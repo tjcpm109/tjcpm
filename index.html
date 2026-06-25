@@ -83,17 +83,17 @@ body {
   padding:24px;
   background:linear-gradient(160deg, #d0ede0 0%, #e8f5f0 50%, #ddeaf8 100%);
 }
-.login-logo { margin-bottom:22px; }
-.login-logo img { width:440px; max-width:90vw; }
+.login-logo { margin-bottom:22px; width:100%; max-width:440px; }
+.login-logo img { width:100%; max-width:440px; display:block; }
 .login-logo .logo-fallback {
   display:none;
   background:var(--blue-main);
   color:#fff;
-  font-size:30px;
+  font-size:42px;
   font-weight:700;
-  padding:20px 36px;
-  border-radius:16px;
-  letter-spacing:3px;
+  padding:28px 48px;
+  border-radius:20px;
+  letter-spacing:4px;
 }
 .login-title { font-size:28px; font-weight:700; color:#1a6fc4; margin-bottom:4px; }
 .login-sub { font-size:16px; color:var(--page-text-secondary); margin-bottom:32px; }
@@ -597,14 +597,13 @@ body {
   </div>
 
   <div class="nav" id="mainNav">
-    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管</div>
     <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
     <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
     <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
     <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
     <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
     <div class="nav-tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 通知</div>
-
+    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管</div>
   </div>
 
   <!-- 打卡 -->
@@ -880,23 +879,51 @@ function callGAS(params, timeoutMs = 15000) {
 }
 
 // ── 連線狀態偵測 ──────────────────────────────────────────────
-// 規則：若無法連到 GAS 後端，就停用「上班/下班」打卡按鈕，避免打卡卻沒有同步紀錄。
+// 規則：
+//  1) 若無法連到 GAS 後端 → 停用「上班/下班」打卡按鈕，避免打卡卻沒有同步紀錄。
+//  2) 若 GPS 定位失敗 → 同樣停用打卡按鈕（GPS 改為打卡的必要條件，不再只是輔助資訊）。
+// 兩個條件都要成立（連線 + GPS 都正常）才能打卡。
 let isOnline = navigator.onLine;
+let isGpsLocked = false;
 let connectivityCheckInFlight = false;
 
-function setOnlineStatus(online) {
-  isOnline = online;
+function updateActionButtonsState() {
   const btnCheckin = document.getElementById('btnCheckin');
   const btnCheckout = document.getElementById('btnCheckout');
   const banner = document.getElementById('offlineBanner');
   const checkinSub = document.getElementById('checkinSub');
   const checkoutSub = document.getElementById('checkoutSub');
   if (!btnCheckin || !btnCheckout) return; // 尚未登入、主畫面未渲染
-  btnCheckin.classList.toggle('disabled', !online);
-  btnCheckout.classList.toggle('disabled', !online);
-  if (banner) banner.classList.toggle('show', !online);
-  if (checkinSub) checkinSub.textContent = online ? '打卡上班' : '⚠️ 無法連線';
-  if (checkoutSub) checkoutSub.textContent = online ? '打卡下班' : '⚠️ 無法連線';
+
+  const canPunch = isOnline && isGpsLocked;
+  btnCheckin.classList.toggle('disabled', !canPunch);
+  btnCheckout.classList.toggle('disabled', !canPunch);
+
+  let reason = '';
+  if (!isOnline) reason = '⚠️ 無法連線';
+  else if (!isGpsLocked) reason = '⚠️ 無 GPS 定位';
+
+  if (banner) {
+    banner.classList.toggle('show', !canPunch);
+    if (!canPunch) {
+      banner.textContent = !isOnline
+        ? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試'
+        : '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
+    }
+  }
+  if (checkinSub) checkinSub.textContent = canPunch ? '打卡上班' : reason;
+  if (checkoutSub) checkoutSub.textContent = canPunch ? '打卡下班' : reason;
+}
+
+// 保留舊函式名稱相容（內部呼叫統一改走 updateActionButtonsState）
+function setOnlineStatus(online) {
+  isOnline = online;
+  updateActionButtonsState();
+}
+
+function setGpsLocked(locked) {
+  isGpsLocked = locked;
+  updateActionButtonsState();
 }
 
 // 主動測試是否連得到 GAS（瀏覽器的 navigator.onLine 只能判斷裝置有無網路，
@@ -948,6 +975,8 @@ function showApp() {
   updateNotifBadge();
   if (Notification && Notification.permission === 'default') document.getElementById('pushBanner').style.display = 'flex';
   if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
+  // ★ 主管登入後直接呈現主管頁，不用先看到打卡首頁再自己點過去
+  if (isAdmin) switchTab('admin');
   checkConnectivity();
   setInterval(checkConnectivity, 30000);
 }
@@ -1016,6 +1045,7 @@ updateClock();
 function initGPS() {
   if (!navigator.geolocation) {
     setGPS('error','不支援 GPS','');
+    setGpsLocked(false);
     return;
   }
   navigator.geolocation.watchPosition(
@@ -1023,8 +1053,12 @@ function initGPS() {
       gpsLat = p.coords.latitude.toFixed(5);
       gpsLng = p.coords.longitude.toFixed(5);
       setGPS('active', 'GPS 已定位', `${gpsLat}, ${gpsLng}`);
+      setGpsLocked(true);
     },
-    () => setGPS('error', 'GPS 定位失敗', '請允許位置存取')
+    () => {
+      setGPS('error', 'GPS 定位失敗', '請允許位置存取');
+      setGpsLocked(false);
+    }
   );
 }
 function setGPS(state, text, coords) {
@@ -1139,6 +1173,11 @@ function handleAction(type) {
   // ★ 無法連線時不允許打卡，避免按鈕被繞過（例如殘留事件）仍寫入本機卻同步不到 Sheet
   if (!isOnline) {
     showToast('⚠️ 目前無法連線，請確認網路後再試');
+    return;
+  }
+  // ★ GPS 未定位成功時不允許打卡（GPS 現在是打卡的必要條件，不只是輔助資訊）
+  if (!isGpsLocked) {
+    showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試');
     return;
   }
   const now = new Date();
