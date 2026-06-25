@@ -1296,7 +1296,8 @@ async function approveRecord(id, decision) {
   try {
     const res = await callGAS({
       action: 'approve', clientId: rec.clientId || String(rec.id),
-      empId: rec.empId, type: rec.type, date: rec.date, decision
+      empId: rec.empId, type: rec.type, date: rec.date, decision,
+      approverName: currentUser.name, approverId: currentUser.empId
     });
     const synced = res.status === 'ok' && res.found !== false;
     showToast(decision === '同意'
