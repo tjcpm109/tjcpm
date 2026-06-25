@@ -681,7 +681,7 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">開始時間</label>
-      <input type="time" class="input-field" id="leaveStartTime" />
+      <select class="select-field" id="leaveStartTime"></select>
     </div>
     <div class="input-group">
       <label class="input-label">結束日期</label>
@@ -689,7 +689,7 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">結束時間</label>
-      <input type="time" class="input-field" id="leaveEndTime" />
+      <select class="select-field" id="leaveEndTime"></select>
     </div>
     <div class="input-group">
       <label class="input-label">原因（選填）</label>
@@ -714,11 +714,11 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">開始時間</label>
-      <input type="time" class="input-field" id="otStart" />
+      <select class="select-field" id="otStart"></select>
     </div>
     <div class="input-group">
       <label class="input-label">結束時間</label>
-      <input type="time" class="input-field" id="otEnd" />
+      <select class="select-field" id="otEnd"></select>
     </div>
     <div class="input-group">
       <label class="input-label">加班原因</label>
@@ -749,7 +749,7 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">時間</label>
-      <input type="time" class="input-field" id="suppTime" />
+      <select class="select-field" id="suppTime"></select>
     </div>
     <div class="input-group">
       <label class="input-label">未打卡原因</label>
@@ -1454,6 +1454,32 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
     if (e.target === o) o.classList.remove('open');
   });
 });
+
+// ── 時間下拉選單：只允許 :00 和 :30 ────────────────────────────
+(function initTimeSelects() {
+  const ids = ['leaveStartTime', 'leaveEndTime', 'otStart', 'otEnd', 'suppTime'];
+  const options = [];
+  for (let h = 0; h < 24; h++) {
+    const hh = String(h).padStart(2, '0');
+    options.push('<option value="' + hh + ':00">' + hh + ':00</option>');
+    options.push('<option value="' + hh + ':30">' + hh + ':30</option>');
+  }
+  const html = options.join('');
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+  ['leaveStartTime','otStart'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '08:00';
+  });
+  ['leaveEndTime','otEnd'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '17:00';
+  });
+  const suppEl = document.getElementById('suppTime');
+  if (suppEl) suppEl.value = '08:00';
+})();
 </script>
 </body>
 </html>
