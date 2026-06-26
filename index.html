@@ -1668,10 +1668,14 @@ async function loadAdminData() {
       if (!seen.has(key)) { seen.add(key); merged.push(r); }
     }
     const pending = merged.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+    const allApply = merged.filter(r => r.type === '請假' || r.type === '加班' || r.type === '補打卡');
+    // ★ 依時間排序，最新在前
+    allApply.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
     document.getElementById('statLeave').innerHTML = merged.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
     document.getElementById('statOT').innerHTML = merged.filter(r => (r.type === '加班' || r.type === '補打卡') && r.status === '待審').length + '<span>筆</span>';
-    document.getElementById('pendingList').innerHTML = pending.length
-      ? pending.map(r => recordHTML(r, true, true)).join('')
+    // ★ 顯示全部申請（待審 + 已簽核），讓主管看到歷史紀錄
+    document.getElementById('pendingList').innerHTML = allApply.length
+      ? allApply.map(r => recordHTML(r, true, r.status === '待審')).join('')
       : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
   }
 
@@ -1688,7 +1692,7 @@ async function loadAdminData() {
     if (leaveData.data && leaveData.data.length > 1) {
       leaveData.data.slice(1).forEach(r => {
         // Sheet 欄位：A(0)時間 B(1)員編 C(2)姓名 D(3)假別 E(4)日期起 F(5)日期迄
-        //             G(6)時間起 H(7)時間迄 I(8)空白 J(9)審核狀態 K(10)clientId L(11)核准人
+        //             G(6)時間起 H(7)時間迄 I(8)空白 J(9)審核狀態 K(10)clientId L(11)核准人 M(12)簽核時間
         const cid = r[10] ? String(r[10]).trim() : null;
         if (!cid) return; 
         sheetRecords.push({
@@ -1697,7 +1701,9 @@ async function loadAdminData() {
           date: sheetDateToLocal(r[4]),
           endDate: sheetDateToLocal(r[5]),
           startTime: sheetTimeToLocal(r[6]), endTime: sheetTimeToLocal(r[7]),
-          status: r[9] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+          status: r[9] || '待審',
+          approver: r[11] || '', approveTime: r[12] ? sheetDateTimeToLocal(r[12]) : '',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
     }
@@ -1711,7 +1717,9 @@ async function loadAdminData() {
           empId: String(r[1]).trim(), name: r[2] || '',
           date: sheetDateToLocal(r[3]),
           startTime: sheetTimeToLocal(r[4]), endTime: sheetTimeToLocal(r[5]), hours: r[6] || '',
-          reason: r[7] || '', status: r[8] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+          reason: r[7] || '', status: r[8] || '待審',
+          approver: r[10] || '', approveTime: r[11] ? sheetDateTimeToLocal(r[11]) : '',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
     }
@@ -1725,6 +1733,7 @@ async function loadAdminData() {
           empId: String(r[1]).trim(), name: r[2] || '',
           date: sheetDateToLocal(r[4]),
           time: sheetTimeToLocal(r[5]), reason: r[6] || '', status: r[7] || '待審',
+          approver: r[9] || '', approveTime: r[10] ? sheetDateTimeToLocal(r[10]) : '',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
