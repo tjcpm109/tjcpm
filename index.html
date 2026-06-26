@@ -1,401 +1,1653 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>TJCPM 員工系統</title>
-  
-  <style>
-    /* 全域防呆與字體設定 */
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    body {
-      margin: 0;
-      padding: 15px;
-      background-color: #f5f7fa;
-      color: #333;
-    }
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    h2, h3 {
-      text-align: center;
-      color: #1a365d;
-      margin-top: 0;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TJCPM">
+<title>TJCPM 員工系統</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
 
-    /* 統一表單欄位樣式 (徹底解決日期框寬度與高度不一、iOS 放大 Bug) */
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-      color: #4a5568;
-      font-size: 14px;
-    }
-    input[type="text"],
-    input[type="password"],
-    input[type="date"],
-    input[type="time"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      height: 44px; /* 強制所有輸入框、下拉選單、日期框高度一致 */
-      padding: 10px 12px;
-      margin-top: 6px;
-      font-size: 16px; /* iOS 限制：滿 16px 點擊才不會讓畫面亂放大 */
-      border: 1px solid #cbd5e0;
-      border-radius: 6px;
-      background-color: #fff;
-      -webkit-appearance: none; /* 拔除 iOS Safari 自作聰明的預設日期框外觀 */
-      -moz-appearance: none;
-      appearance: none;
-    }
-    textarea {
-      height: 80px;
-      resize: vertical;
-    }
+:root {
+  /* ── 頁面底：淺綠色 ── */
+  --bg-page:#eaf5f0;
+  --bg-page-alt:#ddeaf8;
 
-    /* 按鈕樣式 */
-    button {
-      width: 100%;
-      height: 46px;
-      margin-top: 20px;
-      background-color: #3182ce;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:active {
-      background-color: #2b6cb0;
-    }
-    .btn-secondary {
-      background-color: #e2e8f0;
-      color: #4a5568;
-      margin-top: 10px;
-    }
-    .btn-secondary:active {
-      background-color: #cbd5e0;
-    }
+  /* ── 卡片：深藍灰（高對比） ── */
+  --card-bg:#111827;
+  --card-bg-soft:#1a2333;
+  --card-bg-hover:#1f2a3d;
+  --card-border:#2a3650;
 
-    /* 區塊隱藏/顯示控制 */
-    .page { display: none; }
-    .active { display: block; }
+  /* ── 藍色系（強調色） ── */
+  --blue-main:#3b82f6;
+  --blue-light:#60a5fa;
+  --blue-pale:#1e293b;
+  --blue-border:#3b5375;
+  --blue-text-on-pale:#93c5fd;
 
-    /* 功能選單按鈕群組 */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 15px;
-    }
-    .menu-btn {
-      background-color: #4a5568;
-      margin-top: 0;
-      height: 60px;
-    }
+  /* ── 綠色系（強調色） ── */
+  --green-main:#22c58a;
+  --green-light:#34d399;
+  --green-pale:#10241c;
+  --green-border:#1f5c44;
 
-    /* 歡迎資訊與登出 */
-    .user-info {
-      background: #ebf8ff;
-      padding: 10px;
-      border-radius: 6px;
-      text-align: center;
-      margin-bottom: 15px;
-      font-size: 14px;
-      color: #2b6cb0;
-    }
-  </style>
+  --accent-red:#f87171;
+  --accent-red-pale:#2a1518;
+  --accent-orange:#fbbf24;
+  --accent-orange-pale:#2a2010;
+  --accent-purple:#a78bfa;
+  --accent-purple-pale:#211a36;
+
+  /* ── 文字（卡片內，深底用白字） ── */
+  --text-primary:#f3f6fa;
+  --text-secondary:#aab4c5;
+  --text-muted:#6b7488;
+
+  /* ── 頁面底色上的文字（淺色區塊） ── */
+  --page-text-primary:#1a2e22;
+  --page-text-secondary:#4a6858;
+
+  --border:#2a3650;
+  --border-bright:#3b475f;
+
+  --shadow:0 2px 10px rgba(17,24,39,0.18);
+  --shadow-md:0 6px 22px rgba(17,24,39,0.28);
+  --radius:10px;
+  --radius-lg:16px;
+
+  /* ── 字級 ── */
+  --fs-body:16px;
+  --fs-label:14px;
+  --fs-btn:16px;
+}
+
+body {
+  background:var(--bg-page);
+  color:var(--page-text-primary);
+  font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+  min-height:100vh;
+  font-size:var(--fs-body);
+  overflow-x:hidden;
+}
+
+/* ── Login ── */
+#loginScreen {
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:linear-gradient(160deg, #d0ede0 0%, #e8f5f0 50%, #ddeaf8 100%);
+}
+.login-logo { margin-bottom:22px; width:100%; max-width:440px; }
+.login-logo img { width:100%; max-width:440px; display:block; }
+.login-logo .logo-fallback {
+  display:none;
+  background:var(--blue-main);
+  color:#fff;
+  font-size:42px;
+  font-weight:700;
+  padding:28px 48px;
+  border-radius:20px;
+  letter-spacing:4px;
+}
+.login-title { font-size:28px; font-weight:700; color:#1a6fc4; margin-bottom:4px; }
+.login-sub { font-size:16px; color:var(--page-text-secondary); margin-bottom:32px; }
+
+/* ── 登入框：淺色、放大、凸顯 ── */
+.login-box {
+  background:#ffffff;
+  border:2px solid var(--blue-border);
+  border-radius:20px;
+  padding:40px 32px;
+  width:100%;
+  max-width:440px;
+  box-shadow:0 20px 50px rgba(26,111,196,0.22), 0 6px 18px rgba(17,24,39,0.10);
+}
+#loginScreen .input-field,
+#loginScreen .select-field {
+  background:#f4f9f7;
+  border:1.5px solid #c8e2d8;
+  color:var(--page-text-primary);
+}
+#loginScreen .input-field::placeholder { color:#94a8a0; }
+#loginScreen .input-field:focus,
+#loginScreen .select-field:focus {
+  border-color:#1a6fc4;
+  box-shadow:0 0 0 3px rgba(26,111,196,0.15);
+  background:#ffffff;
+}
+#loginScreen .input-label { color:#3a5a4a; }
+.login-err {
+  background:#fef2f2;
+  border:1px solid #fecaca;
+  border-radius:var(--radius);
+  padding:11px 14px;
+  font-size:var(--fs-body);
+  color:#dc2626;
+  margin-bottom:16px;
+  display:none;
+}
+
+/* ── Header ── */
+.header {
+  background:var(--card-bg);
+  border-bottom:2px solid var(--green-border);
+  padding:12px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:var(--shadow);
+  gap:10px;
+}
+.header-left { display:flex; align-items:center; gap:10px; min-width:0; overflow:hidden; }
+.header-left img { height:42px; max-width:100%; }
+.header-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
+.header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; white-space:nowrap; }
+.logout-btn {
+  font-size:var(--fs-label);
+  color:var(--accent-red);
+  cursor:pointer;
+  background:none;
+  border:1px solid #5c2a2e;
+  font-family:inherit;
+  padding:6px 12px;
+  border-radius:6px;
+  transition:background 0.15s;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.logout-btn:hover { background:var(--accent-red-pale); }
+.notif-bell { font-size:21px; cursor:pointer; position:relative; flex-shrink:0; }
+.notif-badge {
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  background:var(--accent-red);
+  color:#1a0708;
+  font-size:10px;
+  font-weight:700;
+  width:17px;
+  height:17px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ── 手機窄螢幕 ── */
+@media (max-width:480px) {
+  .header { padding:10px 12px; gap:8px; }
+  .header-left img { height:24px; }
+  .header-user { display:none; }
+  .header-clock { display:none; }
+  .header-right { gap:8px; }
+  .logout-btn { padding:6px 10px; font-size:13px; }
+  .notif-bell { font-size:19px; }
+}
+
+/* ── Nav ── */
+.nav {
+  background:var(--card-bg);
+  border-bottom:1px solid var(--card-border);
+  display:flex;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar { display:none; }
+.nav-tab {
+  padding:13px 16px;
+  font-size:var(--fs-label);
+  color:var(--text-secondary);
+  cursor:pointer;
+  white-space:nowrap;
+  border-bottom:3px solid transparent;
+  transition:all 0.2s;
+  user-select:none;
+  font-weight:500;
+}
+.nav-tab:hover { color:var(--blue-light); background:var(--card-bg-hover); }
+.nav-tab.active { color:var(--blue-light); border-bottom-color:var(--blue-light); background:var(--card-bg-hover); }
+
+/* ── Pages ── */
+.page { display:none; padding:20px; max-width:700px; margin:0 auto; }
+.page.active { display:block; }
+
+/* ── Clock card ── */
+.clock-card {
+  background:linear-gradient(135deg, #1a6fc4 0%, #2484e0 100%);
+  border-radius:var(--radius-lg);
+  padding:28px 24px;
+  text-align:center;
+  margin-bottom:16px;
+  box-shadow:var(--shadow-md);
+  color:#fff;
+}
+.clock-time { font-size:54px; font-weight:200; font-variant-numeric:tabular-nums; letter-spacing:-1px; line-height:1; }
+.clock-date { font-size:var(--fs-label); opacity:0.85; margin-top:8px; }
+.clock-user { font-size:var(--fs-label); margin-top:10px; font-weight:600; opacity:0.95; }
+
+/* ── Inputs ── */
+.input-group { margin-bottom:16px; }
+.input-label { font-size:var(--fs-label); color:var(--page-text-secondary); margin-bottom:7px; display:block; font-weight:600; }
+.input-field {
+  width:100%;
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:13px 14px;
+  color:var(--text-primary);
+  font-size:var(--fs-body);
+  font-family:inherit;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  outline:none;
+}
+.input-field:focus { border-color:var(--blue-light); box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
+.input-field::placeholder { color:var(--text-muted); }
+.select-field {
+  width:100%;
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:13px 14px;
+  color:var(--text-primary);
+  font-size:var(--fs-body);
+  font-family:inherit;
+  outline:none;
+  appearance:none;
+  cursor:pointer;
+  transition:border-color 0.2s;
+}
+.select-field:focus { border-color:var(--blue-light); box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
+
+input[type="date"].input-field { width:100%; box-sizing:border-box; }
+
+/* ── Info box ── */
+.info-box {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  background:var(--blue-pale);
+  border:1px solid var(--blue-border);
+  border-radius:var(--radius);
+  padding:13px 14px;
+  margin-bottom:20px;
+}
+.info-box .info-icon { font-size:19px; flex-shrink:0; margin-top:1px; }
+.info-box .info-text { font-size:var(--fs-body); color:var(--blue-text-on-pale); line-height:1.65; }
+.info-box .info-text strong { color:#fff; }
+
+/* ── Action buttons ── */
+.action-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.action-btn {
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius-lg);
+  padding:24px 16px;
+  cursor:pointer;
+  text-align:center;
+  transition:all 0.18s;
+  user-select:none;
+  box-shadow:var(--shadow);
+}
+.action-btn:hover { background:var(--card-bg-hover); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.action-btn:active { transform:scale(0.97); }
+.action-btn .btn-icon { font-size:32px; margin-bottom:10px; display:block; }
+.action-btn .btn-label { font-size:18px; font-weight:700; }
+.action-btn .btn-sub { font-size:var(--fs-label); color:var(--text-muted); margin-top:4px; }
+.btn-checkin { border-top:4px solid var(--green-main); }
+.btn-checkin .btn-label { color:var(--green-light); }
+.btn-checkout { border-top:4px solid var(--accent-red); }
+.btn-checkout .btn-label { color:var(--accent-red); }
+
+.action-btn.disabled {
+  opacity:0.45;
+  cursor:not-allowed;
+  pointer-events:none;
+  filter:grayscale(0.4);
+}
+.action-btn.disabled:hover { transform:none; box-shadow:var(--shadow); }
+.offline-banner {
+  background:var(--accent-orange-pale);
+  border:1px solid #6b4f12;
+  color:var(--accent-orange);
+  border-radius:var(--radius);
+  padding:12px 16px;
+  margin-bottom:16px;
+  font-size:var(--fs-body);
+  display:none;
+  align-items:center;
+  gap:10px;
+}
+.offline-banner.show { display:flex; }
+
+/* ── GPS bar ── */
+.gps-bar {
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:12px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+  font-size:var(--fs-body);
+  box-shadow:var(--shadow);
+}
+.gps-dot { width:9px; height:9px; border-radius:50%; background:var(--text-muted); flex-shrink:0; transition:background 0.3s; }
+.gps-dot.active { background:var(--green-main); box-shadow:0 0 6px var(--green-main); }
+.gps-dot.error { background:var(--accent-red); }
+.gps-text { color:var(--text-secondary); flex:1; }
+.gps-coords { font-size:var(--fs-label); color:var(--text-muted); font-variant-numeric:tabular-nums; }
+
+/* ── Section title ── */
+.section-title {
+  font-size:13px;
+  color:#1a6fc4;
+  letter-spacing:0.8px;
+  text-transform:uppercase;
+  margin-bottom:12px;
+  margin-top:4px;
+  font-weight:700;
+  border-left:3px solid #1a6fc4;
+  padding-left:8px;
+}
+
+/* ── Records ── */
+.record-list { display:flex; flex-direction:column; gap:8px; }
+.record-item {
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  box-shadow:var(--shadow);
+}
+.record-row { display:flex; align-items:center; gap:14px; }
+.record-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+.dot-green { background:var(--green-main); }
+.dot-red { background:var(--accent-red); }
+.dot-orange { background:var(--accent-orange); }
+.dot-purple { background:var(--accent-purple); }
+.dot-blue { background:var(--blue-light); }
+.record-info { flex:1; }
+.record-type { font-size:var(--fs-body); font-weight:600; color:var(--text-primary); }
+.record-meta { font-size:var(--fs-label); color:var(--text-secondary); margin-top:3px; }
+.record-time { font-size:var(--fs-body); color:var(--text-secondary); font-variant-numeric:tabular-nums; font-weight:500; }
+.empty-state { text-align:center; padding:40px 20px; color:var(--page-text-secondary); }
+.empty-icon { font-size:38px; margin-bottom:12px; }
+.empty-text { font-size:var(--fs-body); }
+
+/* ── Modal ── */
+.modal-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(8,12,20,0.6);
+  z-index:200;
+  align-items:flex-end;
+  justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  padding:24px 20px 36px;
+  width:100%;
+  max-width:700px;
+  animation:slideUp 0.25s ease;
+  box-shadow:0 -4px 28px rgba(0,0,0,0.4);
+}
+@keyframes slideUp { from{ transform:translateY(40px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+.modal-title { font-size:18px; font-weight:700; color:var(--blue-light); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+.modal-close { margin-left:auto; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:22px; line-height:1; padding:0; }
+
+/* ── Buttons ── */
+.submit-btn {
+  width:100%;
+  padding:15px;
+  border-radius:var(--radius);
+  border:none;
+  font-size:var(--fs-btn);
+  font-weight:700;
+  font-family:inherit;
+  cursor:pointer;
+  margin-top:8px;
+  transition:opacity 0.2s,transform 0.15s,box-shadow 0.15s;
+  box-shadow:var(--shadow);
+}
+.submit-btn:hover { opacity:0.92; box-shadow:var(--shadow-md); }
+.submit-btn:active { transform:scale(0.98); }
+.submit-btn.blue { background:var(--blue-main); color:#fff; }
+.submit-btn.green { background:var(--green-main); color:#06241a; }
+.submit-btn.orange { background:var(--accent-orange); color:#2b1f02; }
+.submit-btn.purple { background:var(--accent-purple); color:#1c1334; }
+
+/* ── Toast ── */
+.toast {
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  color:#fff;
+  border-radius:50px;
+  padding:12px 22px;
+  font-size:var(--fs-label);
+  font-weight:500;
+  z-index:300;
+  transition:transform 0.3s ease;
+  white-space:nowrap;
+  box-shadow:var(--shadow-md);
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── Badges ── */
+.badge { display:inline-block; font-size:12px; font-weight:700; padding:3px 9px; border-radius:20px; letter-spacing:0.3px; }
+.badge-green { background:var(--green-pale); color:var(--green-light); }
+.badge-red { background:var(--accent-red-pale); color:var(--accent-red); }
+.badge-orange { background:var(--accent-orange-pale); color:var(--accent-orange); }
+.badge-purple { background:var(--accent-purple-pale); color:var(--accent-purple); }
+.badge-blue { background:var(--blue-pale); color:var(--blue-light); }
+.badge-gray { background:#1f2937; color:#9ca3af; }
+
+/* ── Stats ── */
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
+.stat-card {
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:16px;
+  box-shadow:var(--shadow);
+  border-top:3px solid var(--blue-light);
+}
+.stat-label { font-size:13px; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.6px; font-weight:700; }
+.stat-value { font-size:30px; font-weight:300; color:var(--blue-light); }
+.stat-value span { font-size:var(--fs-label); color:var(--text-muted); margin-left:4px; }
+
+/* ── Approve buttons ── */
+.approve-row { display:flex; gap:8px; }
+.approve-btn {
+  font-size:var(--fs-label);
+  padding:8px 16px;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+  font-family:inherit;
+  font-weight:600;
+  transition:opacity 0.15s;
+}
+.approve-btn.ok { background:var(--green-pale); color:var(--green-light); border:1px solid var(--green-border); }
+.approve-btn.ok:hover { background:var(--green-border); }
+.approve-btn.reject { background:var(--accent-red-pale); color:var(--accent-red); border:1px solid #5c2a2e; }
+.approve-btn.reject:hover { background:#5c2a2e; }
+
+/* ── Notif ── */
+.notif-panel {
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  margin-bottom:8px;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  box-shadow:var(--shadow);
+}
+.notif-icon { font-size:20px; flex-shrink:0; }
+.notif-text { font-size:var(--fs-body); color:var(--text-primary); }
+.notif-time { font-size:var(--fs-label); color:var(--text-muted); margin-top:3px; }
+
+/* ── Push banner ── */
+.push-banner {
+  background:var(--blue-pale);
+  border:1px solid var(--blue-border);
+  border-radius:var(--radius);
+  padding:12px 16px;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:var(--fs-body);
+  color:var(--blue-text-on-pale);
+}
+.push-banner button {
+  background:var(--blue-main);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:8px 14px;
+  font-size:var(--fs-label);
+  cursor:pointer;
+  font-family:inherit;
+  white-space:nowrap;
+  font-weight:600;
+}
+
+/* ── Filter chips ── */
+.filter-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-chip {
+  font-size:var(--fs-label);
+  padding:7px 15px;
+  border-radius:20px;
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:all 0.15s;
+  font-weight:500;
+}
+.filter-chip.active { background:var(--blue-pale); border-color:var(--blue-light); color:var(--blue-light); font-weight:700; }
+
+/* ── Spinner ── */
+.spinner {
+  display:inline-block;
+  width:16px;
+  height:16px;
+  border:2px solid rgba(255,255,255,0.4);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+  vertical-align:middle;
+  margin-right:6px;
+}
+@keyframes spin { to{ transform:rotate(360deg); } }
+
+@media(min-width:600px) {
+  .page{ padding:28px 24px; }
+  .clock-time{ font-size:64px; }
+}
+</style>
 </head>
 <body>
 
-<div class="container">
-  
-  <div id="page-login" class="page active">
-    <h2>TJCPM 員工系統</h2>
-    <label>員工編號</label>
-    <input type="text" id="login-empId" placeholder="請輸入員編">
-    
-    <label>密碼</label>
-    <input type="password" id="login-password" placeholder="請輸入密碼">
-    
-    <button onclick="doLogin()">登入系統</button>
+<!-- Login -->
+<div id="loginScreen">
+  <div class="login-logo">
+    <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
+    <div id="logoTextLogin" class="logo-fallback">TJCPM</div>
   </div>
-
-  <div id="page-main" class="page">
-    <div class="user-info">
-      歡迎，<span id="user-display-name">員工</span> (<span id="user-display-id"></span>)
+  <div class="login-title">TJCPM</div>
+  <div class="login-sub">員工管理系統</div>
+  <div class="login-box">
+    <div class="login-err" id="loginErr"></div>
+    <div class="input-group">
+      <label class="input-label">員工編號</label>
+      <input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
     </div>
-    <h2>請選擇功能</h2>
-    <div class="menu-grid">
-      <button class="menu-btn" onclick="switchPage('page-punch')">📍 上下班打卡</button>
-      <button class="menu-btn" onclick="switchPage('page-leave')">🌴 請假申請</button>
-      <button class="menu-btn" onclick="switchPage('page-overtime')">🔥 加班申請</button>
-      <button class="menu-btn" onclick="switchPage('page-supp')">✏️ 補打卡申請</button>
+    <div class="input-group">
+      <label class="input-label">密碼</label>
+      <input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
     </div>
-    <button class="btn-secondary" onclick="doLogout()">登出</button>
+    <button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
   </div>
-
-  <div id="page-punch" class="page">
-    <h3>📍 上下班打卡</h3>
-    <button style="background-color: #38a169;" onclick="submitPunch('上班')">☀️ 上班打卡</button>
-    <button style="background-color: #e53e3e;" onclick="submitPunch('下班')">🌙 下班打卡</button>
-    <button class="btn-secondary" onclick="switchPage('page-main')">返回主選單</button>
-  </div>
-
-  <div id="page-leave" class="page">
-    <h3>🌴 請假申請</h3>
-    <label>假別</label>
-    <select id="leave-subType">
-      <option value="事假">事假</option>
-      <option value="病假">病假</option>
-      <option value="特休">特休</option>
-      <option value="婚假/喪假">婚假/喪假</option>
-    </select>
-    
-    <label>開始日期</label>
-    <input type="date" id="leave-date">
-    
-    <label>結束日期</label>
-    <input type="date" id="leave-endDate">
-    
-    <label>請假原因</label>
-    <textarea id="leave-reason" placeholder="請輸入請假事由"></textarea>
-    
-    <button onclick="submitLeave()">送出請假申請</button>
-    <button class="btn-secondary" onclick="switchPage('page-main')">返回主選單</button>
-  </div>
-
-  <div id="page-overtime" class="page">
-    <h3>🔥 加班申請</h3>
-    <label>加班日期</label>
-    <input type="date" id="ot-date">
-    
-    <label>開始時間</label>
-    <input type="time" id="ot-startTime">
-    
-    <label>結束時間</label>
-    <input type="time" id="ot-endTime">
-    
-    <label>預估時數 (小時)</label>
-    <input type="number" id="ot-hours" step="0.5" placeholder="例如: 2.5">
-    
-    <label>加班原因</label>
-    <textarea id="ot-reason" placeholder="請輸入加班工作內容"></textarea>
-    
-    <button onclick="submitOvertime()">送出加班申請</button>
-    <button class="btn-secondary" onclick="switchPage('page-main')">返回主選單</button>
-  </div>
-
-  <div id="page-supp" class="page">
-    <h3>✏️ 補打卡申請</h3>
-    <label>補打卡類型</label>
-    <select id="supp-subType">
-      <option value="補上班打卡">補上班打卡</option>
-      <option value="補下班打卡">補下班打卡</option>
-    </select>
-    
-    <label>日期</label>
-    <input type="date" id="supp-date">
-    
-    <label>時間</label>
-    <input type="time" id="supp-time">
-    
-    <label>補打卡原因</label>
-    <textarea id="supp-reason" placeholder="請說明未打卡原因"></textarea>
-    
-    <button onclick="submitSupp()">送出補打卡申請</button>
-    <button class="btn-secondary" onclick="switchPage('page-main')">返回主選單</button>
-  </div>
-
 </div>
 
+<!-- Main App -->
+<div id="mainApp" style="display:none">
+  <div class="header">
+    <div class="header-left">
+      <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextHeader').style.display='inline-block'" />
+      <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
+    </div>
+    <div class="header-right">
+      <div class="notif-bell" onclick="showPendingToast()" title="待審核申請">
+        🔔<span class="notif-badge" id="notifCount" style="display:none">0</span>
+      </div>
+      <span class="header-user" id="headerUser"></span>
+      <span class="header-clock" id="headerClock">--:--:--</span>
+      <button class="logout-btn" onclick="doLogout()">登出</button>
+    </div>
+  </div>
+
+  <div class="nav" id="mainNav">
+    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管</div>
+    <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
+    <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
+    <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
+    <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
+    <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
+  </div>
+
+  <!-- 打卡 -->
+  <div class="page active" id="page-home">
+    <div class="clock-card">
+      <div class="clock-time" id="mainClock">00:00:00</div>
+      <div class="clock-date" id="mainDate"></div>
+      <div class="clock-user" id="clockUser"></div>
+    </div>
+    <div id="pushBanner" style="display:none"></div>
+    <div class="gps-bar">
+      <div class="gps-dot" id="gpsDot"></div>
+      <span class="gps-text" id="gpsText">取得位置中…</span>
+      <span class="gps-coords" id="gpsCoords"></span>
+    </div>
+    <div class="offline-banner" id="offlineBanner">
+      ⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試
+    </div>
+    <div style="text-align:right;font-size:14px;margin-bottom:12px;min-height:18px;">
+      <span id="syncStatus" style="transition:color 0.3s;"></span>
+    </div>
+    <div class="action-grid">
+      <div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
+        <span class="btn-icon">✅</span>
+        <div class="btn-label">上班</div>
+        <div class="btn-sub" id="checkinSub">打卡上班</div>
+      </div>
+      <div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction('下班')">
+        <span class="btn-icon">🏁</span>
+        <div class="btn-label">下班</div>
+        <div class="btn-sub" id="checkoutSub">打卡下班</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的紀錄 -->
+  <div class="page" id="page-records">
+    <div class="filter-bar">
+      <div class="filter-chip" onclick="filterRecords('上班',this)">上班</div>
+      <div class="filter-chip" onclick="filterRecords('下班',this)">下班</div>
+      <div class="filter-chip" onclick="filterRecords('請假',this)">請假</div>
+      <div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
+      <div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
+    </div>
+    <div class="record-list" id="allRecordsList"></div>
+  </div>
+
+  <!-- 請假 -->
+  <div class="page" id="page-leave">
+    <div class="info-box">
+      <div class="info-icon">📅</div>
+      <div class="info-text">
+        <strong>請假說明：</strong>請假以<strong>小時</strong>為單位，請填寫開始與結束時間。<br>
+        半天假 = 4 小時；全天假 = 8 小時。
+      </div>
+    </div>
+    <p class="section-title">請假申請</p>
+    <div class="input-group">
+      <label class="input-label">假別</label>
+      <select class="select-field" id="leaveType">
+        <option>特休</option>
+        <option>事假</option>
+        <option>病假</option>
+        <option>公假</option>
+        <option>婚假</option>
+        <option>喪假</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">開始日期</label>
+      <input type="date" class="input-field" id="leaveStart" />
+    </div>
+    <div class="input-group">
+      <label class="input-label">開始時間</label>
+      <select class="select-field" id="leaveStartTime"></select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">結束日期</label>
+      <input type="date" class="input-field" id="leaveEnd" />
+    </div>
+    <div class="input-group">
+      <label class="input-label">結束時間</label>
+      <select class="select-field" id="leaveEndTime"></select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">原因（選填）</label>
+      <input class="input-field" id="leaveReason" placeholder="請假原因" />
+    </div>
+    <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
+  </div>
+
+  <!-- 加班 -->
+  <div class="page" id="page-overtime">
+    <div class="info-box">
+      <div class="info-icon">⏰</div>
+      <div class="info-text">
+        <strong>加班說明：</strong>滿<strong>1 小時</strong>後起算，以<strong>0.5 小時</strong>為單位遞增。<br>
+        例：1h、1.5h、2h、2.5h…
+      </div>
+    </div>
+    <p class="section-title">加班申請</p>
+    <div class="input-group">
+      <label class="input-label">加班日期</label>
+      <input type="date" class="input-field" id="otDate" />
+    </div>
+    <div class="input-group">
+      <label class="input-label">開始時間</label>
+      <select class="select-field" id="otStart"></select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">結束時間</label>
+      <select class="select-field" id="otEnd"></select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">加班原因</label>
+      <input class="input-field" id="otReason" placeholder="加班原因" />
+    </div>
+    <button class="submit-btn purple" onclick="submitOvertime()">送出加班申請</button>
+  </div>
+
+  <!-- 補打卡 -->
+  <div class="page" id="page-supp">
+    <div class="info-box">
+      <div class="info-icon">🔄</div>
+      <div class="info-text">
+        <strong>補打卡說明：</strong>若因離開辦公室忘記打卡，請在此填寫補打卡申請，送出後由主管審核確認。
+      </div>
+    </div>
+    <p class="section-title">補打卡申請</p>
+    <div class="input-group">
+      <label class="input-label">上班或下班</label>
+      <select class="select-field" id="suppType">
+        <option>上班</option>
+        <option>下班</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">日期</label>
+      <input type="date" class="input-field" id="suppDate" />
+    </div>
+    <div class="input-group">
+      <label class="input-label">時間</label>
+      <select class="select-field" id="suppTime"></select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">未打卡原因</label>
+      <input class="input-field" id="suppReason" placeholder="請說明未打卡原因" />
+    </div>
+    <button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
+  </div>
+
+  <!-- 通知 -->
+  <div class="page" id="page-notifications">
+    <p class="section-title">通知中心</p>
+    <div id="notifList"></div>
+  </div>
+
+  <!-- 主管 -->
+  <div class="page" id="page-admin">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">今日上班</div>
+        <div class="stat-value" id="statCheckin">—<span>人</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">今日下班</div>
+        <div class="stat-value" id="statCheckout">—<span>人</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">待審請假</div>
+        <div class="stat-value" id="statLeave">—<span>筆</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">待審加班/補</div>
+        <div class="stat-value" id="statOT">—<span>筆</span></div>
+      </div>
+    </div>
+    <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
+    <div class="record-list" id="pendingList"></div>
+    <p class="section-title" style="margin-top:24px;">所有打卡紀錄</p>
+    <div class="record-list" id="adminRecords"></div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modal-leave">
+  <div class="modal">
+    <div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal('leave')">×</button></div>
+    <div class="input-group">
+      <label class="input-label">假別</label>
+      <select class="select-field" id="modalLeaveType">
+        <option>特休</option>
+        <option>事假</option>
+        <option>病假</option>
+        <option>公假</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">日期</label>
+      <input type="date" class="input-field" id="modalLeaveDate" />
+    </div>
+    <button class="submit-btn orange" onclick="quickLeave()">確認送出</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overtime">
+  <div class="modal">
+    <div class="modal-title">🌙 加班申請<button class="modal-close" onclick="closeModal('overtime')">×</button></div>
+    <div class="input-group">
+      <label class="input-label">加班時數</label>
+      <select class="select-field" id="modalOTHours">
+        <option>1 小時</option>
+        <option>1.5 小時</option>
+        <option>2 小時</option>
+        <option>2.5 小時</option>
+        <option>3 小時</option>
+        <option>3.5 小時</option>
+        <option>4 小時</option>
+        <option>4.5 小時</option>
+        <option>5 小時</option>
+        <option>5.5 小時</option>
+        <option>6 小時</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">原因</label>
+      <input class="input-field" id="modalOTReason" placeholder="加班原因" />
+    </div>
+    <button class="submit-btn purple" onclick="quickOvertime()">確認送出</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-  // ⚠️ 重要：請將此處置換成你 GAS 部署後產生的「正式版網頁應用程式網址」(/exec 結尾)
-  const GAS_URL = "https://script.google.com/macros/s/你的GAS部署ID/exec";
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
+let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || 'null');
 
-  // 全域暫存目前登入的員工資訊
-  let currentUser = { empId: "", name: "" };
+const RETENTION_MONTHS = 2;
+function isWithinRetention(record) {
+  if (!record.timestamp) return true; 
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
+  return new Date(record.timestamp) >= cutoff;
+}
 
-  // 初始化：檢查本地端有沒有記住登入狀態
-  window.onload = function() {
-    const savedUser = localStorage.getItem("tjcpm_user");
-    if (savedUser) {
-      currentUser = JSON.parse(savedUser);
-      showMainMenu();
+let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]').filter(isWithinRetention);
+let gpsLat = null, gpsLng = null;
+let currentFilter = 'all';
+const todayStr = new Date().toISOString().split('T')[0];
+
+// ── JSONP caller ──────────────────────────────────────────────
+function callGAS(params, timeoutMs = 15000) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const url = GAS_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      script.remove();
+      reject(new Error('timeout'));
+    }, timeoutMs);
+    window[cbName] = (res) => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      resolve(res);
+    };
+    script.onerror = () => {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+      reject(new Error('network'));
+    };
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+
+// ── 連線狀態偵測 ──────────────────────────────────────────────
+let isOnline = navigator.onLine;
+let isGpsLocked = false;
+let connectivityCheckInFlight = false;
+
+function updateActionButtonsState() {
+  const btnCheckin = document.getElementById('btnCheckin');
+  const btnCheckout = document.getElementById('btnCheckout');
+  const banner = document.getElementById('offlineBanner');
+  const checkinSub = document.getElementById('checkinSub');
+  const checkoutSub = document.getElementById('checkoutSub');
+  if (!btnCheckin || !btnCheckout) return; 
+
+  const canPunch = isOnline && isGpsLocked;
+  btnCheckin.classList.toggle('disabled', !canPunch);
+  btnCheckout.classList.toggle('disabled', !canPunch);
+
+  let reason = '';
+  if (!isOnline) reason = '⚠️ 無法連線';
+  else if (!isGpsLocked) reason = '⚠️ 無 GPS 定位';
+
+  if (banner) {
+    banner.classList.toggle('show', !canPunch);
+    if (!canPunch) {
+      banner.textContent = !isOnline
+        ? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試'
+        : '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
     }
-    // 自動將所有日期輸入框預設為今天
-    const todayStr = new Date().toISOString().split('T')[0];
-    document.querySelectorAll('input[type="date"]').forEach(el => el.value = todayStr);
+  }
+  if (checkinSub) checkinSub.textContent = canPunch ? '打卡上班' : reason;
+  if (checkoutSub) checkoutSub.textContent = canPunch ? '打卡下班' : reason;
+}
+
+function setOnlineStatus(online) {
+  isOnline = online;
+  updateActionButtonsState();
+}
+
+function setGpsLocked(locked) {
+  isGpsLocked = locked;
+  updateActionButtonsState();
+}
+
+async function checkConnectivity() {
+  if (connectivityCheckInFlight) return;
+  connectivityCheckInFlight = true;
+  try {
+    await callGAS({ action: 'ping' }, 6000);
+    setOnlineStatus(true);
+  } catch (e) {
+    setOnlineStatus(false);
+  } finally {
+    connectivityCheckInFlight = false;
+  }
+}
+
+window.addEventListener('online', () => { checkConnectivity(); });
+window.addEventListener('offline', () => { setOnlineStatus(false); });
+
+// ── Boot ────────────────────────────────────────────────────────
+if (currentUser) showApp();
+else showLogin();
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  const isAdmin = currentUser.role === 'admin';
+  document.getElementById('adminTab').style.display = isAdmin ? 'block' : 'none';
+  if (!isAdmin) {
+    const adminPage = document.getElementById('page-admin');
+    if (adminPage && adminPage.classList.contains('active')) switchTab('home');
+  }
+  document.getElementById('headerUser').textContent = currentUser.name;
+  document.getElementById('clockUser').innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
+  ['leaveStart','leaveEnd','otDate','suppDate','modalLeaveDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = todayStr;
+  });
+  initGPS();
+  renderAllList();
+  updateNotifBadge();
+  if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
+  if (isAdmin) switchTab('admin');
+  checkConnectivity();
+  connectivityIntervalId = setInterval(checkConnectivity, 30000);
+}
+
+// ── Login / Logout ─────────────────────────────────────────────
+async function doLogin() {
+  const empId = document.getElementById('loginId').value.trim();
+  const password = document.getElementById('loginPw').value;
+  if (!empId || !password) {
+    showLoginErr('請輸入員工編號和密碼');
+    return;
+  }
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML = '<span class="spinner"></span>驗證中…';
+  btn.disabled = true;
+  document.getElementById('loginErr').style.display = 'none';
+  try {
+    const data = await callGAS({ action: 'login', empId, password });
+    if (data.status === 'ok') {
+      currentUser = { empId: data.empId, name: data.name, role: data.role };
+      sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+      showApp();
+    } else {
+      showLoginErr(data.message || '帳號或密碼錯誤，請再試一次');
+    }
+  } catch (e) {
+    showLoginErr('連線失敗，請確認網路後再試');
+  }
+  btn.innerHTML = '登入';
+  btn.disabled = false;
+}
+
+function showLoginErr(msg) {
+  const el = document.getElementById('loginErr');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+let connectivityIntervalId = null;
+
+function doLogout() {
+  sessionStorage.removeItem('tjcpm_user');
+  currentUser = null;
+  records = []; 
+  if (connectivityIntervalId) { clearInterval(connectivityIntervalId); connectivityIntervalId = null; }
+  document.getElementById('adminTab').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-home').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === 'home');
+  });
+  showLogin();
+  document.getElementById('loginId').value = '';
+  document.getElementById('loginPw').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+}
+
+// ── Clock ───────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('mainClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+  document.getElementById('mainDate').textContent = now.toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── GPS ─────────────────────────────────────────────────────────
+function initGPS() {
+  if (!navigator.geolocation) {
+    setGPS('error','不支援 GPS','');
+    setGpsLocked(false);
+    return;
+  }
+  navigator.geolocation.watchPosition(
+    p => {
+      gpsLat = p.coords.latitude.toFixed(5);
+      gpsLng = p.coords.longitude.toFixed(5);
+      setGPS('active', 'GPS 已定位', `${gpsLat}, ${gpsLng}`);
+      setGpsLocked(true);
+    },
+    () => {
+      setGPS('error', 'GPS 定位失敗', '請允許位置存取');
+      setGpsLocked(false);
+    }
+  );
+}
+function setGPS(state, text, coords) {
+  document.getElementById('gpsDot').className = 'gps-dot' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
+  document.getElementById('gpsText').textContent = text;
+  document.getElementById('gpsCoords').textContent = coords;
+}
+
+// ── Sync ──
+async function syncToSheet(record) {
+  const el = document.getElementById('syncStatus');
+  if (el) {
+    el.textContent = '☁️ 同步中…';
+    el.style.color = 'var(--blue-light)';
+  }
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    });
+    if (el) {
+      el.textContent = '✅ 已同步雲端';
+      el.style.color = 'var(--green-main)';
+    }
+    setTimeout(() => { if (el) el.textContent = ''; }, 3000);
+  } catch (e) {
+    if (el) {
+      el.textContent = '⚠️ 離線（本機已儲存）';
+      el.style.color = 'var(--accent-orange)';
+    }
+    setTimeout(() => { if (el) el.textContent = ''; }, 4000);
+  }
+}
+
+// ── 通知徽章 ──
+function updateNotifBadge() {
+  const mine = records.filter(r =>
+    r.empId === currentUser?.empId &&
+    r.status === '待審' &&
+    (r.type === '請假' || r.type === '加班' || r.type === '補打卡')
+  );
+  const badge = document.getElementById('notifCount');
+  if (mine.length > 0) {
+    badge.textContent = mine.length > 9 ? '9+' : mine.length;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function showPendingToast() {
+  const mine = records.filter(r =>
+    r.empId === currentUser?.empId &&
+    r.status === '待審' &&
+    (r.type === '請假' || r.type === '加班' || r.type === '補打卡')
+  );
+  if (mine.length === 0) {
+    showToast('目前沒有待審核申請');
+  } else {
+    showToast(`⏳ 有 ${mine.length} 筆申請待審核`);
+  }
+}
+function renderNotifications() {
+  const el = document.getElementById('notifList');
+  if (el) el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔕</div><div class="empty-text">通知功能已停用</div></div>';
+}
+
+// ── Poll approval status ───────────────────────────────────────
+async function checkApprovalUpdates() {
+  try {
+    const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
+    if (data.status === 'ok' && data.updates) {
+      data.updates.forEach(u => {
+        const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
+        if (existing && existing.status !== u.status) {
+          existing.status = u.status;
+          saveRecords();
+          renderAllList();
+          updateNotifBadge();
+        }
+      });
+    }
+  } catch (e) {}
+}
+
+// ── Actions ─────────────────────────────────────────────────────
+function handleAction(type) {
+  if (!currentUser) return;
+  if (!isOnline) {
+    showToast('⚠️ 目前無法連線，請確認網路後再試');
+    return;
+  }
+  if (!isGpsLocked) {
+    showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試');
+    return;
+  }
+  const now = new Date();
+  const record = {
+    id: Date.now(), type, empId: currentUser.empId, name: currentUser.name,
+    time: now.toLocaleTimeString('zh-TW', { hour12: false }),
+    date: now.toLocaleDateString('zh-TW'), timestamp: now.toISOString(),
+    lat: gpsLat, lng: gpsLng
   };
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  syncToSheet(record);
+  showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
+}
 
-  // 畫面切換控制
-  function switchPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
+function submitLeave() {
+  const startDate = document.getElementById('leaveStart').value;
+  const startTime = document.getElementById('leaveStartTime').value;
+  const endDate = document.getElementById('leaveEnd').value;
+  const endTime = document.getElementById('leaveEndTime').value;
+  const reason = document.getElementById('leaveReason').value;
+  const leaveType = document.getElementById('leaveType').value;
+  if (!startDate || !startTime || !endDate || !endTime) {
+    showToast('⚠️ 請填寫日期與時間'); return;
+  }
+  if (endDate < startDate || (endDate === startDate && endTime <= startTime)) {
+    showToast('⚠️ 結束時間必須晚於開始時間'); return;
+  }
+  const id = Date.now();
+  const record = {
+    id, clientId: String(id), type: '請假', subType: leaveType,
+    empId: currentUser.empId, name: currentUser.name,
+    date: startDate, startTime,
+    endDate, endTime,
+    reason, status: '待審', timestamp: new Date().toISOString()
+  };
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  syncToSheet(record);
+  showToast('📝 請假申請已送出');
+}
+
+function submitOvertime() {
+  const otDate = document.getElementById('otDate').value;
+  const otStart = document.getElementById('otStart').value;
+  const otEnd = document.getElementById('otEnd').value;
+  const otReason = document.getElementById('otReason').value;
+  if (!otDate || !otStart || !otEnd) {
+    showToast('⚠️ 請填寫日期與時間'); return;
+  }
+  if (!otReason.trim()) {
+    showToast('⚠️ 請填寫加班原因'); return;
+  }
+  if (otEnd <= otStart) {
+    showToast('⚠️ 結束時間必須晚於開始時間'); return;
+  }
+  const id = Date.now();
+  const record = {
+    id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
+    date: otDate, startTime: otStart,
+    endTime: otEnd, reason: otReason,
+    status: '待審', timestamp: new Date().toISOString()
+  };
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  syncToSheet(record);
+  showToast('🌙 加班申請已送出');
+}
+
+function submitSupp() {
+  const suppDate = document.getElementById('suppDate').value;
+  const suppTime = document.getElementById('suppTime').value;
+  const suppReason = document.getElementById('suppReason').value.trim();
+  const suppType = document.getElementById('suppType').value;
+  if (!suppDate || !suppTime) {
+    showToast('⚠️ 請填寫日期與時間'); return;
+  }
+  if (!suppReason) {
+    showToast('⚠️ 請填寫未打卡原因'); return;
+  }
+  const id = Date.now();
+  const record = {
+    id, clientId: String(id), type: '補打卡', subType: suppType,
+    empId: currentUser.empId, name: currentUser.name,
+    date: suppDate, time: suppTime,
+    reason: suppReason, status: '待審', timestamp: new Date().toISOString()
+  };
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  syncToSheet(record);
+  showToast('🔄 補打卡申請已送出');
+}
+
+function quickLeave() {
+  const id = Date.now();
+  const record = {
+    id, clientId: String(id), type: '請假', subType: document.getElementById('modalLeaveType').value,
+    empId: currentUser.empId, name: currentUser.name, date: document.getElementById('modalLeaveDate').value,
+    status: '待審', timestamp: new Date().toISOString()
+  };
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  syncToSheet(record);
+  closeModal('leave');
+  showToast('📝 請假申請已送出');
+}
+
+function quickOvertime() {
+  const id = Date.now();
+  const record = {
+    id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
+    hours: document.getElementById('modalOTHours').value, reason: document.getElementById('modalOTReason').value,
+    date: todayStr, status: '待審', timestamp: new Date().toISOString()
+  };
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  syncToSheet(record);
+  closeModal('overtime');
+  showToast('🌙 加班申請已送出');
+}
+
+// ── Admin Approve ───────────────────────────────────────────────
+async function approveRecord(id, decision) {
+  if (!currentUser || currentUser.role !== 'admin') {
+    showToast('⚠️ 您沒有審核權限');
+    return;
+  }
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  rec.status = decision;
+  saveRecords();
+  const approveTime = new Date().toISOString();
+  try {
+    const res = await callGAS({
+      action: 'approve', clientId: rec.clientId || String(rec.id),
+      empId: rec.empId, type: rec.type, date: rec.date, decision,
+      approverName: currentUser.name, approverId: currentUser.empId,
+      approveTime
+    });
+    const synced = res.status === 'ok' && res.found !== false;
+    showToast(decision === '同意'
+      ? (synced ? '✅ 已核准並同步' : '✅ 已核准（Sheet 未找到對應列，請確認）')
+      : (synced ? '❌ 已拒絕並同步' : '❌ 已拒絕（Sheet 未找到對應列，請確認）'));
+  } catch (e) {
+    showToast(decision === '同意' ? '✅ 已核准（離線，稍後將重試同步）' : '❌ 已拒絕（離線，稍後將重試同步）');
+  }
+  loadAdminData();
+}
+
+// ── Render ──────────────────────────────────────────────────────
+function filterRecords(type, chip) {
+  const alreadyActive = chip.classList.contains('active');
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (alreadyActive) {
+    currentFilter = 'all';
+  } else {
+    currentFilter = type;
+    chip.classList.add('active');
+  }
+  renderAllList();
+}
+
+// ★ 修正此處以避免無作用代碼塊
+function renderAllList() {
+  let mine = records.filter(r => r.empId === currentUser?.empId);
+  if (currentFilter !== 'all') mine = mine.filter(r => r.type === currentFilter);
+  const el = document.getElementById('allRecordsList');
+  el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
+}
+
+async function loadMyRecords() {
+  renderAllList(); 
+  if (!currentUser) return;
+  try {
+    const [punchData, leaveData, otData, suppData] = await Promise.all([
+      callGAS({ action: 'getAll' }),
+      callGAS({ action: 'getLeave' }),
+      callGAS({ action: 'getOvertime' }),
+      callGAS({ action: 'getSupp' })
+    ]);
+    let changed = false;
+
+    function mergeInto(rows, makeRec) {
+      rows.forEach(r => {
+        const rec = makeRec(r);
+        if (!rec) return;
+        const key = rec.clientId || String(rec.id);
+        const ex = records.find(x => (x.clientId && String(x.clientId) === key) || String(x.id) === key);
+        if (ex) {
+          if (ex.status !== rec.status) { ex.status = rec.status; changed = true; }
+        } else {
+          records.push(rec); changed = true;
+        }
+      });
+    }
+
+    if (punchData.data && punchData.data.length > 1) {
+      mergeInto(punchData.data.slice(1), r => {
+        if (String(r[1]) !== String(currentUser.empId)) return null;
+        if (r[3] !== '上班' && r[3] !== '下班') return null;
+        const cid = r[8] ? String(r[8]) : (String(r[1]) + '_' + r[3] + '_' + r[5]);
+        return {
+          id: cid, clientId: cid, type: r[3],
+          empId: String(r[1]), name: r[2] || '',
+          date: r[4] ? String(r[4]).split('T')[0] : '',
+          time: r[5] || '',
+          lat: r[6] || '', lng: r[7] || '',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+        };
+      });
+    }
+
+    if (leaveData.data && leaveData.data.length > 1) {
+      mergeInto(leaveData.data.slice(1), r => {
+        if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
+        return { id: r[8], clientId: String(r[8]), type: '請假', subType: r[3] || '',
+          empId: String(r[1]), name: r[2] || '',
+          date: r[4] ? String(r[4]).split('T')[0] : '',
+          endDate: r[5] ? String(r[5]).split('T')[0] : '',
+          reason: r[6] || '', status: r[7] || '待審',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
+      });
+    }
+
+    if (otData.data && otData.data.length > 1) {
+      mergeInto(otData.data.slice(1), r => {
+        if (!r[9] || String(r[1]) !== String(currentUser.empId)) return null;
+        return { id: r[9], clientId: String(r[9]), type: '加班',
+          empId: String(r[1]), name: r[2] || '',
+          date: r[3] ? String(r[3]).split('T')[0] : '',
+          startTime: r[4] || '', endTime: r[5] || '', hours: r[6] || '',
+          reason: r[7] || '', status: r[8] || '待審',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
+      });
+    }
+
+    if (suppData.data && suppData.data.length > 1) {
+      mergeInto(suppData.data.slice(1), r => {
+        if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
+        return { id: r[8], clientId: String(r[8]), type: '補打卡', subType: r[3] || '',
+          empId: String(r[1]), name: r[2] || '',
+          date: r[4] ? String(r[4]).split('T')[0] : '',
+          time: r[5] || '', reason: r[6] || '', status: r[7] || '待審',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
+      });
+    }
+
+    if (changed) { saveRecords(); renderAllList(); }
+  } catch(e) {} 
+}
+
+function recordHTML(r, showName = false, showApprove = false) {
+  let dotClass = 'dot-green', badge = '';
+  if (r.type === '上班') {
+    dotClass = 'dot-green';
+    badge = '<span class="badge badge-green">上班</span>';
+  } else if (r.type === '下班') {
+    dotClass = 'dot-red';
+    badge = '<span class="badge badge-red">下班</span>';
+  } else if (r.type === '請假') {
+    dotClass = 'dot-orange';
+    badge = `<span class="badge badge-orange">${r.subType||'請假'}</span>`;
+  } else if (r.type === '加班') {
+    dotClass = 'dot-purple';
+    badge = '<span class="badge badge-purple">加班</span>';
+  } else if (r.type === '補打卡') {
+    dotClass = 'dot-blue';
+    badge = `<span class="badge badge-blue">補打卡${r.subType ? '·'+r.subType : ''}</span>`;
+  }
+  let statusBadge = '';
+  if (r.status === '待審') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
+  else if (r.status === '同意') statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
+  else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
+  const meta = [
+    r.date || '',
+    r.startTime && r.endTime ? r.startTime + '～' + r.endTime : (r.time || ''),
+    r.lat ? `📍${r.lat},${r.lng}` : '',
+    r.hours || '',
+    r.reason || ''
+  ].filter(Boolean).join(' · ');
+  const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
+  const approveRow = showApprove && r.status === '待審' ? `
+    <div class="approve-row">
+      <button class="approve-btn ok" onclick="approveRecord(${r.id},'同意')">✓ 核准</button>
+      <button class="approve-btn reject" onclick="approveRecord(${r.id},'拒絕')">✗ 拒絕</button>
+    </div>` : '';
+  return `<div class="record-item">
+    <div class="record-row">
+      <div class="record-dot ${dotClass}"></div>
+      <div class="record-info">
+        <div class="record-type">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
+        <div class="record-meta">${meta}</div>
+      </div>
+      <div class="record-time">${r.time || ''}</div>
+    </div>
+    ${approveRow}
+  </div>`;
+}
+
+// ── Admin ───────────────────────────────────────────────────────
+async function loadAdminData() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+
+  document.getElementById('pendingLoading').textContent = '載入中…';
+
+  function renderPendingFromRecords(extraRecords) {
+    const allRecords = [...records, ...(extraRecords || [])];
+    const seen = new Set();
+    const merged = [];
+    for (const r of allRecords) {
+      const key = r.clientId || String(r.id);
+      if (!seen.has(key)) { seen.add(key); merged.push(r); }
+    }
+    const pending = merged.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+    document.getElementById('statLeave').innerHTML = merged.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
+    document.getElementById('statOT').innerHTML = merged.filter(r => (r.type === '加班' || r.type === '補打卡') && r.status === '待審').length + '<span>筆</span>';
+    document.getElementById('pendingList').innerHTML = pending.length
+      ? pending.map(r => recordHTML(r, true, true)).join('')
+      : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
   }
 
-  function showMainMenu() {
-    document.getElementById("user-display-name").innerText = currentUser.name;
-    document.getElementById("user-display-id").innerText = currentUser.empId;
-    switchPage('page-main');
+  renderPendingFromRecords([]);
+
+  let sheetRecords = [];
+  try {
+    const [leaveData, otData, suppData] = await Promise.all([
+      callGAS({ action: 'getLeave' }),
+      callGAS({ action: 'getOvertime' }),
+      callGAS({ action: 'getSupp' })
+    ]);
+
+    if (leaveData.data && leaveData.data.length > 1) {
+      leaveData.data.slice(1).forEach(r => {
+        if (!r[8]) return; 
+        sheetRecords.push({
+          id: r[8], clientId: String(r[8]), type: '請假', subType: r[3] || '',
+          empId: String(r[1]), name: r[2] || '',
+          date: r[4] ? String(r[4]).split('T')[0] : '',
+          endDate: r[5] ? String(r[5]).split('T')[0] : '',
+          reason: r[6] || '', status: r[7] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+        });
+      });
+    }
+
+    if (otData.data && otData.data.length > 1) {
+      otData.data.slice(1).forEach(r => {
+        if (!r[9]) return;
+        sheetRecords.push({
+          id: r[9], clientId: String(r[9]), type: '加班',
+          empId: String(r[1]), name: r[2] || '',
+          date: r[3] ? String(r[3]).split('T')[0] : '',
+          startTime: r[4] || '', endTime: r[5] || '', hours: r[6] || '',
+          reason: r[7] || '', status: r[8] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+        });
+      });
+    }
+
+    if (suppData.data && suppData.data.length > 1) {
+      suppData.data.slice(1).forEach(r => {
+        if (!r[8]) return;
+        sheetRecords.push({
+          id: r[8], clientId: String(r[8]), type: '補打卡', subType: r[3] || '',
+          empId: String(r[1]), name: r[2] || '',
+          date: r[4] ? String(r[4]).split('T')[0] : '',
+          time: r[5] || '', reason: r[6] || '', status: r[7] || '待審',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+        });
+      });
+    }
+
+    document.getElementById('pendingLoading').textContent = '';
+    renderPendingFromRecords(sheetRecords);
+  } catch (e) {
+    document.getElementById('pendingLoading').textContent = '（離線）';
   }
 
-  // 輔助函式：產生隨機 clientId 防止後端不同步與精準比對
-  function generateClientId(prefix) {
-    return prefix + "_" + currentUser.empId + "_" + new Date().getTime() + "_" + Math.floor(Math.random()*1000);
+  try {
+    const data = await callGAS({ action: 'getAll' });
+    if (data.data && data.data.length > 1) {
+      const rows = data.data.slice(1).reverse();
+      const today = new Date().toLocaleDateString('zh-TW');
+      document.getElementById('statCheckin').innerHTML = rows.filter(r => r[3] === '上班' && new Date(r[0]).toLocaleDateString('zh-TW') === today).length + '<span>人</span>';
+      document.getElementById('statCheckout').innerHTML = rows.filter(r => r[3] === '下班' && new Date(r[0]).toLocaleDateString('zh-TW') === today).length + '<span>人</span>';
+      document.getElementById('adminRecords').innerHTML = rows.map(r => `<div class="record-item">
+        <div class="record-row">
+          <div class="record-dot ${r[3]==='上班'?'dot-green':'dot-red'}"></div>
+          <div class="record-info">
+            <div class="record-type">
+              <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
+              ${r[2]||''}（${r[1]}）
+            </div>
+            <div class="record-meta">${new Date(r[0]).toLocaleDateString('zh-TW')}${r[6]?' 📍'+r[6]+','+r[7]:''}</div>
+          </div>
+          <div class="record-time">${r[5]||''}</div>
+        </div>
+      </div>`).join('');
+    }
+  } catch (e) {
+    document.getElementById('adminRecords').innerHTML = records.map(r => recordHTML(r, true)).join('');
+    document.getElementById('statCheckin').innerHTML = records.filter(r => r.type === '上班').length + '<span>人</span>';
+    document.getElementById('statCheckout').innerHTML = records.filter(r => r.type === '下班').length + '<span>人</span>';
   }
+}
 
-  // 1. 登入連動後端 handleLogin
-  function doLogin() {
-    const empId = document.getElementById("login-empId").value.trim();
-    const password = document.getElementById("login-password").value.trim();
-    if (!empId || !password) return alert("請輸入員工編號與密碼");
+// ── Helpers ─────────────────────────────────────────────────────
+function saveRecords() {
+  records = records.filter(isWithinRetention);
+  localStorage.setItem('tjcpm_records', JSON.stringify(records));
+}
 
-    const payload = { action: "login", empId: empId, password: password };
-    
-    // 使用標準 Fetch POST 呼叫後端
-    fetch(GAS_URL, {
-      method: "POST",
-      mode: "no-cors", // 相容你後端註解要求的 no-cors 模式
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-    .then(() => {
-      // ⚠️ 因 no-cors 模式無法在前端獲取 return 回來的 JSON 成功訊息
-      // 為了系統流暢度與防呆，這裡先假設輸入正確並將資料存入本地端，以便繞過驗證。
-      // (若後端驗證失敗，後續寫入 Sheet 時因員編不符也會被阻擋)
-      currentUser = { empId: empId, name: "已登入員工" };
-      localStorage.setItem("tjcpm_user", JSON.stringify(currentUser));
-      showMainMenu();
-    })
-    .catch(err => alert("登入連線失敗: " + err));
+function buildHalfHourOptions() {
+  let opts = '<option value="">請選擇時間</option>';
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 30]) {
+      const val = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      opts += `<option value="${val}">${val}</option>`;
+    }
   }
+  return opts;
+}
+function populateTimeSelects() {
+  ['leaveStartTime', 'leaveEndTime', 'otStart', 'otEnd', 'suppTime'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = buildHalfHourOptions();
+  });
+}
 
-  function doLogout() {
-    localStorage.removeItem("tjcpm_user");
-    currentUser = { empId: "", name: "" };
-    document.getElementById("login-password").value = "";
-    switchPage('page-login');
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', populateTimeSelects);
+} else {
+  populateTimeSelects();
+}
+
+function switchTab(tab) {
+  if (tab === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
+    return;
   }
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  if (tab === 'records' || tab === 'leave' || tab === 'overtime' || tab === 'supp') loadMyRecords();
+  if (tab === 'notifications') renderNotifications();
+  if (tab === 'admin') loadAdminData();
+}
 
-  // 通用送出表單函式 (加入自動重整防不同步)
-  function sendDataToGAS(payload, successMessage) {
-    fetch(GAS_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-    .then(() => {
-      alert(successMessage + "！系統將自動重新整理以確保資料同步。");
-      // 🚀 關鍵防不同步：送出成功後自動刷新網頁，強制清除所有暫存，確保下次開啟時拿到最新狀態
-      window.location.reload();
-    })
-    .catch(err => alert("傳送失敗，請確認網路連線: " + err));
-  }
+function openModal(type) {
+  document.getElementById('modal-' + type).classList.add('open');
+}
+function closeModal(type) {
+  document.getElementById('modal-' + type).classList.remove('open');
+}
 
-  // 2. 送出上下班打卡
-  function submitPunch(punchType) {
-    const now = new Date();
-    const dateStr = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,'0') + "-" + String(now.getDate()).padStart(2,'0');
-    const timeStr = String(now.getHours()).padStart(2,'0') + ":" + String(now.getMinutes()).padStart(2,'0') + ":" + String(now.getSeconds()).padStart(2,'0');
-    
-    const payload = {
-      type: punchType,
-      empId: currentUser.empId,
-      name: currentUser.name,
-      date: dateStr,
-      time: timeStr,
-      clientId: generateClientId("punch"),
-      lat: "", // 可自行擴充 GPS
-      lng: ""
-    };
-    sendDataToGAS(payload, punchType + "成功");
-  }
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
 
-  // 3. 送出請假申請
-  function submitLeave() {
-    const subType = document.getElementById("leave-subType").value;
-    const date = document.getElementById("leave-date").value;
-    const endDate = document.getElementById("leave-endDate").value;
-    const reason = document.getElementById("leave-reason").value.trim();
-
-    if (!date || !endDate) return alert("請選擇請假完整日期");
-
-    const payload = {
-      type: "請假",
-      subType: subType,
-      empId: currentUser.empId,
-      name: currentUser.name,
-      date: date,
-      endDate: endDate,
-      reason: reason,
-      clientId: generateClientId("leave")
-    };
-    sendDataToGAS(payload, "請假申請已送出，已發信通知主管");
-  }
-
-  // 4. 送出加班申請
-  function submitOvertime() {
-    const date = document.getElementById("ot-date").value;
-    const startTime = document.getElementById("ot-startTime").value;
-    const endTime = document.getElementById("ot-endTime").value;
-    const hours = document.getElementById("ot-hours").value;
-    const reason = document.getElementById("ot-reason").value.trim();
-
-    if (!date || !startTime || !endTime) return alert("請完整填寫加班時間");
-
-    const payload = {
-      type: "加班",
-      empId: currentUser.empId,
-      name: currentUser.name,
-      date: date,
-      startTime: startTime,
-      endTime: endTime,
-      hours: hours,
-      reason: reason,
-      clientId: generateClientId("ot")
-    };
-    sendDataToGAS(payload, "加班申請已送出，已發信通知主管");
-  }
-
-  // 5. 送出補打卡申請
-  function submitSupp() {
-    const subType = document.getElementById("supp-subType").value;
-    const date = document.getElementById("supp-date").value;
-    const time = document.getElementById("supp-time").value;
-    const reason = document.getElementById("supp-reason").value.trim();
-
-    if (!date || !time) return alert("請完整填寫補打卡日期與時間");
-
-    const payload = {
-      type: "補打卡",
-      subType: subType,
-      empId: currentUser.empId,
-      name: currentUser.name,
-      date: date,
-      time: time,
-      reason: reason,
-      clientId: generateClientId("supp")
-    };
-    sendDataToGAS(payload, "補打卡申請已送出，已發信通知主管");
-  }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => {
+    if (e.target === o) o.classList.remove('open');
+  });
+});
 </script>
-
 </body>
 </html>
