@@ -1363,9 +1363,11 @@ function filterRecords(type, chip) {
   renderAllList();
 }
 
-// ★ 修正此處以避免無作用代碼塊
 function renderAllList() {
-  let mine = records.filter(r => r.empId === currentUser?.empId);
+  const myEmpId = String(currentUser?.empId || '').trim();
+  let mine = records.filter(r => String(r.empId || '').trim() === myEmpId);
+  // 依時間排序，最新在前
+  mine.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
   if (currentFilter !== 'all') mine = mine.filter(r => r.type === currentFilter);
   const el = document.getElementById('allRecordsList');
   el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
@@ -1458,10 +1460,12 @@ async function loadMyRecords() {
     }
 
     if (changed) {
-      // 依時間排序（最新在前）
       records.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-      saveRecords(); renderAllList(); updateNotifBadge();
+      saveRecords();
     }
+    // 無論有無新資料都重新渲染，確保雲端帶入的資料一定顯示
+    renderAllList();
+    updateNotifBadge();
     if (syncEl) { syncEl.textContent = '✅ 雲端同步完成'; setTimeout(() => { if(syncEl) syncEl.textContent = ''; }, 3000); }
   } catch(e) {
     if (syncEl) syncEl.textContent = '⚠️ 離線，顯示本機紀錄';
@@ -1491,7 +1495,7 @@ function recordHTML(r, showName = false, showApprove = false) {
   else if (r.status === '同意') statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
   else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
   const meta = [
-    r.date || '',
+    r.date ? (r.endDate && r.endDate !== r.date ? r.date + ' ～ ' + r.endDate : r.date) : '',
     r.startTime && r.endTime ? r.startTime + '～' + r.endTime : (r.time || ''),
     r.lat ? `📍${r.lat},${r.lng}` : '',
     r.hours || '',
