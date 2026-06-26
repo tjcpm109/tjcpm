@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TJCPM">
-<link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP logo.png">
+<link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/logo.png">
 <link rel="manifest" href="https://tjcpm109.github.io/tjcpm/manifest.json">
 <title>TJCPM 員工系統</title>
 <style>
@@ -1390,12 +1390,15 @@ async function loadMyRecords() {
 
     if (leaveData.data && leaveData.data.length > 1) {
       mergeInto(leaveData.data.slice(1), r => {
-        if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
-        return { id: r[8], clientId: String(r[8]), type: '請假', subType: r[3] || '',
+        // Sheet 欄位：A(0)時間 B(1)員編 C(2)姓名 D(3)假別 E(4)日期起 F(5)日期迄
+        //             G(6)時間起 H(7)時間迄 I(8)空白 J(9)審核狀態 K(10)clientId L(11)核准人
+        if (!r[10] || String(r[1]) !== String(currentUser.empId)) return null;
+        return { id: r[10], clientId: String(r[10]), type: '請假', subType: r[3] || '',
           empId: String(r[1]), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           endDate: r[5] ? String(r[5]).split('T')[0] : '',
-          reason: r[6] || '', status: r[7] || '待審',
+          startTime: r[6] || '', endTime: r[7] || '',
+          status: r[9] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
       });
     }
@@ -1516,13 +1519,16 @@ async function loadAdminData() {
 
     if (leaveData.data && leaveData.data.length > 1) {
       leaveData.data.slice(1).forEach(r => {
-        if (!r[8]) return; 
+        // Sheet 欄位：A(0)時間 B(1)員編 C(2)姓名 D(3)假別 E(4)日期起 F(5)日期迄
+        //             G(6)時間起 H(7)時間迄 I(8)空白 J(9)審核狀態 K(10)clientId L(11)核准人
+        if (!r[10]) return; 
         sheetRecords.push({
-          id: r[8], clientId: String(r[8]), type: '請假', subType: r[3] || '',
+          id: r[10], clientId: String(r[10]), type: '請假', subType: r[3] || '',
           empId: String(r[1]), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           endDate: r[5] ? String(r[5]).split('T')[0] : '',
-          reason: r[6] || '', status: r[7] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
+          startTime: r[6] || '', endTime: r[7] || '',
+          status: r[9] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
     }
