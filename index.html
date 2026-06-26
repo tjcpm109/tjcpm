@@ -860,11 +860,11 @@ input[type="date"].input-field::-webkit-calendar-picker-indicator {
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
 let currentUser = JSON.parse(localStorage.getItem('tjcpm_user') || sessionStorage.getItem('tjcpm_user') || 'null');
-const RETENTION_MONTHS = 2;
+const RETENTION_DAYS = 40;
 function isWithinRetention(record) {
-  if (!record.timestamp) return true; 
+  if (!record.timestamp) return true;
   const cutoff = new Date();
-  cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
+  cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
   return new Date(record.timestamp) >= cutoff;
 }
 
@@ -872,6 +872,22 @@ let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]').filter(i
 let gpsLat = null, gpsLng = null;
 let currentFilter = 'all';
 const todayStr = new Date().toISOString().split('T')[0];
+
+// ★ Google Sheet 有時會把日期字串自動轉成真正的日期格式，讀回來序列化成 JSON 時
+//   一律是 UTC 時間字串（例如 2026-07-01 在試算表時區可能變成 2026-06-30T16:00:00.000Z）。
+//   如果只取 'T' 前面那段會差一天。這裡改用瀏覽器本地時區重新取出年月日，
+//   只要使用者裝置時區跟試算表時區一致（這裡預設都是台灣時間），就能還原正確日期。
+function sheetDateToLocal(v) {
+  if (!v) return '';
+  const s = String(v);
+  if (!s.includes('T')) return s.split(' ')[0]; // 已經是純日期字串，直接用
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s.split('T')[0];
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 // ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
@@ -1191,7 +1207,7 @@ function handleAction(type) {
   showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
 }
 
-function submitLeave() {
+async function submitLeave() {
   const startDate = document.getElementById('leaveStart').value;
   const startTime = document.getElementById('leaveStartTime').value;
   const endDate = document.getElementById('leaveEnd').value;
@@ -1216,7 +1232,6 @@ function submitLeave() {
   saveRecords();
   renderAllList();
   updateNotifBadge();
-  syncToSheet(record);
   showToast('📝 請假申請已送出');
   // ★ 送出後清空欄位
   document.getElementById('leaveStart').value = todayStr;
@@ -1224,10 +1239,14 @@ function submitLeave() {
   document.getElementById('leaveStartTime').selectedIndex = 0;
   document.getElementById('leaveEndTime').selectedIndex = 0;
   document.getElementById('leaveReason').value = '';
+  // ★ 一定要等 syncToSheet 真正寫完，才去重新抓雲端資料，
+  //   否則讀取可能搶在寫入完成之前發出，讀回來的還是舊資料，
+  //   畫面上剛送出的這筆就會被洗掉、看起來像沒送出去一樣。
+  await syncToSheet(record);
   loadMyRecords();
 }
 
-function submitOvertime() {
+async function submitOvertime() {
   const otDate = document.getElementById('otDate').value;
   const otStart = document.getElementById('otStart').value;
   const otEnd = document.getElementById('otEnd').value;
@@ -1252,17 +1271,17 @@ function submitOvertime() {
   saveRecords();
   renderAllList();
   updateNotifBadge();
-  syncToSheet(record);
   showToast('🌙 加班申請已送出');
   // ★ 送出後清空欄位
   document.getElementById('otDate').value = todayStr;
   document.getElementById('otStart').selectedIndex = 0;
   document.getElementById('otEnd').selectedIndex = 0;
   document.getElementById('otReason').value = '';
+  await syncToSheet(record);
   loadMyRecords();
 }
 
-function submitSupp() {
+async function submitSupp() {
   const suppDate = document.getElementById('suppDate').value;
   const suppTime = document.getElementById('suppTime').value;
   const suppReason = document.getElementById('suppReason').value.trim();
@@ -1284,16 +1303,16 @@ function submitSupp() {
   saveRecords();
   renderAllList();
   updateNotifBadge();
-  syncToSheet(record);
   showToast('🔄 補打卡申請已送出');
   // ★ 送出後清空欄位
   document.getElementById('suppDate').value = todayStr;
   document.getElementById('suppTime').selectedIndex = 0;
   document.getElementById('suppReason').value = '';
+  await syncToSheet(record);
   loadMyRecords();
 }
 
-function quickLeave() {
+async function quickLeave() {
   const id = Date.now();
   const record = {
     id, clientId: String(id), type: '請假', subType: document.getElementById('modalLeaveType').value,
@@ -1304,13 +1323,13 @@ function quickLeave() {
   saveRecords();
   renderAllList();
   updateNotifBadge();
-  syncToSheet(record);
   closeModal('leave');
   showToast('📝 請假申請已送出');
-loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
+  await syncToSheet(record); // 等寫入完成才重新抓雲端資料，避免讀寫競速
+  loadMyRecords();
 }
 
-function quickOvertime() {
+async function quickOvertime() {
   const id = Date.now();
   const record = {
     id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
@@ -1321,10 +1340,10 @@ function quickOvertime() {
   saveRecords();
   renderAllList();
   updateNotifBadge();
-  syncToSheet(record);
   closeModal('overtime');
   showToast('🌙 加班申請已送出');
-loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
+  await syncToSheet(record); // 等寫入完成才重新抓雲端資料，避免讀寫競速
+  loadMyRecords();
 }
 
 // ── Admin Approve ───────────────────────────────────────────────
@@ -1419,7 +1438,7 @@ async function loadMyRecords() {
         cloudRecords.push({
           id: cid, clientId: cid, type: r[3],
           empId: myEmpId, name: r[2] || '',
-          date: r[4] ? String(r[4]).split('T')[0] : '',
+          date: sheetDateToLocal(r[4]),
           time: r[5] || '',
           lat: r[6] || '', lng: r[7] || '',
           status: null,
@@ -1438,8 +1457,8 @@ async function loadMyRecords() {
         cloudRecords.push({
           id: cid, clientId: cid, type: '請假', subType: r[3] || '',
           empId: myEmpId, name: r[2] || '',
-          date: r[4] ? String(r[4]).split('T')[0] : '',
-          endDate: r[5] ? String(r[5]).split('T')[0] : '',
+          date: sheetDateToLocal(r[4]),
+          endDate: sheetDateToLocal(r[5]),
           startTime: r[6] || '', endTime: r[7] || '',
           status: r[9] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
@@ -1457,7 +1476,7 @@ async function loadMyRecords() {
         cloudRecords.push({
           id: cid, clientId: cid, type: '加班',
           empId: myEmpId, name: r[2] || '',
-          date: r[3] ? String(r[3]).split('T')[0] : '',
+          date: sheetDateToLocal(r[3]),
           startTime: r[4] || '', endTime: r[5] || '', hours: r[6] || '',
           reason: r[7] || '', status: r[8] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
@@ -1475,7 +1494,7 @@ async function loadMyRecords() {
         cloudRecords.push({
           id: cid, clientId: cid, type: '補打卡', subType: r[3] || '',
           empId: myEmpId, name: r[2] || '',
-          date: r[4] ? String(r[4]).split('T')[0] : '',
+          date: sheetDateToLocal(r[4]),
           time: r[5] || '', reason: r[6] || '', status: r[7] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
@@ -1611,8 +1630,8 @@ async function loadAdminData() {
         sheetRecords.push({
           id: cid, clientId: cid, type: '請假', subType: r[3] || '',
           empId: String(r[1]).trim(), name: r[2] || '',
-          date: r[4] ? String(r[4]).split('T')[0] : '',
-          endDate: r[5] ? String(r[5]).split('T')[0] : '',
+          date: sheetDateToLocal(r[4]),
+          endDate: sheetDateToLocal(r[5]),
           startTime: r[6] || '', endTime: r[7] || '',
           status: r[9] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
@@ -1626,7 +1645,7 @@ async function loadAdminData() {
         sheetRecords.push({
           id: cid, clientId: cid, type: '加班',
           empId: String(r[1]).trim(), name: r[2] || '',
-          date: r[3] ? String(r[3]).split('T')[0] : '',
+          date: sheetDateToLocal(r[3]),
           startTime: r[4] || '', endTime: r[5] || '', hours: r[6] || '',
           reason: r[7] || '', status: r[8] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
@@ -1640,7 +1659,7 @@ async function loadAdminData() {
         sheetRecords.push({
           id: cid, clientId: cid, type: '補打卡', subType: r[3] || '',
           empId: String(r[1]).trim(), name: r[2] || '',
-          date: r[4] ? String(r[4]).split('T')[0] : '',
+          date: sheetDateToLocal(r[4]),
           time: r[5] || '', reason: r[6] || '', status: r[7] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
