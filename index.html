@@ -272,7 +272,14 @@ body {
 }
 .select-field:focus { border-color:var(--blue-light); box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
 
-input[type="date"].input-field { width:100%; box-sizing:border-box; }
+input[type="date"].input-field,
+input[type="date"].input-field::-webkit-date-and-time-value {
+  width:100%;
+  box-sizing:border-box;
+  min-height:48px;
+  -webkit-appearance:none;
+  appearance:none;
+}
 
 /* ── Info box ── */
 .info-box {
@@ -1200,7 +1207,13 @@ function submitLeave() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('📝 請假申請已送出');
-  loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
+  // ★ 送出後清空欄位
+  document.getElementById('leaveStart').value = todayStr;
+  document.getElementById('leaveEnd').value = todayStr;
+  document.getElementById('leaveStartTime').selectedIndex = 0;
+  document.getElementById('leaveEndTime').selectedIndex = 0;
+  document.getElementById('leaveReason').value = '';
+  loadMyRecords();
 }
 
 function submitOvertime() {
@@ -1230,7 +1243,12 @@ function submitOvertime() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('🌙 加班申請已送出');
-  loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
+  // ★ 送出後清空欄位
+  document.getElementById('otDate').value = todayStr;
+  document.getElementById('otStart').selectedIndex = 0;
+  document.getElementById('otEnd').selectedIndex = 0;
+  document.getElementById('otReason').value = '';
+  loadMyRecords();
 }
 
 function submitSupp() {
@@ -1257,7 +1275,11 @@ function submitSupp() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('🔄 補打卡申請已送出');
-  loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
+  // ★ 送出後清空欄位
+  document.getElementById('suppDate').value = todayStr;
+  document.getElementById('suppTime').selectedIndex = 0;
+  document.getElementById('suppReason').value = '';
+  loadMyRecords();
 }
 
 function quickLeave() {
@@ -1300,8 +1322,14 @@ async function approveRecord(id, decision) {
     showToast('⚠️ 您沒有審核權限');
     return;
   }
-  const rec = records.find(r => r.id === id);
-  if (!rec) return;
+  // id 可能是數字或字串，統一用 String 比對
+  const rec = records.find(r => String(r.id) === String(id) || String(r.clientId) === String(id));
+  if (!rec) {
+    // 找不到本機紀錄，直接從 sheetRecords 裡撈（管理員通常只看雲端資料）
+    // 建一個最小 rec 讓後面的 callGAS 可以送出
+    showToast('⚠️ 本機找不到紀錄，請稍後重整再試');
+    return;
+  }
   rec.status = decision;
   saveRecords();
   const approveTime = new Date().toISOString();
@@ -1374,12 +1402,12 @@ async function loadMyRecords() {
 
     if (punchData.data && punchData.data.length > 1) {
       mergeInto(punchData.data.slice(1), r => {
-        if (String(r[1]) !== String(currentUser.empId)) return null;
+        if (String(r[1]).trim() !== String(currentUser.empId).trim()) return null;
         if (r[3] !== '上班' && r[3] !== '下班') return null;
         const cid = r[8] ? String(r[8]) : (String(r[1]) + '_' + r[3] + '_' + r[5]);
         return {
           id: cid, clientId: cid, type: r[3],
-          empId: String(r[1]), name: r[2] || '',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           time: r[5] || '',
           lat: r[6] || '', lng: r[7] || '',
@@ -1392,9 +1420,10 @@ async function loadMyRecords() {
       mergeInto(leaveData.data.slice(1), r => {
         // Sheet 欄位：A(0)時間 B(1)員編 C(2)姓名 D(3)假別 E(4)日期起 F(5)日期迄
         //             G(6)時間起 H(7)時間迄 I(8)空白 J(9)審核狀態 K(10)clientId L(11)核准人
-        if (!r[10] || String(r[1]) !== String(currentUser.empId)) return null;
-        return { id: r[10], clientId: String(r[10]), type: '請假', subType: r[3] || '',
-          empId: String(r[1]), name: r[2] || '',
+        const cid = r[10] ? String(r[10]).trim() : null;
+        if (!cid || String(r[1]).trim() !== String(currentUser.empId).trim()) return null;
+        return { id: cid, clientId: cid, type: '請假', subType: r[3] || '',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           endDate: r[5] ? String(r[5]).split('T')[0] : '',
           startTime: r[6] || '', endTime: r[7] || '',
@@ -1405,9 +1434,10 @@ async function loadMyRecords() {
 
     if (otData.data && otData.data.length > 1) {
       mergeInto(otData.data.slice(1), r => {
-        if (!r[9] || String(r[1]) !== String(currentUser.empId)) return null;
-        return { id: r[9], clientId: String(r[9]), type: '加班',
-          empId: String(r[1]), name: r[2] || '',
+        const cid = r[9] ? String(r[9]).trim() : null;
+        if (!cid || String(r[1]).trim() !== String(currentUser.empId).trim()) return null;
+        return { id: cid, clientId: cid, type: '加班',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[3] ? String(r[3]).split('T')[0] : '',
           startTime: r[4] || '', endTime: r[5] || '', hours: r[6] || '',
           reason: r[7] || '', status: r[8] || '待審',
@@ -1417,9 +1447,10 @@ async function loadMyRecords() {
 
     if (suppData.data && suppData.data.length > 1) {
       mergeInto(suppData.data.slice(1), r => {
-        if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
-        return { id: r[8], clientId: String(r[8]), type: '補打卡', subType: r[3] || '',
-          empId: String(r[1]), name: r[2] || '',
+        const cid = r[8] ? String(r[8]).trim() : null;
+        if (!cid || String(r[1]).trim() !== String(currentUser.empId).trim()) return null;
+        return { id: cid, clientId: cid, type: '補打卡', subType: r[3] || '',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           time: r[5] || '', reason: r[6] || '', status: r[7] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
@@ -1469,8 +1500,8 @@ function recordHTML(r, showName = false, showApprove = false) {
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
   const approveRow = showApprove && r.status === '待審' ? `
     <div class="approve-row">
-      <button class="approve-btn ok" onclick="approveRecord(${r.id},'同意')">✓ 核准</button>
-      <button class="approve-btn reject" onclick="approveRecord(${r.id},'拒絕')">✗ 拒絕</button>
+      <button class="approve-btn ok" onclick="approveRecord('${r.clientId || r.id}','同意')">✓ 核准</button>
+      <button class="approve-btn reject" onclick="approveRecord('${r.clientId || r.id}','拒絕')">✗ 拒絕</button>
     </div>` : '';
   return `<div class="record-item">
     <div class="record-row">
@@ -1521,10 +1552,11 @@ async function loadAdminData() {
       leaveData.data.slice(1).forEach(r => {
         // Sheet 欄位：A(0)時間 B(1)員編 C(2)姓名 D(3)假別 E(4)日期起 F(5)日期迄
         //             G(6)時間起 H(7)時間迄 I(8)空白 J(9)審核狀態 K(10)clientId L(11)核准人
-        if (!r[10]) return; 
+        const cid = r[10] ? String(r[10]).trim() : null;
+        if (!cid) return; 
         sheetRecords.push({
-          id: r[10], clientId: String(r[10]), type: '請假', subType: r[3] || '',
-          empId: String(r[1]), name: r[2] || '',
+          id: cid, clientId: cid, type: '請假', subType: r[3] || '',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           endDate: r[5] ? String(r[5]).split('T')[0] : '',
           startTime: r[6] || '', endTime: r[7] || '',
@@ -1535,10 +1567,11 @@ async function loadAdminData() {
 
     if (otData.data && otData.data.length > 1) {
       otData.data.slice(1).forEach(r => {
-        if (!r[9]) return;
+        const cid = r[9] ? String(r[9]).trim() : null;
+        if (!cid) return;
         sheetRecords.push({
-          id: r[9], clientId: String(r[9]), type: '加班',
-          empId: String(r[1]), name: r[2] || '',
+          id: cid, clientId: cid, type: '加班',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[3] ? String(r[3]).split('T')[0] : '',
           startTime: r[4] || '', endTime: r[5] || '', hours: r[6] || '',
           reason: r[7] || '', status: r[8] || '待審', timestamp: r[0] ? new Date(r[0]).toISOString() : ''
@@ -1548,10 +1581,11 @@ async function loadAdminData() {
 
     if (suppData.data && suppData.data.length > 1) {
       suppData.data.slice(1).forEach(r => {
-        if (!r[8]) return;
+        const cid = r[8] ? String(r[8]).trim() : null;
+        if (!cid) return;
         sheetRecords.push({
-          id: r[8], clientId: String(r[8]), type: '補打卡', subType: r[3] || '',
-          empId: String(r[1]), name: r[2] || '',
+          id: cid, clientId: cid, type: '補打卡', subType: r[3] || '',
+          empId: String(r[1]).trim(), name: r[2] || '',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           time: r[5] || '', reason: r[6] || '', status: r[7] || '待審',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
@@ -1560,6 +1594,14 @@ async function loadAdminData() {
     }
 
     document.getElementById('pendingLoading').textContent = '';
+    // ★ 把雲端資料合併進全域 records，讓 approveRecord() 查得到
+    sheetRecords.forEach(sr => {
+      const key = sr.clientId || String(sr.id);
+      const ex = records.find(r => (r.clientId && r.clientId === key) || String(r.id) === key);
+      if (!ex) records.push(sr);
+      else if (ex.status !== sr.status) ex.status = sr.status;
+    });
+    saveRecords();
     renderPendingFromRecords(sheetRecords);
   } catch (e) {
     document.getElementById('pendingLoading').textContent = '（離線）';
