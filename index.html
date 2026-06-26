@@ -838,8 +838,7 @@ input[type="date"].input-field { width:100%; box-sizing:border-box; }
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
-let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || sessionStorage.getItem('tjcpm_user') || 'null');
-
+let currentUser = JSON.parse(localStorage.getItem('tjcpm_user') || sessionStorage.getItem('tjcpm_user') || 'null');
 const RETENTION_MONTHS = 2;
 function isWithinRetention(record) {
   if (!record.timestamp) return true; 
@@ -990,6 +989,7 @@ async function doLogin() {
     if (data.status === 'ok') {
       currentUser = { empId: data.empId, name: data.name, role: data.role };
       sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+      localStorage.setItem('tjcpm_user', JSON.stringify(currentUser)); // 跨設備與跨分頁永久記住登入狀態
       showApp();
     } else {
       showLoginErr(data.message || '帳號或密碼錯誤，請再試一次');
@@ -1195,7 +1195,7 @@ function submitLeave() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('📝 請假申請已送出');
-  if (typeof loadMyRecords === "function") { loadMyRecords(); } // 重新向雲端抓最新數據，達成多裝置即時同步
+  loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
 }
 
 function submitOvertime() {
@@ -1225,7 +1225,7 @@ function submitOvertime() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('🌙 加班申請已送出');
-  if (typeof loadMyRecords === "function") { loadMyRecords(); } // 重新向雲端抓最新數據，達成多裝置即時同步
+  loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
 }
 
 function submitSupp() {
@@ -1252,7 +1252,7 @@ function submitSupp() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('🔄 補打卡申請已送出');
-  if (typeof loadMyRecords === "function") { loadMyRecords(); } // 重新向雲端抓最新數據，達成多裝置即時同步
+  loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
 }
 
 function quickLeave() {
@@ -1269,6 +1269,7 @@ function quickLeave() {
   syncToSheet(record);
   closeModal('leave');
   showToast('📝 請假申請已送出');
+loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
 }
 
 function quickOvertime() {
@@ -1285,6 +1286,7 @@ function quickOvertime() {
   syncToSheet(record);
   closeModal('overtime');
   showToast('🌙 加班申請已送出');
+loadMyRecords(); // 立即重新向雲端抓取最新數據，讓所有設備即時同步
 }
 
 // ── Admin Approve ───────────────────────────────────────────────
