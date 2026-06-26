@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TJCPM">
+<link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/logo.png">
+<link rel="manifest" href="https://tjcpm109.github.io/tjcpm/manifest.json">
 <title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -665,6 +667,7 @@ input[type="date"].input-field { width:100%; box-sizing:border-box; }
       <div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
       <div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
     </div>
+    <div id="recordSyncStatus" style="font-size:13px;color:var(--blue-light);margin-bottom:10px;min-height:18px;"></div>
     <div class="record-list" id="allRecordsList"></div>
   </div>
 
@@ -966,6 +969,8 @@ function showApp() {
   initGPS();
   renderAllList();
   updateNotifBadge();
+  // ★ 登入後立即從雲端拉取紀錄（修正換設備看不到紀錄問題）
+  loadMyRecords();
   if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
   if (isAdmin) switchTab('admin');
   checkConnectivity();
@@ -1341,6 +1346,8 @@ function renderAllList() {
 async function loadMyRecords() {
   renderAllList(); 
   if (!currentUser) return;
+  const syncEl = document.getElementById('recordSyncStatus');
+  if (syncEl) syncEl.textContent = '☁️ 從雲端同步紀錄中…';
   try {
     const [punchData, leaveData, otData, suppData] = await Promise.all([
       callGAS({ action: 'getAll' }),
@@ -1359,6 +1366,7 @@ async function loadMyRecords() {
         if (ex) {
           if (ex.status !== rec.status) { ex.status = rec.status; changed = true; }
         } else {
+          // ★ 新設備沒有本機紀錄，直接從雲端建立
           records.push(rec); changed = true;
         }
       });
@@ -1415,8 +1423,15 @@ async function loadMyRecords() {
       });
     }
 
-    if (changed) { saveRecords(); renderAllList(); }
-  } catch(e) {} 
+    if (changed) {
+      // 依時間排序（最新在前）
+      records.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+      saveRecords(); renderAllList(); updateNotifBadge();
+    }
+    if (syncEl) { syncEl.textContent = '✅ 雲端同步完成'; setTimeout(() => { if(syncEl) syncEl.textContent = ''; }, 3000); }
+  } catch(e) {
+    if (syncEl) syncEl.textContent = '⚠️ 離線，顯示本機紀錄';
+  } 
 }
 
 function recordHTML(r, showName = false, showApprove = false) {
