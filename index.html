@@ -613,14 +613,13 @@ body {
   </div>
 
   <div class="nav" id="mainNav">
-    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管
+    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管</div>
     <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
     <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
     <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
     <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
     <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
- /* ──   <div class="nav-tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 通知</div>  ─*/
-</div>
+    <!-- <div class="nav-tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 通知</div> -->
   </div>
 
   <!-- 打卡 -->
@@ -629,6 +628,9 @@ body {
       <div class="clock-time" id="mainClock">00:00:00</div>
       <div class="clock-date" id="mainDate"></div>
       <div class="clock-user" id="clockUser"></div>
+    </div>
+    <div id="pushBanner" class="push-banner" style="display:none">
+      🔔 開啟推播通知，及時收到審批結果 <button onclick="requestPush()">開啟</button>
     </div>
     <div class="gps-bar">
       <div class="gps-dot" id="gpsDot"></div>
@@ -997,6 +999,7 @@ function showApp() {
   initGPS();
   renderAllList();
   updateNotifBadge();
+  if (Notification && Notification.permission === 'default') document.getElementById('pushBanner').style.display = 'flex';
   if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
   // ★ 主管登入後直接呈現主管頁，不用先看到打卡首頁再自己點過去
   if (isAdmin) switchTab('admin');
@@ -1055,22 +1058,11 @@ function doLogout() {
 }
 
 // ── Clock ───────────────────────────────────────────────────────
-// ★ 手動格式化，避免手機（iOS/Android）toLocaleTimeString 輸出 '000000' 的 bug
-function pad2(n) { return String(n).padStart(2, '0'); }
-function fmtTime(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
-function fmtDate(d) {
-  const days = ['日','一','二','三','四','五','六'];
-  return d.getFullYear() + ' 年 ' + (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日（' + days[d.getDay()] + '）';
-}
 function updateClock() {
   const now = new Date();
-  const t = fmtTime(now);
-  const el = document.getElementById('mainClock');
-  if (el) el.textContent = t;
-  const elDate = document.getElementById('mainDate');
-  if (elDate) elDate.textContent = fmtDate(now);
-  const elH = document.getElementById('headerClock');
-  if (elH) elH.textContent = t;
+  document.getElementById('mainClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+  document.getElementById('mainDate').textContent = now.toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -1217,7 +1209,7 @@ function handleAction(type) {
   const now = new Date();
   const record = {
     id: Date.now(), type, empId: currentUser.empId, name: currentUser.name,
-    time: fmtTime(now),
+    time: now.toLocaleTimeString('zh-TW', { hour12: false }),
     date: now.toLocaleDateString('zh-TW'), timestamp: now.toISOString(),
     lat: gpsLat, lng: gpsLng
   };
