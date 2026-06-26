@@ -956,7 +956,7 @@ async function checkConnectivity() {
   if (connectivityCheckInFlight) return;
   connectivityCheckInFlight = true;
   try {
-    await callGAS({}, 6000);
+    await callGAS({ action: 'ping' }, 6000);
     setOnlineStatus(true);
   } catch (e) {
     setOnlineStatus(false);
@@ -986,7 +986,7 @@ function showApp() {
   // ★ 若非主管，且目前停留在主管頁，強制切回首頁（防止殘留狀態下直接看到主管畫面）
   if (!isAdmin) {
     const adminPage = document.getElementById('page-admin');
-    if (adminPage.classList.contains('active')) switchTab('home');
+    if (adminPage && adminPage.classList.contains('active')) switchTab('home');
   }
   document.getElementById('headerUser').textContent = currentUser.name;
   document.getElementById('clockUser').innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
@@ -1001,7 +1001,7 @@ function showApp() {
   // ★ 主管登入後直接呈現主管頁，不用先看到打卡首頁再自己點過去
   if (isAdmin) switchTab('admin');
   checkConnectivity();
-  setInterval(checkConnectivity, 30000);
+  connectivityIntervalId = setInterval(checkConnectivity, 30000);
 }
 
 // ── Login / Logout ─────────────────────────────────────────────
@@ -1038,9 +1038,14 @@ function showLoginErr(msg) {
   el.style.display = 'block';
 }
 
+let connectivityIntervalId = null;
+
 function doLogout() {
   sessionStorage.removeItem('tjcpm_user');
   currentUser = null;
+  records = []; // ★ 清除本機快取，避免舊帳號資料殘留
+  // ★ 停止背景連線檢查
+  if (connectivityIntervalId) { clearInterval(connectivityIntervalId); connectivityIntervalId = null; }
   // ★ 登出時確保主管頁籤隱藏、頁面回首頁
   document.getElementById('adminTab').style.display = 'none';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1637,7 +1642,12 @@ function populateTimeSelects() {
     if (el) el.innerHTML = buildHalfHourOptions();
   });
 }
-populateTimeSelects();
+// ★ 延遲到 DOMContentLoaded 後再執行，確保元素已就緒
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', populateTimeSelects);
+} else {
+  populateTimeSelects();
+}
 
 function switchTab(tab) {
   // ★ 防呆：非主管不能切到主管頁，就算被手動呼叫 switchTab('admin') 也擋下來
