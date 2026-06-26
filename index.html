@@ -623,8 +623,7 @@ body {
     <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
     <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
     <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
- <!-- <div class="nav-tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 通知</div>   -->
-
+    <!-- <div class="nav-tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 通知</div>-->
   </div>
 
   <!-- 打卡 -->
@@ -633,9 +632,6 @@ body {
       <div class="clock-time" id="mainClock">00:00:00</div>
       <div class="clock-date" id="mainDate"></div>
       <div class="clock-user" id="clockUser"></div>
-    </div>
-    <div id="pushBanner" class="push-banner" style="display:none">
-      🔔 開啟推播通知，及時收到審批結果 <button onclick="requestPush()">開啟</button>
     </div>
     <div class="gps-bar">
       <div class="gps-dot" id="gpsDot"></div>
@@ -1004,7 +1000,6 @@ function showApp() {
   initGPS();
   renderAllList();
   updateNotifBadge();
-  if (Notification && Notification.permission === 'default') document.getElementById('pushBanner').style.display = 'flex';
   if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
   // ★ 主管登入後直接呈現主管頁，不用先看到打卡首頁再自己點過去
   if (isAdmin) switchTab('admin');
@@ -1063,11 +1058,22 @@ function doLogout() {
 }
 
 // ── Clock ───────────────────────────────────────────────────────
+// ★ 手動格式化，避免 iOS/Android toLocaleTimeString 輸出 '000000' 的相容性問題
+function pad2(n) { return String(n).padStart(2, '0'); }
+function fmtTime(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+function fmtDate(d) {
+  const days = ['日','一','二','三','四','五','六'];
+  return d.getFullYear() + ' 年 ' + (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日（' + days[d.getDay()] + '）';
+}
 function updateClock() {
   const now = new Date();
-  document.getElementById('mainClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
-  document.getElementById('mainDate').textContent = now.toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
-  document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+  const t = fmtTime(now);
+  const el = document.getElementById('mainClock');
+  if (el) el.textContent = t;
+  const elDate = document.getElementById('mainDate');
+  if (elDate) elDate.textContent = fmtDate(now);
+  const elH = document.getElementById('headerClock');
+  if (elH) elH.textContent = t;
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -1214,8 +1220,9 @@ function handleAction(type) {
   const now = new Date();
   const record = {
     id: Date.now(), type, empId: currentUser.empId, name: currentUser.name,
-    time: now.toLocaleTimeString('zh-TW', { hour12: false }),
-    date: now.toLocaleDateString('zh-TW'), timestamp: now.toISOString(),
+    time: fmtTime(now),
+    date: fmtDate(now).replace(' 年 ', '/').replace(' 月 ', '/').replace(/ 日.*/, ''),
+    timestamp: now.toISOString(),
     lat: gpsLat, lng: gpsLng
   };
   records.unshift(record);
@@ -1364,7 +1371,7 @@ function renderAllList() {
   el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
 }
 
-// ★ 切到「我的紀錄」時從 Sheet 補齊申請資料，解決換裝置後本機空白的問題
+// ★ 切到「我的紀錄」時從 Sheet 補齊資料，解決換裝置後本機空白的問題
 async function loadMyRecords() {
   renderAllList(); // 先顯示本機快取
   if (!currentUser) return;
@@ -1375,40 +1382,39 @@ async function loadMyRecords() {
       callGAS({ action: 'getSupp' })
     ]);
     let changed = false;
-    function mergeSheet(rows, makeRecord) {
+    function mergeInto(rows, makeRec) {
       rows.forEach(r => {
-        const rec = makeRecord(r);
+        const rec = makeRec(r);
         if (!rec) return;
-        const existing = records.find(x => x.clientId && String(x.clientId) === String(rec.clientId));
-        if (existing) {
-          if (existing.status !== rec.status) { existing.status = rec.status; changed = true; }
-        } else {
-          records.unshift(rec); changed = true;
-        }
+        const ex = records.find(x => x.clientId && String(x.clientId) === String(rec.clientId));
+        if (ex) { if (ex.status !== rec.status) { ex.status = rec.status; changed = true; } }
+        else { records.unshift(rec); changed = true; }
       });
     }
     if (leaveData.data && leaveData.data.length > 1) {
-      mergeSheet(leaveData.data.slice(1), r => {
+      mergeInto(leaveData.data.slice(1), r => {
         if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
         return { id: r[8], clientId: String(r[8]), type: '請假', subType: r[3]||'',
           empId: String(r[1]), name: r[2]||'',
           date: r[4] ? String(r[4]).split('T')[0] : '',
           endDate: r[5] ? String(r[5]).split('T')[0] : '',
-          reason: r[6]||'', status: r[7]||'待審', timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
+          reason: r[6]||'', status: r[7]||'待審',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
       });
     }
     if (otData.data && otData.data.length > 1) {
-      mergeSheet(otData.data.slice(1), r => {
+      mergeInto(otData.data.slice(1), r => {
         if (!r[9] || String(r[1]) !== String(currentUser.empId)) return null;
         return { id: r[9], clientId: String(r[9]), type: '加班',
           empId: String(r[1]), name: r[2]||'',
           date: r[3] ? String(r[3]).split('T')[0] : '',
           startTime: r[4]||'', endTime: r[5]||'', hours: r[6]||'',
-          reason: r[7]||'', status: r[8]||'待審', timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
+          reason: r[7]||'', status: r[8]||'待審',
+          timestamp: r[0] ? new Date(r[0]).toISOString() : '' };
       });
     }
     if (suppData.data && suppData.data.length > 1) {
-      mergeSheet(suppData.data.slice(1), r => {
+      mergeInto(suppData.data.slice(1), r => {
         if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
         return { id: r[8], clientId: String(r[8]), type: '補打卡', subType: r[3]||'',
           empId: String(r[1]), name: r[2]||'',
@@ -1418,7 +1424,7 @@ async function loadMyRecords() {
       });
     }
     if (changed) { saveRecords(); renderAllList(); }
-  } catch(e) {} // 離線時靜默失敗，本機快取仍可用
+  } catch(e) {} // 離線靜默失敗，本機快取仍可用
 }
 
 function recordHTML(r, showName = false, showApprove = false) {
@@ -1588,14 +1594,13 @@ function saveRecords() {
   localStorage.setItem('tjcpm_records', JSON.stringify(records));
 }
 
-// ★ 時間欄位改用下拉選單，只列出 00 / 30 分的選項，使用者只能從清單裡選，
-//   不會再有機會選到其他分鐘數（比起原生時間選擇器事後校正更直接可靠）。
+// ★ 時間選單限定 07:00 ～ 22:00，每 30 分一格
 function buildHalfHourOptions() {
   let opts = '<option value="">請選擇時間</option>';
   for (let h = 7; h <= 22; h++) {
     for (const m of [0, 30]) {
-      if (h === 22 && m === 30) continue; // 22:30 超出範圍
-      const val = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+      if (h === 22 && m === 30) continue;
+      const val = pad2(h) + ':' + pad2(m);
       opts += `<option value="${val}">${val}</option>`;
     }
   }
