@@ -903,6 +903,22 @@ function sheetTimeToLocal(v) {
   return `${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
 }
 
+// ★ 簽核時間：Sheet 回傳完整 ISO 字串（e.g. "2026-06-26T11:40:11.000Z"），
+//   顯示成 "6/26/2026 19:40:11" 台灣時間格式。
+//   這裡用 Date 物件 + 台灣 locale 格式化，是刻意的：
+//   簽核時間是完整日期時間、不是 1899 那種純時間值，不需要直接切字串。
+function sheetDateTimeToLocal(v) {
+  if (!v) return '';
+  const d = new Date(String(v));
+  if (isNaN(d.getTime())) return String(v);
+  return d.toLocaleString('zh-TW', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  });
+}
+
 // ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
@@ -1483,7 +1499,7 @@ async function loadMyRecords() {
     }
 
     // 請假：A(0)時間 B(1)員編 C(2)姓名 D(3)假別 E(4)日期起 F(5)日期迄
-    //       G(6)時間起 H(7)時間迄 I(8)空 J(9)審核狀態 K(10)clientId
+    //       G(6)時間起 H(7)時間迄 I(8)空 J(9)審核狀態 K(10)clientId L(11)核准人 M(12)簽核時間
     if (leaveData.data && leaveData.data.length > 1) {
       leaveData.data.slice(1).forEach(r => {
         if (String(r[1]).trim() !== myEmpId) return;
@@ -1496,13 +1512,14 @@ async function loadMyRecords() {
           endDate: sheetDateToLocal(r[5]),
           startTime: sheetTimeToLocal(r[6]), endTime: sheetTimeToLocal(r[7]),
           status: r[9] || '待審',
+          approver: r[11] || '', approveTime: r[12] ? sheetDateTimeToLocal(r[12]) : '',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
     }
 
     // 加班：A(0)時間 B(1)員編 C(2)姓名 D(3)日期 E(4)開始時間 F(5)結束時間
-    //       G(6)時數 H(7)原因 I(8)狀態 J(9)clientId
+    //       G(6)時數 H(7)原因 I(8)狀態 J(9)clientId K(10)核准人 L(11)簽核時間
     if (otData.data && otData.data.length > 1) {
       otData.data.slice(1).forEach(r => {
         if (String(r[1]).trim() !== myEmpId) return;
@@ -1514,13 +1531,14 @@ async function loadMyRecords() {
           date: sheetDateToLocal(r[3]),
           startTime: sheetTimeToLocal(r[4]), endTime: sheetTimeToLocal(r[5]), hours: r[6] || '',
           reason: r[7] || '', status: r[8] || '待審',
+          approver: r[10] || '', approveTime: r[11] ? sheetDateTimeToLocal(r[11]) : '',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
     }
 
     // 補打卡：A(0)時間 B(1)員編 C(2)姓名 D(3)類型 E(4)日期 F(5)時間
-    //         G(6)原因 H(7)狀態 I(8)clientId
+    //         G(6)原因 H(7)狀態 I(8)clientId J(9)核准人 K(10)簽核時間
     if (suppData.data && suppData.data.length > 1) {
       suppData.data.slice(1).forEach(r => {
         if (String(r[1]).trim() !== myEmpId) return;
@@ -1531,6 +1549,7 @@ async function loadMyRecords() {
           empId: myEmpId, name: r[2] || '',
           date: sheetDateToLocal(r[4]),
           time: sheetTimeToLocal(r[5]), reason: r[6] || '', status: r[7] || '待審',
+          approver: r[9] || '', approveTime: r[10] ? sheetDateTimeToLocal(r[10]) : '',
           timestamp: r[0] ? new Date(r[0]).toISOString() : ''
         });
       });
@@ -1603,7 +1622,8 @@ function recordHTML(r, showName = false, showApprove = false) {
     r.startTime && r.endTime ? r.startTime + '～' + r.endTime : (r.time || ''),
     r.lat ? `📍${r.lat},${r.lng}` : '',
     r.hours || '',
-    r.reason || ''
+    r.reason || '',
+    r.approveTime ? `✅ 簽核：${r.approveTime}` : ''
   ].filter(Boolean).join(' · ');
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
   // ★ 卡片右側的時間欄位之前只認 r.time，但請假/加班是用 startTime/endTime 這組欄位，
