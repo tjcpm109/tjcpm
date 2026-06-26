@@ -270,6 +270,8 @@ body {
 }
 .select-field:focus { border-color:var(--blue-light); box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
 
+input[type="date"].input-field { width:100%; box-sizing:border-box; }
+
 /* ── Info box（藍色資訊欄） ── */
 .info-box {
   display:flex;
@@ -603,7 +605,7 @@ body {
       <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
     </div>
     <div class="header-right">
-      <div class="notif-bell" onclick="switchTab('notifications')">
+      <div class="notif-bell" onclick="switchTab('notifications')" style="display:none">
         🔔<span class="notif-badge" id="notifCount" style="display:none">0</span>
       </div>
       <span class="header-user" id="headerUser"></span>
@@ -1223,13 +1225,25 @@ function handleAction(type) {
 }
 
 function submitLeave() {
+  const startDate = document.getElementById('leaveStart').value;
+  const startTime = document.getElementById('leaveStartTime').value;
+  const endDate = document.getElementById('leaveEnd').value;
+  const endTime = document.getElementById('leaveEndTime').value;
+  const reason = document.getElementById('leaveReason').value;
+  const leaveType = document.getElementById('leaveType').value;
+  if (!startDate || !startTime || !endDate || !endTime) {
+    showToast('⚠️ 請填寫日期與時間'); return;
+  }
+  if (endDate < startDate || (endDate === startDate && endTime <= startTime)) {
+    showToast('⚠️ 結束時間必須晚於開始時間'); return;
+  }
   const id = Date.now();
   const record = {
-    id, clientId: String(id), type: '請假', subType: document.getElementById('leaveType').value,
+    id, clientId: String(id), type: '請假', subType: leaveType,
     empId: currentUser.empId, name: currentUser.name,
-    date: document.getElementById('leaveStart').value, startTime: document.getElementById('leaveStartTime').value,
-    endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
-    reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
+    date: startDate, startTime,
+    endDate, endTime,
+    reason, status: '待審', timestamp: new Date().toISOString()
   };
   records.unshift(record);
   saveRecords();
@@ -1240,11 +1254,24 @@ function submitLeave() {
 }
 
 function submitOvertime() {
+  const otDate = document.getElementById('otDate').value;
+  const otStart = document.getElementById('otStart').value;
+  const otEnd = document.getElementById('otEnd').value;
+  const otReason = document.getElementById('otReason').value;
+  if (!otDate || !otStart || !otEnd) {
+    showToast('⚠️ 請填寫日期與時間'); return;
+  }
+  if (!otReason.trim()) {
+    showToast('⚠️ 請填寫加班原因'); return;
+  }
+  if (otEnd <= otStart) {
+    showToast('⚠️ 結束時間必須晚於開始時間'); return;
+  }
   const id = Date.now();
   const record = {
     id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
-    date: document.getElementById('otDate').value, startTime: document.getElementById('otStart').value,
-    endTime: document.getElementById('otEnd').value, reason: document.getElementById('otReason').value,
+    date: otDate, startTime: otStart,
+    endTime: otEnd, reason: otReason,
     status: '待審', timestamp: new Date().toISOString()
   };
   records.unshift(record);
@@ -1256,12 +1283,22 @@ function submitOvertime() {
 }
 
 function submitSupp() {
+  const suppDate = document.getElementById('suppDate').value;
+  const suppTime = document.getElementById('suppTime').value;
+  const suppReason = document.getElementById('suppReason').value.trim();
+  const suppType = document.getElementById('suppType').value;
+  if (!suppDate || !suppTime) {
+    showToast('⚠️ 請填寫日期與時間'); return;
+  }
+  if (!suppReason) {
+    showToast('⚠️ 請填寫未打卡原因'); return;
+  }
   const id = Date.now();
   const record = {
-    id, clientId: String(id), type: '補打卡', subType: document.getElementById('suppType').value,
+    id, clientId: String(id), type: '補打卡', subType: suppType,
     empId: currentUser.empId, name: currentUser.name,
-    date: document.getElementById('suppDate').value, time: document.getElementById('suppTime').value,
-    reason: document.getElementById('suppReason').value, status: '待審', timestamp: new Date().toISOString()
+    date: suppDate, time: suppTime,
+    reason: suppReason, status: '待審', timestamp: new Date().toISOString()
   };
   records.unshift(record);
   saveRecords();
@@ -1644,7 +1681,7 @@ function switchTab(tab) {
   });
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
-  if (tab === 'records') loadMyRecords();
+  if (tab === 'records' || tab === 'leave' || tab === 'overtime' || tab === 'supp') loadMyRecords();
   if (tab === 'notifications') renderNotifications();
   if (tab === 'admin') loadAdminData();
 }
