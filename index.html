@@ -184,8 +184,7 @@ body {
   justify-content:center;
 }
 
-/* ── 手機窄螢幕：logo 是寬版橫幅，空間不夠時優先保留通知/登出按鈕可見，
-   姓名跟時鐘在頭部本來就跟首頁的大時鐘卡片重複，窄螢幕直接隱藏不影響功能 ── */
+/* ── 手機窄螢幕 ── */
 @media (max-width:480px) {
   .header { padding:10px 12px; gap:8px; }
   .header-left img { height:24px; }
@@ -272,7 +271,7 @@ body {
 
 input[type="date"].input-field { width:100%; box-sizing:border-box; }
 
-/* ── Info box（藍色資訊欄） ── */
+/* ── Info box ── */
 .info-box {
   display:flex;
   align-items:flex-start;
@@ -309,7 +308,7 @@ input[type="date"].input-field { width:100%; box-sizing:border-box; }
 .btn-checkin .btn-label { color:var(--green-light); }
 .btn-checkout { border-top:4px solid var(--accent-red); }
 .btn-checkout .btn-label { color:var(--accent-red); }
-/* ── 離線時停用打卡按鈕 ── */
+
 .action-btn.disabled {
   opacity:0.45;
   cursor:not-allowed;
@@ -859,11 +858,9 @@ input[type="date"].input-field { width:100%; box-sizing:border-box; }
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
 let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || 'null');
 
-// ★ 本機紀錄只保留最近兩個月，避免 localStorage 越用越大、「我的紀錄」也只會顯示近期資料。
-//   注意：這只影響瀏覽器本機快取，Google Sheet 裡的正式紀錄不會被刪除。
 const RETENTION_MONTHS = 2;
 function isWithinRetention(record) {
-  if (!record.timestamp) return true; // 沒有時間戳記的舊資料保守起見不主動刪除
+  if (!record.timestamp) return true; 
   const cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - RETENTION_MONTHS);
   return new Date(record.timestamp) >= cutoff;
@@ -903,10 +900,6 @@ function callGAS(params, timeoutMs = 15000) {
 }
 
 // ── 連線狀態偵測 ──────────────────────────────────────────────
-// 規則：
-//  1) 若無法連到 GAS 後端 → 停用「上班/下班」打卡按鈕，避免打卡卻沒有同步紀錄。
-//  2) 若 GPS 定位失敗 → 同樣停用打卡按鈕（GPS 改為打卡的必要條件，不再只是輔助資訊）。
-// 兩個條件都要成立（連線 + GPS 都正常）才能打卡。
 let isOnline = navigator.onLine;
 let isGpsLocked = false;
 let connectivityCheckInFlight = false;
@@ -917,7 +910,7 @@ function updateActionButtonsState() {
   const banner = document.getElementById('offlineBanner');
   const checkinSub = document.getElementById('checkinSub');
   const checkoutSub = document.getElementById('checkoutSub');
-  if (!btnCheckin || !btnCheckout) return; // 尚未登入、主畫面未渲染
+  if (!btnCheckin || !btnCheckout) return; 
 
   const canPunch = isOnline && isGpsLocked;
   btnCheckin.classList.toggle('disabled', !canPunch);
@@ -939,7 +932,6 @@ function updateActionButtonsState() {
   if (checkoutSub) checkoutSub.textContent = canPunch ? '打卡下班' : reason;
 }
 
-// 保留舊函式名稱相容（內部呼叫統一改走 updateActionButtonsState）
 function setOnlineStatus(online) {
   isOnline = online;
   updateActionButtonsState();
@@ -950,8 +942,6 @@ function setGpsLocked(locked) {
   updateActionButtonsState();
 }
 
-// 主動測試是否連得到 GAS（瀏覽器的 navigator.onLine 只能判斷裝置有無網路，
-// 不代表真的連得到後端，所以額外用一次輕量 JSONP 請求驗證）
 async function checkConnectivity() {
   if (connectivityCheckInFlight) return;
   connectivityCheckInFlight = true;
@@ -980,10 +970,8 @@ function showLogin() {
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
-  // ★ 每次都依 role 決定主管頁籤可見性，避免切換帳號殘留
   const isAdmin = currentUser.role === 'admin';
   document.getElementById('adminTab').style.display = isAdmin ? 'block' : 'none';
-  // ★ 若非主管，且目前停留在主管頁，強制切回首頁（防止殘留狀態下直接看到主管畫面）
   if (!isAdmin) {
     const adminPage = document.getElementById('page-admin');
     if (adminPage && adminPage.classList.contains('active')) switchTab('home');
@@ -998,7 +986,6 @@ function showApp() {
   renderAllList();
   updateNotifBadge();
   if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
-  // ★ 主管登入後直接呈現主管頁，不用先看到打卡首頁再自己點過去
   if (isAdmin) switchTab('admin');
   checkConnectivity();
   connectivityIntervalId = setInterval(checkConnectivity, 30000);
@@ -1043,10 +1030,8 @@ let connectivityIntervalId = null;
 function doLogout() {
   sessionStorage.removeItem('tjcpm_user');
   currentUser = null;
-  records = []; // ★ 清除本機快取，避免舊帳號資料殘留
-  // ★ 停止背景連線檢查
+  records = []; 
   if (connectivityIntervalId) { clearInterval(connectivityIntervalId); connectivityIntervalId = null; }
-  // ★ 登出時確保主管頁籤隱藏、頁面回首頁
   document.getElementById('adminTab').style.display = 'none';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-home').classList.add('active');
@@ -1095,7 +1080,7 @@ function setGPS(state, text, coords) {
   document.getElementById('gpsCoords').textContent = coords;
 }
 
-// ── Sync (fire-and-forget, POST no-cors for punch / applications) ──
+// ── Sync ──
 async function syncToSheet(record) {
   const el = document.getElementById('syncStatus');
   if (el) {
@@ -1123,7 +1108,7 @@ async function syncToSheet(record) {
   }
 }
 
-// ── 通知徽章：顯示本人「待審核」申請筆數 ──────────────────────
+// ── 通知徽章 ──
 function updateNotifBadge() {
   const mine = records.filter(r =>
     r.empId === currentUser?.empId &&
@@ -1177,12 +1162,10 @@ async function checkApprovalUpdates() {
 // ── Actions ─────────────────────────────────────────────────────
 function handleAction(type) {
   if (!currentUser) return;
-  // ★ 無法連線時不允許打卡，避免按鈕被繞過（例如殘留事件）仍寫入本機卻同步不到 Sheet
   if (!isOnline) {
     showToast('⚠️ 目前無法連線，請確認網路後再試');
     return;
   }
-  // ★ GPS 未定位成功時不允許打卡（GPS 現在是打卡的必要條件，不只是輔助資訊）
   if (!isGpsLocked) {
     showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試');
     return;
@@ -1229,7 +1212,9 @@ function submitLeave() {
   updateNotifBadge();
   syncToSheet(record);
   showToast('📝 請假申請已送出');
-} {
+}
+
+function submitOvertime() {
   const otDate = document.getElementById('otDate').value;
   const otStart = document.getElementById('otStart').value;
   const otEnd = document.getElementById('otEnd').value;
@@ -1317,10 +1302,6 @@ function quickOvertime() {
 }
 
 // ── Admin Approve ───────────────────────────────────────────────
-// ★ 改用 callGAS（JSONP GET）傳送審核結果。
-//   修正重點：之前 GAS 端 doGet() 沒有 'approve' 分支，審核永遠不會寫回 Sheet，
-//   現在後端 doGet/doPost 都會處理 approve，並回報 found 欄位讓這裡能正確顯示結果。
-// ★ 加上 role 防呆：理論上只有主管能看到核准按鈕，但這裡仍擋一層，避免被繞過。
 async function approveRecord(id, decision) {
   if (!currentUser || currentUser.role !== 'admin') {
     showToast('⚠️ 您沒有審核權限');
@@ -1349,8 +1330,6 @@ async function approveRecord(id, decision) {
 }
 
 // ── Render ──────────────────────────────────────────────────────
-// ★ 拿掉「全部」按鈕後，改成「再點一次已選中的篩選鈕」就會取消篩選、回到顯示全部，
-//   不用額外留一個專門的「全部」按鈕。
 function filterRecords(type, chip) {
   const alreadyActive = chip.classList.contains('active');
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -1363,6 +1342,7 @@ function filterRecords(type, chip) {
   renderAllList();
 }
 
+// ★ 修正此處以避免無作用代碼塊
 function renderAllList() {
   let mine = records.filter(r => r.empId === currentUser?.empId);
   if (currentFilter !== 'all') mine = mine.filter(r => r.type === currentFilter);
@@ -1370,10 +1350,8 @@ function renderAllList() {
   el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
 }
 
-// ★ 切到「我的紀錄」時從 Sheet 補齊所有資料（打卡 + 請假 + 加班 + 補打卡）
-// 解決換裝置後本機 localStorage 空白、看不到資料的問題
 async function loadMyRecords() {
-  renderAllList(); // 先顯示本機快取，不讓畫面空白
+  renderAllList(); 
   if (!currentUser) return;
   try {
     const [punchData, leaveData, otData, suppData] = await Promise.all([
@@ -1398,7 +1376,6 @@ async function loadMyRecords() {
       });
     }
 
-    // 打卡紀錄：A時間戳 B員編 C姓名 D類型(上班/下班) E日期 F時間 G緯度 H經度 I clientId
     if (punchData.data && punchData.data.length > 1) {
       mergeInto(punchData.data.slice(1), r => {
         if (String(r[1]) !== String(currentUser.empId)) return null;
@@ -1415,7 +1392,6 @@ async function loadMyRecords() {
       });
     }
 
-    // 請假：A時間 B員編 C姓名 D假別 E開始日期 F結束日期 G原因 H狀態 I clientId
     if (leaveData.data && leaveData.data.length > 1) {
       mergeInto(leaveData.data.slice(1), r => {
         if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
@@ -1428,7 +1404,6 @@ async function loadMyRecords() {
       });
     }
 
-    // 加班：A時間 B員編 C姓名 D日期 E開始時間 F結束時間 G時數 H原因 I狀態 J clientId
     if (otData.data && otData.data.length > 1) {
       mergeInto(otData.data.slice(1), r => {
         if (!r[9] || String(r[1]) !== String(currentUser.empId)) return null;
@@ -1441,7 +1416,6 @@ async function loadMyRecords() {
       });
     }
 
-    // 補打卡：A時間 B員編 C姓名 D類型 E日期 F時間 G原因 H狀態 I clientId
     if (suppData.data && suppData.data.length > 1) {
       mergeInto(suppData.data.slice(1), r => {
         if (!r[8] || String(r[1]) !== String(currentUser.empId)) return null;
@@ -1454,7 +1428,7 @@ async function loadMyRecords() {
     }
 
     if (changed) { saveRecords(); renderAllList(); }
-  } catch(e) {} // 離線靜默失敗，本機快取仍可用
+  } catch(e) {} 
 }
 
 function recordHTML(r, showName = false, showApprove = false) {
@@ -1507,15 +1481,12 @@ function recordHTML(r, showName = false, showApprove = false) {
 
 // ── Admin ───────────────────────────────────────────────────────
 async function loadAdminData() {
-  // ★ 防呆：非主管不應該能觸發到這裡，但仍擋一層避免資料外洩
   if (!currentUser || currentUser.role !== 'admin') return;
 
   document.getElementById('pendingLoading').textContent = '載入中…';
 
-  // 先用本機資料快速顯示，避免等待期間畫面空白
   function renderPendingFromRecords(extraRecords) {
     const allRecords = [...records, ...(extraRecords || [])];
-    // 合併去重（以 clientId 為準）
     const seen = new Set();
     const merged = [];
     for (const r of allRecords) {
@@ -1532,7 +1503,6 @@ async function loadAdminData() {
 
   renderPendingFromRecords([]);
 
-  // ★ 從 Sheet 拉所有待審申請（解決手機換裝置看不到資料的問題）
   let sheetRecords = [];
   try {
     const [leaveData, otData, suppData] = await Promise.all([
@@ -1541,10 +1511,9 @@ async function loadAdminData() {
       callGAS({ action: 'getSupp' })
     ]);
 
-    // 請假申請：A時間 B員編 C姓名 D假別 E開始日期 F結束日期 G原因 H狀態 I clientId J核准人
     if (leaveData.data && leaveData.data.length > 1) {
       leaveData.data.slice(1).forEach(r => {
-        if (!r[8]) return; // 沒有 clientId 就跳過
+        if (!r[8]) return; 
         sheetRecords.push({
           id: r[8], clientId: String(r[8]), type: '請假', subType: r[3] || '',
           empId: String(r[1]), name: r[2] || '',
@@ -1555,7 +1524,6 @@ async function loadAdminData() {
       });
     }
 
-    // 加班申請：A時間 B員編 C姓名 D日期 E開始時間 F結束時間 G時數 H原因 I狀態 J clientId K核准人
     if (otData.data && otData.data.length > 1) {
       otData.data.slice(1).forEach(r => {
         if (!r[9]) return;
@@ -1569,7 +1537,6 @@ async function loadAdminData() {
       });
     }
 
-    // 補打卡申請：A時間 B員編 C姓名 D類型 E日期 F時間 G原因 H狀態 I clientId J核准人
     if (suppData.data && suppData.data.length > 1) {
       suppData.data.slice(1).forEach(r => {
         if (!r[8]) return;
@@ -1589,7 +1556,6 @@ async function loadAdminData() {
     document.getElementById('pendingLoading').textContent = '（離線）';
   }
 
-  // 打卡紀錄（只取今日統計）
   try {
     const data = await callGAS({ action: 'getAll' });
     if (data.data && data.data.length > 1) {
@@ -1624,8 +1590,6 @@ function saveRecords() {
   localStorage.setItem('tjcpm_records', JSON.stringify(records));
 }
 
-// ★ 時間欄位改用下拉選單，只列出 00 / 30 分的選項，使用者只能從清單裡選，
-//   不會再有機會選到其他分鐘數（比起原生時間選擇器事後校正更直接可靠）。
 function buildHalfHourOptions() {
   let opts = '<option value="">請選擇時間</option>';
   for (let h = 0; h < 24; h++) {
@@ -1642,7 +1606,7 @@ function populateTimeSelects() {
     if (el) el.innerHTML = buildHalfHourOptions();
   });
 }
-// ★ 延遲到 DOMContentLoaded 後再執行，確保元素已就緒
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', populateTimeSelects);
 } else {
@@ -1650,7 +1614,6 @@ if (document.readyState === 'loading') {
 }
 
 function switchTab(tab) {
-  // ★ 防呆：非主管不能切到主管頁，就算被手動呼叫 switchTab('admin') 也擋下來
   if (tab === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
     return;
   }
