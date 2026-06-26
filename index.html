@@ -881,12 +881,9 @@ function sheetDateToLocal(v) {
   if (!v) return '';
   const s = String(v);
   if (!s.includes('T')) return s.split(' ')[0]; // 已經是純日期字串，直接用
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return s.split('T')[0];
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+  // ★ 修正手機日期格式錯誤：不走 new Date()（UTC 轉本地時區可能差一天），
+  //   直接從 ISO 字串切出 "T" 前面的 YYYY-MM-DD。
+  return s.split('T')[0];
 }
 
 // ★ 同樣的陷阱也會發生在「純時間」欄位（開始時間/結束時間）：
@@ -897,11 +894,13 @@ function sheetTimeToLocal(v) {
   if (!v) return '';
   const s = String(v);
   if (!s.includes('T')) return s; // 已經是 "HH:MM" 字串，直接用
-  const d = new Date(s);
-  if (isNaN(d.getTime())) return s;
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
+  // ★ 修正手機時間格式錯誤：不走 new Date()（會因手機時區不同而算錯），
+  //   直接從 ISO 字串切出 "T" 後面的 HH:MM，避免 UTC 轉本地時區的差異。
+  const timePart = s.split('T')[1];
+  if (!timePart) return s;
+  const [hh, mm] = timePart.split(':');
+  if (!hh || !mm) return s;
+  return `${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
 }
 
 // ── JSONP caller ──────────────────────────────────────────────
@@ -1395,6 +1394,27 @@ async function approveRecord(id, decision) {
   loadAdminData();
 }
 
+// ★ 新增：員工撤回待審申請
+async function cancelRecord(id) {
+  const rec = records.find(r => String(r.id) === String(id) || String(r.clientId) === String(id));
+  if (!rec) { showToast('⚠️ 找不到該筆紀錄'); return; }
+  if (!confirm('確定要撤回這筆申請嗎？')) return;
+  rec.status = '已撤回';
+  saveRecords();
+  renderAllList();
+  updateNotifBadge();
+  try {
+    await callGAS({
+      action: 'cancel', clientId: rec.clientId || String(rec.id),
+      empId: rec.empId, type: rec.type
+    });
+    showToast('✅ 申請已撤回');
+  } catch (e) {
+    showToast('✅ 申請已撤回（離線，稍後同步）');
+  }
+  loadMyRecords();
+}
+
 // ── Render ──────────────────────────────────────────────────────
 // 快取最後一次雲端拉取的資料，供 filter 使用
 let _lastCloudRecords = null;
@@ -1595,6 +1615,11 @@ function recordHTML(r, showName = false, showApprove = false) {
       <button class="approve-btn ok" onclick="approveRecord('${r.clientId || r.id}','同意')">✓ 核准</button>
       <button class="approve-btn reject" onclick="approveRecord('${r.clientId || r.id}','拒絕')">✗ 拒絕</button>
     </div>` : '';
+  // ★ 新增：員工本人可以撤回「待審」的申請
+  const cancelRow = !showApprove && r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡') ? `
+    <div class="approve-row">
+      <button class="approve-btn reject" onclick="cancelRecord('${r.clientId || r.id}')">✕ 撤回申請</button>
+    </div>` : '';
   return `<div class="record-item">
     <div class="record-row">
       <div class="record-dot ${dotClass}"></div>
@@ -1604,7 +1629,7 @@ function recordHTML(r, showName = false, showApprove = false) {
       </div>
       <div class="record-time">${rightTime}</div>
     </div>
-    ${approveRow}
+    ${approveRow}${cancelRow}
   </div>`;
 }
 
