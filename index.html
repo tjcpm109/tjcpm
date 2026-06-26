@@ -7,8 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TJCPM">
-<link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP logo.png">
-<link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP logo.png">
 <title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -73,6 +71,7 @@ body {
   font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
   min-height:100vh;
   font-size:var(--fs-body);
+  overflow-x:hidden;
 }
 
 /* ── Login ── */
@@ -147,12 +146,13 @@ body {
   top:0;
   z-index:100;
   box-shadow:var(--shadow);
+  gap:10px;
 }
-.header-left { display:flex; align-items:center; gap:10px; }
-.header-left img { height:42px; }
-.header-right { display:flex; align-items:center; gap:10px; }
-.header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
-.header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; }
+.header-left { display:flex; align-items:center; gap:10px; min-width:0; overflow:hidden; }
+.header-left img { height:42px; max-width:100%; }
+.header-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
+.header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; white-space:nowrap; }
 .logout-btn {
   font-size:var(--fs-label);
   color:var(--accent-red);
@@ -163,9 +163,11 @@ body {
   padding:6px 12px;
   border-radius:6px;
   transition:background 0.15s;
+  white-space:nowrap;
+  flex-shrink:0;
 }
 .logout-btn:hover { background:var(--accent-red-pale); }
-.notif-bell { font-size:21px; cursor:pointer; position:relative; }
+.notif-bell { font-size:21px; cursor:pointer; position:relative; flex-shrink:0; }
 .notif-badge {
   position:absolute;
   top:-4px;
@@ -180,6 +182,18 @@ body {
   display:flex;
   align-items:center;
   justify-content:center;
+}
+
+/* ── 手機窄螢幕：logo 是寬版橫幅，空間不夠時優先保留通知/登出按鈕可見，
+   姓名跟時鐘在頭部本來就跟首頁的大時鐘卡片重複，窄螢幕直接隱藏不影響功能 ── */
+@media (max-width:480px) {
+  .header { padding:10px 12px; gap:8px; }
+  .header-left img { height:24px; }
+  .header-user { display:none; }
+  .header-clock { display:none; }
+  .header-right { gap:8px; }
+  .logout-btn { padding:6px 10px; font-size:13px; }
+  .notif-bell { font-size:19px; }
 }
 
 /* ── Nav ── */
@@ -683,7 +697,7 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">開始時間</label>
-      <select class="select-field" id="leaveStartTime"></select>
+      <input type="time" class="input-field" id="leaveStartTime" step="1800" onchange="snapToHalfHour(this)" />
     </div>
     <div class="input-group">
       <label class="input-label">結束日期</label>
@@ -691,7 +705,7 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">結束時間</label>
-      <select class="select-field" id="leaveEndTime"></select>
+      <input type="time" class="input-field" id="leaveEndTime" step="1800" onchange="snapToHalfHour(this)" />
     </div>
     <div class="input-group">
       <label class="input-label">原因（選填）</label>
@@ -716,11 +730,11 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">開始時間</label>
-      <select class="select-field" id="otStart"></select>
+      <input type="time" class="input-field" id="otStart" step="1800" onchange="snapToHalfHour(this)" />
     </div>
     <div class="input-group">
       <label class="input-label">結束時間</label>
-      <select class="select-field" id="otEnd"></select>
+      <input type="time" class="input-field" id="otEnd" step="1800" onchange="snapToHalfHour(this)" />
     </div>
     <div class="input-group">
       <label class="input-label">加班原因</label>
@@ -751,7 +765,7 @@ body {
     </div>
     <div class="input-group">
       <label class="input-label">時間</label>
-      <select class="select-field" id="suppTime"></select>
+      <input type="time" class="input-field" id="suppTime" step="1800" onchange="snapToHalfHour(this)" />
     </div>
     <div class="input-group">
       <label class="input-label">未打卡原因</label>
@@ -1420,6 +1434,19 @@ function saveRecords() {
   localStorage.setItem('tjcpm_records', JSON.stringify(records));
 }
 
+// ★ 時間欄位只允許 00 或 30 分：就算瀏覽器的時間選擇器讓人手動打字輸入其他分鐘數，
+//   onchange 時也會強制校正到最接近的 00/30（四捨五入），避免存進奇怪的分鐘數。
+function snapToHalfHour(input) {
+  if (!input.value) return;
+  const [h, m] = input.value.split(':').map(Number);
+  let totalMinutes = h * 60 + m;
+  totalMinutes = Math.round(totalMinutes / 30) * 30;
+  if (totalMinutes >= 24 * 60) totalMinutes = 24 * 60 - 30; // 防止四捨五入超過 23:30
+  const snappedH = Math.floor(totalMinutes / 60);
+  const snappedM = totalMinutes % 60;
+  input.value = String(snappedH).padStart(2, '0') + ':' + String(snappedM).padStart(2, '0');
+}
+
 function switchTab(tab) {
   // ★ 防呆：非主管不能切到主管頁，就算被手動呼叫 switchTab('admin') 也擋下來
   if (tab === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
@@ -1456,32 +1483,6 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
     if (e.target === o) o.classList.remove('open');
   });
 });
-
-// ── 時間下拉選單：只允許 :00 和 :30 ────────────────────────────
-(function initTimeSelects() {
-  const ids = ['leaveStartTime', 'leaveEndTime', 'otStart', 'otEnd', 'suppTime'];
-  const options = [];
-  for (let h = 0; h < 24; h++) {
-    const hh = String(h).padStart(2, '0');
-    options.push('<option value="' + hh + ':00">' + hh + ':00</option>');
-    options.push('<option value="' + hh + ':30">' + hh + ':30</option>');
-  }
-  const html = options.join('');
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-  });
-  ['leaveStartTime','otStart'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '08:00';
-  });
-  ['leaveEndTime','otEnd'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '17:00';
-  });
-  const suppEl = document.getElementById('suppTime');
-  if (suppEl) suppEl.value = '08:00';
-})();
 </script>
 </body>
 </html>
