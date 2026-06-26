@@ -1586,6 +1586,10 @@ function recordHTML(r, showName = false, showApprove = false) {
     r.reason || ''
   ].filter(Boolean).join(' · ');
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
+  // ★ 卡片右側的時間欄位之前只認 r.time，但請假/加班是用 startTime/endTime 這組欄位，
+  //   沒有 r.time，所以右側一直是空的（看起來像「時間只顯示在最後/某幾種類型」）。
+  //   這裡改成依序退而求其次：先看 r.time（打卡/補打卡），沒有就用 endTime，再沒有就用 startTime。
+  const rightTime = r.time || r.endTime || r.startTime || '';
   const approveRow = showApprove && r.status === '待審' ? `
     <div class="approve-row">
       <button class="approve-btn ok" onclick="approveRecord('${r.clientId || r.id}','同意')">✓ 核准</button>
@@ -1598,7 +1602,7 @@ function recordHTML(r, showName = false, showApprove = false) {
         <div class="record-type">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
         <div class="record-meta">${meta}</div>
       </div>
-      <div class="record-time">${r.time || ''}</div>
+      <div class="record-time">${rightTime}</div>
     </div>
     ${approveRow}
   </div>`;
