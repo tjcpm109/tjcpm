@@ -684,14 +684,13 @@ body {
   </div>
 
   <div class="nav" id="mainNav">
+    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管</div>
     <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
     <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
     <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
     <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
     <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
-    <div class="nav-tab" data-tab="notifications" onclick="switchTab('notifications')">🔔 通知</div>
     <div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
-    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨‍💼 主管</div>
   </div>
 
   <!-- 打卡 -->
@@ -732,9 +731,7 @@ body {
   <!-- 我的紀錄 -->
   <div class="page" id="page-records">
     <div class="filter-bar">
-      <div class="filter-chip active" onclick="filterRecords('all',this)">全部</div>
-      <div class="filter-chip" onclick="filterRecords('上班',this)">上班</div>
-      <div class="filter-chip" onclick="filterRecords('下班',this)">下班</div>
+      <div class="filter-chip active" onclick="filterRecords('打卡',this)">打卡</div>
       <div class="filter-chip" onclick="filterRecords('請假',this)">請假</div>
       <div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
       <div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
@@ -756,6 +753,7 @@ body {
       <label class="input-label">假別</label>
       <select class="select-field" id="leaveType">
         <option>特休</option>
+        <option>加班補休</option>
         <option>事假</option>
         <option>病假</option>
         <option>公假</option>
@@ -922,12 +920,6 @@ body {
     </div>
   </div>
 
-  <!-- 通知 -->
-  <div class="page" id="page-notifications">
-    <p class="section-title">通知中心</p>
-    <div id="notifList"></div>
-  </div>
-
   <!-- 主管 -->
   <div class="page" id="page-admin">
     <div class="stats-grid">
@@ -963,6 +955,7 @@ body {
       <label class="input-label">假別</label>
       <select class="select-field" id="modalLeaveType">
         <option>特休</option>
+        <option>加班補休</option>
         <option>事假</option>
         <option>病假</option>
         <option>公假</option>
@@ -1011,7 +1004,7 @@ let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || 'null');
 let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
 let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
 let gpsLat = null, gpsLng = null;
-let currentFilter = 'all';
+let currentFilter = '打卡';
 const todayStr = new Date().toISOString().split('T')[0];
 
 // ── JSONP caller ──────────────────────────────────────────────
@@ -1471,7 +1464,11 @@ function filterRecords(type, chip) {
 
 function renderAllList() {
   let mine = records.filter(r => r.empId === currentUser?.empId);
-  if (currentFilter !== 'all') mine = mine.filter(r => r.type === currentFilter);
+  if (currentFilter === '打卡') {
+    mine = mine.filter(r => r.type === '上班' || r.type === '下班');
+  } else if (currentFilter !== 'all') {
+    mine = mine.filter(r => r.type === currentFilter);
+  }
   const el = document.getElementById('allRecordsList');
   el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
 }
@@ -1547,11 +1544,51 @@ async function loadAdminData() {
     const data = await callGAS({ action: 'getAll' });
     document.getElementById('pendingLoading').textContent = '';
     if (data.data && data.data.length > 1) {
-      const rows = data.data.slice(1).reverse();
-      const today = new Date().toLocaleDateString('zh-TW');
-      document.getElementById('statCheckin').innerHTML = rows.filter(r => r[3] === '上班' && new Date(r[0]).toLocaleDateString('zh-TW') === today).length + '<span>人</span>';
-      document.getElementById('statCheckout').innerHTML = rows.filter(r => r[3] === '下班' && new Date(r[0]).toLocaleDateString('zh-TW') === today).length + '<span>人</span>';
-      document.getElementById('adminRecords').innerHTML = rows.map(r => `<div class="record-item">
+      const allRows = data.data.slice(1).reverse();
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const oneWeekAgo = new Date(today);
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      // 修正日期：Google Sheets 有時回傳 1899-12-30 格式的序號字串或空值
+      // r[0]=timestamp, r[1]=empId, r[2]=name, r[3]=type, r[4]=date(string), r[5]=time, r[6]=lat, r[7]=lng
+      function parseSheetDate(val) {
+        if (!val) return null;
+        const d = new Date(val);
+        // 1899-12-30 是 Excel 序號0 的起點，視為無效
+        if (isNaN(d.getTime()) || d.getFullYear() < 2000) return null;
+        return d;
+      }
+      function fmtDate(val) {
+        const d = parseSheetDate(val);
+        if (!d) return '—';
+        return d.toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' });
+      }
+      function fmtTime(val) {
+        // val 可能是 "HH:MM:SS" 字串，或 Date，或 1899 日期序號
+        if (!val) return '—';
+        if (typeof val === 'string' && val.match(/^\d{2}:\d{2}/)) return val.slice(0,5);
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return String(val).slice(0,5) || '—';
+        // 1899 日期實際上只是時間序號
+        if (d.getFullYear() < 2000) {
+          const h = String(d.getUTCHours()).padStart(2,'0');
+          const m = String(d.getUTCMinutes()).padStart(2,'0');
+          return `${h}:${m}`;
+        }
+        return d.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit', hour12:false });
+      }
+
+      // 只保留一週內的打卡紀錄
+      const rows = allRows.filter(r => {
+        const d = parseSheetDate(r[0]);
+        return d && d >= oneWeekAgo;
+      });
+
+      const todayStr = today.toLocaleDateString('zh-TW');
+      document.getElementById('statCheckin').innerHTML = rows.filter(r => r[3] === '上班' && fmtDate(r[0]) === todayStr).length + '<span>人</span>';
+      document.getElementById('statCheckout').innerHTML = rows.filter(r => r[3] === '下班' && fmtDate(r[0]) === todayStr).length + '<span>人</span>';
+      document.getElementById('adminRecords').innerHTML = rows.length ? rows.map(r => `<div class="record-item">
         <div class="record-row">
           <div class="record-dot ${r[3]==='上班'?'dot-green':'dot-red'}"></div>
           <div class="record-info">
@@ -1559,17 +1596,20 @@ async function loadAdminData() {
               <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
               ${r[2]||''}（${r[1]}）
             </div>
-            <div class="record-meta">${new Date(r[0]).toLocaleDateString('zh-TW')}${r[6]?' 📍'+r[6]+','+r[7]:''}</div>
+            <div class="record-meta">${fmtDate(r[0])}${r[6]?' 📍'+r[6]+','+r[7]:''}</div>
           </div>
-          <div class="record-time">${r[5]||''}</div>
+          <div class="record-time">${fmtTime(r[5])}</div>
         </div>
-      </div>`).join('');
+      </div>`).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
     }
   } catch (e) {
     document.getElementById('pendingLoading').textContent = '（離線）';
-    document.getElementById('adminRecords').innerHTML = records.map(r => recordHTML(r, true)).join('');
-    document.getElementById('statCheckin').innerHTML = records.filter(r => r.type === '上班').length + '<span>人</span>';
-    document.getElementById('statCheckout').innerHTML = records.filter(r => r.type === '下班').length + '<span>人</span>';
+    const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const recentRecords = records.filter(r => new Date(r.timestamp) >= oneWeekAgo);
+    document.getElementById('adminRecords').innerHTML = recentRecords.map(r => recordHTML(r, true)).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
+    const todayStr = new Date().toLocaleDateString('zh-TW');
+    document.getElementById('statCheckin').innerHTML = records.filter(r => r.type === '上班' && r.date === todayStr).length + '<span>人</span>';
+    document.getElementById('statCheckout').innerHTML = records.filter(r => r.type === '下班' && r.date === todayStr).length + '<span>人</span>';
   }
 }
 
@@ -1589,7 +1629,6 @@ function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + tab).classList.add('active');
   if (tab === 'records') renderAllList();
-  if (tab === 'notifications') renderNotifications();
   if (tab === 'admin') loadAdminData();
   if (tab === 'profile') renderProfile();
 }
