@@ -1,20 +1,19 @@
 {
   "name": "TJCPM 員工系統",
   "short_name": "TJCPM",
-  "description": "TJCPM 員工打卡與請假管理系統",
-  "start_url": "https://tjcpm109.github.io/tjcpm/",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#111827",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://tjcpm109.github.io/tjcpm/APP　logo.png",
+      "src": "https://tjcpm109.github.io/tjcpm/APP%20logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://tjcpm109.github.io/tjcpm/APP　logo.png",
+      "src": "https://tjcpm109.github.io/tjcpm/APP%20logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+<link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">\n<link rel="manifest" href="manifest.json">
 <title>TJCPM 員工系統 v4</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -844,7 +844,15 @@ box-shadow:var(--shadow);
 <button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
 </div>
 </div>
-<p class="section-title">出缺勤總表（本月）</p>
+
+<p class="section-title">手機桌面 App</p>
+<div class="profile-card" style="text-align:center; padding:18px 15px;">
+<div style="font-size:24px; margin-bottom:8px;">📱</div>
+<div style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">安裝至手機主畫面</div>
+<div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px; line-height:1.4;">將系統加入桌面變成一個獨立 App，免除尋找網址、打卡更加便捷！</div>
+<button class="submit-btn blue" style="margin-top:0; padding:10px 14px; font-size:14px; border-radius:8px;" onclick="showPWAInstructions()">📥 點此開始安裝</button>
+</div>
+\n<p class="section-title">出缺勤總表（本月）</p>
 <div class="attend-stats">
 <div class="attend-card blue">
 <div class="attend-val blue" id="attTotal">—</div>
@@ -895,6 +903,38 @@ box-shadow:var(--shadow);
 </div>
 </div>
 <!-- Modals -->
+<!-- PWA Modals -->
+<div class="modal-overlay" id="modal-pwa-ios">
+<div class="modal">
+<div class="modal-title">📱 iOS 裝置安裝指南<button class="modal-close" onclick="closeModal('pwa-ios')">×</button></div>
+<div style="text-align:left; font-size:14px; color:var(--text-secondary); line-height:1.6; padding:10px 0;">
+<p style="margin-bottom:12px; color:var(--text-primary); font-weight:700;">請依以下步驟將本系統加至您的手機主畫面：</p>
+<div style="background:var(--card-bg-soft); border-radius:8px; padding:12px; margin-bottom:14px; border:1px solid var(--card-border);">
+<p style="margin-bottom:8px;"><strong>步驟 1.</strong> 點擊 Safari 瀏覽器下方的「分享」按鈕 📤（一個含有向上箭頭的方塊圖示）。</p>
+<p><strong>步驟 2.</strong> 在彈出的選單中向下捲動，點選「<strong>加入主畫面</strong>」 ➕。</p>
+</div>
+<p style="font-size:12px; color:var(--accent-orange); text-align:center;">💡 提示：必須使用 iOS 原生 <strong>Safari</strong> 瀏覽器開啟網頁方可看到該選項。</p>
+</div>
+<button class="submit-btn blue" onclick="closeModal('pwa-ios')">我知道了</button>
+</div>
+</div>
+
+<div class="modal-overlay" id="modal-pwa-general">
+<div class="modal">
+<div class="modal-title">📱 網頁安裝至主畫面<button class="modal-close" onclick="closeModal('pwa-general')">×</button></div>
+<div style="text-align:left; font-size:14px; color:var(--text-secondary); line-height:1.6; padding:10px 0;">
+<p style="margin-bottom:12px; color:var(--text-primary); font-weight:700;">若您的裝置未彈出直接安裝提示，請依瀏覽器類型操作：</p>
+<div style="background:var(--card-bg-soft); border-radius:8px; padding:12px; margin-bottom:14px; border:1px solid var(--card-border);">
+<p style="margin-bottom:8px;"><strong>Chrome / Edge (Android/PC)：</strong></p>
+<p style="margin-bottom:12px; padding-left:10px;">點選網頁選單（右上角三個點）選取「<strong>安裝應用程式</strong>」或「<strong>加至主畫面</strong>」。</p>
+<p style="margin-bottom:8px;"><strong>LINE / 社群 App 內建瀏覽器：</strong></p>
+<p style="padding-left:10px; color:var(--accent-orange);">⚠️ 請勿在 LINE 內建視窗中操作！請點擊右上角選單 $\rightarrow$ 選擇「在瀏覽器中開啟」（Safari / Chrome），即可進行安裝。</p>
+</div>
+</div>
+<button class="submit-btn blue" onclick="closeModal('pwa-general')">我知道了</button>
+</div>
+</div>
+
 <div class="modal-overlay" id="modal-leave">
 <div class="modal">
 <div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal('leave')">×</button></div>
@@ -949,7 +989,45 @@ let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
 let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
-const todayStr = new Date().toISOString().split('T')[0];
+const todayStr = new Date().toISOString().split('T')[0];\n\n
+// ── PWA Install Logic ───────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('beforeinstallprompt event fired');
+});
+
+function showPWAInstructions() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) {
+    openModal('pwa-ios');
+  } else if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        showToast('🎉 App 安裝成功！');
+      } else {
+        showToast('ℹ️ 安裝已取消');
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    openModal('pwa-general');
+  }
+}
+
+// Register simple offline support service worker to enable Chrome PWA Install
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered successfully:', reg.scope);
+    }).catch(err => {
+      console.log('SW registration failed:', err);
+    });
+  });
+}
+
 
 // ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
@@ -1251,6 +1329,7 @@ el.innerHTML = notifications.map(n => `
 
 // ── Poll approval status ───────────────────────────────────────
 async function checkApprovalUpdates() {
+if (!currentUser) return;
 try {
 const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
 if (data.status === 'ok') {
