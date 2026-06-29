@@ -659,9 +659,7 @@ box-shadow:var(--shadow);
 <div class="clock-date" id="mainDate"></div>
 <div class="clock-user" id="clockUser"></div>
 </div>
-<div id="pushBanner" class="push-banner" style="display:none">
-🔔 開啟推播通知，及時收到審批結果 <button onclick="requestPush()">開啟</button>
-</div>
+
 <div class="gps-bar">
 <div class="gps-dot" id="gpsDot"></div>
 <span class="gps-text" id="gpsText">取得位置中…</span>
@@ -804,11 +802,7 @@ box-shadow:var(--shadow);
 </div>
 <!-- 個人資料 -->
 <div class="page" id="page-profile">
-<div class="profile-card">
-<div class="profile-avatar" id="profileAvatar">?</div>
-<div class="profile-name" id="profileName">—</div>
-<div class="profile-empid" id="profileEmpId">員編：—</div>
-</div>
+
 <p class="section-title">基本資料</p>
 <div class="profile-card">
 <div class="profile-meta-row">
@@ -854,7 +848,7 @@ box-shadow:var(--shadow);
 <div class="attend-stats">
 <div class="attend-card blue">
 <div class="attend-val blue" id="attTotal">—</div>
-<div class="attend-lbl">出勤天數</div>
+<div class="attend-lbl">加班次數</div>
 </div>
 <div class="attend-card red">
 <div class="attend-val red" id="attMissed">—</div>
@@ -1067,7 +1061,7 @@ if (el) el.value = todayStr;
 initGPS();
 renderAllList();
 updateNotifBadge();
-if (Notification && Notification.permission === 'default') document.getElementById('pushBanner').style.display = 'flex';
+
 if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
 if (isAdmin) switchTab('admin');
 checkConnectivity();
@@ -1089,7 +1083,7 @@ document.getElementById('loginErr').style.display = 'none';
 try {
 const data = await callGAS({ action: 'login', empId, password });
 if (data.status === 'ok') {
-currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate || '' };
+currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate || '', quota: data.quota || null };
 sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
 showApp();
 } else {
@@ -1200,7 +1194,7 @@ showToast('此裝置不支援通知');
 return;
 }
 const perm = await Notification.requestPermission();
-document.getElementById('pushBanner').style.display = 'none';
+
 if (perm === 'granted') {
 showToast('✅ 推播通知已開啟');
 addNotif('system', '🔔 通知已開啟，審批結果將即時通知您');
@@ -1210,7 +1204,7 @@ showToast('⚠️ 未允許通知權限');
 }
 
 function sendPush(title, body) {
-if (Notification && Notification.permission === 'granted') new Notification(title, { body });
+  // Push notifications disabled as requested
 }
 
 function addNotif(type, message) {
@@ -1259,7 +1253,12 @@ el.innerHTML = notifications.map(n => `
 async function checkApprovalUpdates() {
 try {
 const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-if (data.status === 'ok' && data.updates) {
+if (data.status === 'ok') {
+if (data.quota) {
+currentUser.quota = data.quota;
+sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+}
+if (data.updates) {
 data.updates.forEach(u => {
 const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
 if (existing) {
@@ -1690,14 +1689,14 @@ if (el) el.innerHTML = html;
 });
 ['leaveStartTime','otStart'].forEach(id => {
 const el = document.getElementById(id);
-if (el) el.value = '08:00';
+if (el) el.value = '09:00';
 });
 ['leaveEndTime','otEnd'].forEach(id => {
 const el = document.getElementById(id);
-if (el) el.value = '17:00';
+if (el) el.value = '18:00';
 });
 const suppEl = document.getElementById('suppTime');
-if (suppEl) suppEl.value = '08:00';
+if (suppEl) suppEl.value = '09:00';
 })();
 
 // ── 主管簽核：展開意見欄 ─────────────────────────────────────
@@ -1779,20 +1778,134 @@ if (!currentUser) return;
 const name = currentUser.name || '—';
 const empId = currentUser.empId || '—';
 const initial = name.charAt(0) || '?';
-document.getElementById('profileAvatar').textContent = initial;
-document.getElementById('profileName').textContent = name;
-document.getElementById('profileEmpId').textContent = '員編：' + empId;
+const avatarEl = document.getElementById('profileAvatar');
+if (avatarEl) avatarEl.textContent = initial;
+const nameEl = document.getElementById('profileName');
+if (nameEl) nameEl.textContent = name;
+const empIdEl = document.getElementById('profileEmpId');
+if (empIdEl) empIdEl.textContent = '員編：' + empId;
 document.getElementById('profileNameVal').textContent = name;
 document.getElementById('profileEmpIdVal').textContent = empId;
 document.getElementById('profileJoinDate').textContent = currentUser.joinDate || '—';
 
 calcAttendance();
 
-const leaves = records.filter(r => r.empId === currentUser.empId && r.type === '請假');
+// ── 請假紀錄與額度 (動態表格呈現) ──
 const leaveEl = document.getElementById('profileLeaveList');
-leaveEl.innerHTML = leaves.length
-? leaves.map(r => recordHTML(r)).join('')
-: '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>';
+const quota = currentUser.quota || JSON.parse(localStorage.getItem('tjcpm_quota')) || {
+  specialLeaveDays: 0,
+  compLeaveDays: 0,
+  sickLeaveDays: 0,
+  funeralLeaveDays: 0,
+  personalLeaveDays: 0
+};
+
+// 計算本年度主管審核同意的已用請假時數
+const currentYear = new Date().getFullYear();
+const myApprovedLeaves = records.filter(r => {
+  if (r.empId !== currentUser.empId || r.type !== '請假' || r.status !== '同意') return false;
+  const d = r.date || r.timestamp;
+  if (!d) return false;
+  return new Date(d).getFullYear() === currentYear;
+});
+
+const usedHours = {
+  '特休': 0,
+  '加班補休': 0,
+  '事假': 0,
+  '病假': 0,
+  '公假': 0,
+  '婚假': 0,
+  '喪假': 0
+};
+
+myApprovedLeaves.forEach(r => {
+  const hours = getLeaveRecordHours(r);
+  const subType = r.subType || '事假';
+  if (usedHours[subType] !== undefined) {
+    usedHours[subType] += hours;
+  } else {
+    usedHours[subType] = hours;
+  }
+});
+
+function getLeaveRecordHours(r) {
+  if (r.hours) return Number(r.hours);
+  if (!r.date) return 0;
+  const startD = new Date(r.date);
+  const endD = new Date(r.endDate || r.date);
+  const daysCount = Math.round(Math.abs(endD - startD) / (1000 * 60 * 60 * 24)) + 1;
+  if (r.startTime && r.endTime) {
+    const sh = parseInt(r.startTime.split(':')[0]);
+    const sm = parseInt(r.startTime.split(':')[1] || 0);
+    const eh = parseInt(r.endTime.split(':')[0]);
+    const em = parseInt(r.endTime.split(':')[1] || 0);
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    let diffMin = endMin - startMin;
+    if (sh <= 12 && eh >= 13) diffMin -= 60;
+    let hours = diffMin / 60;
+    if (hours < 0) hours = 0;
+    return hours * daysCount;
+  }
+  return 8 * daysCount;
+}
+
+const quotaHours = {
+  '特休': (quota.specialLeaveDays || 0) * 8,
+  '加班補休': (quota.compLeaveDays || 0) * 8,
+  '事假': (quota.personalLeaveDays || 14) * 8,
+  '病假': (quota.sickLeaveDays || 30) * 8,
+  '公假': '-',
+  '婚假': 8 * 8,
+  '喪假': (quota.funeralLeaveDays || 8) * 8
+};
+
+const rowsHTML = [
+  { name: '特休', code: '特休' },
+  { name: '加班補休', code: '加班補休' },
+  { name: '事假', code: '事假' },
+  { name: '病假', code: '病假' },
+  { name: '公假', code: '公假' },
+  { name: '婚假', code: '婚假' },
+  { name: '喪假', code: '喪假' }
+].map(item => {
+  const ent = quotaHours[item.code];
+  const used = usedHours[item.code] || 0;
+  let rem = '-';
+  if (ent !== '-') {
+    rem = Math.max(0, ent - used);
+  }
+  return `
+    <tr style="border-bottom: 1px solid var(--card-border);">
+      <td style="padding: 10px; font-weight: 600; color: var(--text-primary);">${item.name}</td>
+      <td style="padding: 10px; text-align: center; color: var(--text-secondary);">${ent === '-' ? '無上限' : ent + 'h'}</td>
+      <td style="padding: 10px; text-align: center; color: var(--accent-red);">${used > 0 ? used + 'h' : '0h'}</td>
+      <td style="padding: 10px; text-align: center; color: var(--green-light); font-weight: 700;">${rem === '-' ? '—' : rem + 'h'}</td>
+    </tr>
+  `;
+}).join('');
+
+leaveEl.innerHTML = `
+<div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow);">
+  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+    <thead>
+      <tr style="border-bottom: 2px solid var(--green-border); text-align: left; color: var(--blue-light); font-size: 13px;">
+        <th style="padding: 8px 10px;">假別</th>
+        <th style="padding: 8px 10px; text-align: center;">應有時數</th>
+        <th style="padding: 8px 10px; text-align: center;">已用時數</th>
+        <th style="padding: 8px 10px; text-align: center;">剩餘時數</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHTML}
+    </tbody>
+  </table>
+  <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right;">
+    💡 統計年度：${currentYear} 年 (已用時數以審核同意為準)
+  </div>
+</div>
+`;
 }
 
 function calcAttendance() {
@@ -1807,16 +1920,8 @@ function calcAttendance() {
     return dt.getFullYear() === thisYear && (dt.getMonth() + 1) === thisMonth;
   });
 
-  // 1. 出勤天數 (上班打卡 + 審核同意的補打卡(上班) 的不重複日期數)
-  const checkinDates = new Set();
-  myRecords.forEach(r => {
-    if (r.type === '上班' && r.date) {
-      checkinDates.add(r.date);
-    } else if (r.type === '補打卡' && r.subType === '上班' && r.status === '同意' && r.date) {
-      checkinDates.add(r.date);
-    }
-  });
-  const checkinDays = checkinDates.size;
+  // 1. 加班次數 (本月審核同意的加班申請筆數)
+  const otCount = myRecords.filter(r => r.type === '加班' && r.status === '同意').length;
 
   // 2. 漏打卡次數 (補打卡申請中，狀態為待審或同意的次數)
   const missedCount = myRecords.filter(r => r.type === '補打卡' && (r.status === '待審' || r.status === '同意')).length;
@@ -1878,7 +1983,7 @@ function calcAttendance() {
     }
   });
 
-  document.getElementById('attTotal').textContent = checkinDays;
+  document.getElementById('attTotal').textContent = otCount;
   document.getElementById('attMissed').textContent = missedCount;
   document.getElementById('attLate').textContent = `${lateCount} / ${earlyLeaveCount}`;
   document.getElementById('attLeave').textContent = totalLeaveDays % 1 === 0 ? totalLeaveDays : totalLeaveDays.toFixed(1);
