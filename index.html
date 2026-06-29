@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="manifest" href="manifest.json">
-<title>TJCPM 員工系統 v4</title>
+<title>TJCPM 員工系統 v17</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -687,11 +687,15 @@ box-shadow:var(--shadow);
 </div>
 <!-- 我的紀錄 -->
 <div class="page" id="page-records">
+<p class="section-title">出缺勤總表（當年度累計）</p>
+<div id="profileYearAttendance"></div>
+
 <div class="filter-bar">
 <div class="filter-chip active" onclick="filterRecords('打卡',this)">打卡</div>
 <div class="filter-chip" onclick="filterRecords('請假',this)">請假</div>
 <div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
 <div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
+<div class="filter-chip" onclick="filterRecords('本月',this)">本月</div>
 </div>
 <div id="recordsRangeNotice" style="font-size:12px; color:var(--text-secondary); margin-bottom:12px; background:var(--card-bg); border:1px solid var(--card-border); padding:8px 12px; border-radius:8px;"></div>
 <div class="record-list" id="allRecordsList"></div>
@@ -855,25 +859,8 @@ box-shadow:var(--shadow);
 <button class="submit-btn blue" style="margin-top:0; padding:10px 14px; font-size:14px; border-radius:8px;" onclick="showPWAInstructions()">📥 點此開始安裝</button>
 </div>
 
-<p class="section-title">出缺勤總表（本月）</p>
-<div class="attend-stats">
-<div class="attend-card blue">
-<div class="attend-val blue" id="attTotal">—</div>
-<div class="attend-lbl">加班次數</div>
-</div>
-<div class="attend-card red">
-<div class="attend-val red" id="attMissed">—</div>
-<div class="attend-lbl">漏打卡</div>
-</div>
-<div class="attend-card orange">
-<div class="attend-val orange" id="attLate">—</div>
-<div class="attend-lbl">遲到 / 早退</div>
-</div>
-<div class="attend-card purple">
-<div class="attend-val purple" id="attLeave">—</div>
-<div class="attend-lbl">請假天數</div>
-</div>
-</div>
+<p class="section-title">出缺勤總表（當年度累計）</p>
+<div id="profileYearAttendance"></div>
 <p class="section-title">請假紀錄</p>
 <div class="record-list" id="profileLeaveList">
 <div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>
@@ -1078,7 +1065,91 @@ function getPersonalYearRange(joinDateStr) {
   return {
     start: cycleStart,
     end: cycleEnd,
-    label: `${fmt(cycleStart)} ～ ${fmt(cycleEnd)}`
+    label: `${fmt(cycleStart)} ～ 
+
+// ── 是否為當月 ──────────────────────────────────────────
+function isCurrentMonth(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && (d.getMonth() + 1) === (now.getMonth() + 1);
+}
+
+// ── 個人到職週年當年度累計出缺勤計算 ──────────────────────────────────────────
+function calcYearlyAttendance() {
+  const range = getPersonalYearRange(currentUser?.joinDate);
+  const myRecords = records.filter(r => {
+    if (r.empId !== currentUser?.empId) return false;
+    const d = r.date || r.timestamp;
+    if (!d) return false;
+    const dt = new Date(d);
+    return dt >= range.start && dt <= range.end;
+  });
+
+  const otCount = myRecords.filter(r => r.type === '加班' && r.status === '同意').length;
+  const missedCount = myRecords.filter(r => r.type === '補打卡' && (r.status === '待審' || r.status === '同意')).length;
+
+  const lateCount = myRecords.filter(r => {
+    let timeStr = '';
+    if (r.type === '上班') {
+      timeStr = r.time;
+    } else if (r.type === '補打卡' && r.subType === '上班' && r.status === '同意') {
+      timeStr = r.time;
+    }
+    if (!timeStr) return false;
+    const parts = timeStr.split(':');
+    const h = parseInt(parts[0], 10), m = parseInt(parts[1] || 0, 10);
+    return h > 9 || (h === 9 && m > 0);
+  }).length;
+
+  const earlyLeaveCount = myRecords.filter(r => {
+    let timeStr = '';
+    if (r.type === '下班') {
+      timeStr = r.time;
+    } else if (r.type === '補打卡' && r.subType === '下班' && r.status === '同意') {
+      timeStr = r.time;
+    }
+    if (!timeStr) return false;
+    const parts = timeStr.split(':');
+    const h = parseInt(parts[0], 10), m = parseInt(parts[1] || 0, 10);
+    return h < 18;
+  }).length;
+
+  let totalLeaveDays = 0;
+  myRecords.filter(r => r.type === '請假' && r.status === '同意').forEach(r => {
+    if (r.hours) {
+      totalLeaveDays += Number(r.hours) / 8;
+    } else if (r.date) {
+      const startD = new Date(r.date);
+      const endD = new Date(r.endDate || r.date);
+      const daysCount = Math.round(Math.abs(endD - startD) / (1000 * 60 * 60 * 24)) + 1;
+      if (r.startTime && r.endTime) {
+        const sh = parseInt(r.startTime.split(':')[0], 10);
+        const sm = parseInt(r.startTime.split(':')[1] || 0, 10);
+        const eh = parseInt(r.endTime.split(':')[0], 10);
+        const em = parseInt(r.endTime.split(':')[1] || 0, 10);
+        const startMin = sh * 60 + sm;
+        const endMin = eh * 60 + em;
+        let diffMin = endMin - startMin;
+        if (sh <= 12 && eh >= 13) diffMin -= 60;
+        let hours = diffMin / 60;
+        if (hours < 0) hours = 0;
+        totalLeaveDays += (hours / 8) * daysCount;
+      } else {
+        totalLeaveDays += daysCount;
+      }
+    }
+  });
+
+  return {
+    otCount,
+    missedCount,
+    lateCount: `${lateCount} / ${earlyLeaveCount}`,
+    leaveDays: totalLeaveDays % 1 === 0 ? totalLeaveDays : totalLeaveDays.toFixed(1),
+    label: range.label
+  };
+}
+${fmt(cycleEnd)}`
   };
 }
 
@@ -1658,28 +1729,45 @@ renderAllList();
 }
 
 function renderAllList() {
-let mine = records.filter(r => r.empId === currentUser?.empId);
+  if (!currentUser) return;
+  let mine = records.filter(r => r.empId === currentUser?.empId);
 
-const range = getPersonalYearRange(currentUser?.joinDate);
-const noticeEl = document.getElementById('recordsRangeNotice');
-if (noticeEl) {
-  noticeEl.innerHTML = `📅 顯示個人年度統計區間：<strong>${range.label}</strong>`;
-}
+  const range = getPersonalYearRange(currentUser?.joinDate);
+  const noticeEl = document.getElementById('recordsRangeNotice');
+  if (noticeEl) {
+    noticeEl.innerHTML = `📅 顯示個人年度統計區間：<strong>${range.label}</strong>`;
+  }
 
-mine = mine.filter(r => {
-  const dStr = r.date || r.timestamp;
-  if (!dStr) return false;
-  const d = new Date(dStr);
-  return d >= range.start && d <= range.end;
-});
+  // 1.「打卡」與「本月」特別過濾
+  if (currentFilter === '打卡') {
+    mine = mine.filter(r => {
+      if (r.type !== '上班' && r.type !== '下班') return false;
+      const dStr = r.date || r.timestamp;
+      return isCurrentMonth(dStr);
+    });
+  } else if (currentFilter === '本月') {
+    mine = mine.filter(r => {
+      const dStr = r.date || r.timestamp;
+      return isCurrentMonth(dStr);
+    });
+  } else {
+    mine = mine.filter(r => {
+      const dStr = r.date || r.timestamp;
+      if (!dStr) return false;
+      const d = new Date(dStr);
+      return d >= range.start && d <= range.end;
+    });
+    
+    if (currentFilter !== 'all') {
+      mine = mine.filter(r => r.type === currentFilter);
+    }
+  }
 
-if (currentFilter === '打卡') {
-mine = mine.filter(r => r.type === '上班' || r.type === '下班');
-} else if (currentFilter !== 'all') {
-mine = mine.filter(r => r.type === currentFilter);
-}
-const el = document.getElementById('allRecordsList');
-el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">此年度區間尚無紀錄</div></div>';
+  // 同步重算出缺勤總表，讓"我的紀錄"頁籤隨時更新本月出缺勤數據
+  calcAttendance();
+
+  const el = document.getElementById('allRecordsList');
+  el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">此統計區間尚無紀錄</div></div>';
 }
 
 function recordHTML(r, showName = false, showApprove = false) {
@@ -1989,7 +2077,46 @@ document.getElementById('profileJoinDate').textContent = currentUser.joinDate ||
 
 calcAttendance();
 
-// ── 請假紀錄與額度 (動態表格呈現) ──
+  // ── 當年度累計至當月的出缺勤表 (動態表格呈現) ──
+  const yearlyStats = calcYearlyAttendance();
+  const profileYearAttendanceEl = document.getElementById('profileYearAttendance');
+  if (profileYearAttendanceEl) {
+    profileYearAttendanceEl.innerHTML = `
+    <div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 20px; box-shadow: var(--shadow);">
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--blue-border); text-align: left; color: var(--blue-light); font-size: 13px;">
+            <th style="padding: 10px 8px;">項目</th>
+            <th style="padding: 10px 8px; text-align: center;">當年度累計數值</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--card-border);">
+            <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 500;">📅 累計請假天數</td>
+            <td style="padding: 12px 8px; text-align: center; color: var(--accent-purple); font-weight: 700; font-size: 16px;">${yearlyStats.leaveDays} 天</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--card-border);">
+            <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 500;">⏰ 累計加班次數</td>
+            <td style="padding: 12px 8px; text-align: center; color: var(--blue-light); font-weight: 700; font-size: 16px;">${yearlyStats.otCount} 次</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--card-border);">
+            <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 500;">🔄 累計漏打卡次數</td>
+            <td style="padding: 12px 8px; text-align: center; color: var(--accent-red); font-weight: 700; font-size: 16px;">${yearlyStats.missedCount} 次</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--card-border);">
+            <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 500;">⚠️ 累計遲到 / 早退</td>
+            <td style="padding: 12px 8px; text-align: center; color: var(--accent-orange); font-weight: 700; font-size: 16px;">${yearlyStats.lateCount} 次</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right;">
+        💡 統計區間：<strong>${yearlyStats.label}</strong> (統計至當月)
+      </div>
+    </div>
+    `;
+  }
+
+  // ── 請假紀錄與額度 (動態表格呈現) ──
 const leaveEl = document.getElementById('profileLeaveList');
 const quota = currentUser.quota || JSON.parse(localStorage.getItem('tjcpm_quota')) || {
   specialLeaveDays: 0,
@@ -2106,11 +2233,11 @@ const rowsA = [
   }).join('');
 
   const otherLeaves = [
-    { name: '事假 (無給薪)', code: '事假', note: '一年內最長 14 天，事假不給薪' },
-    { name: '病假 (半薪)', code: '病假', note: '一年內 30 天內半薪，超過不給薪' },
-    { name: '公假 (全薪)', code: '公假', note: '公假期間薪資照給，核實核給' },
-    { name: '婚假 (全薪)', code: '婚假', note: '結婚給予 8 天，工資照給' },
-    { name: '喪假 (全薪)', code: '喪假', note: '依親等給予 3~8 天喪假，工資照給' }
+    { name: '事假 (無給薪)', code: '事假', note: '依勞基法請假規則第7條，一年內最長 14 天，事假不給薪' },
+    { name: '病假 (半薪)', code: '病假', note: '依勞基法請假規則第4條，未住院傷病假一年內 30 天內半薪，超過不給薪' },
+    { name: '公假 (全薪)', code: '公假', note: '依勞基法請假規則第8條，依法給予公假，公假期間工資照給，依實際需要核實給假' },
+    { name: '婚假 (全薪)', code: '婚假', note: '依勞基法請假規則第2條，結婚給予婚假 8 天，工資照給 (可自登記日前10天起3個月內彈性請畢)' },
+    { name: '喪假 (全薪)', code: '喪假', note: '依勞基法請假規則第3條，依親等給予 3~8 天喪假 (配偶/父母死喪給8天；配偶父母/子女/祖父母給6天；兄弟姊妹給3天)，工資照給' }
   ];
 
   const rowsB = otherLeaves.map(item => {
@@ -2128,7 +2255,7 @@ const rowsA = [
   }).join('');
 
   leaveEl.innerHTML = `
-  <div style="font-size: 13px; font-weight: 700; color: var(--blue-light); margin-bottom: 8px; border-left: 3px solid var(--blue-light); padding-left: 8px; margin-top: 10px;">📊 特休與加班補休 (標準額度表)</div>
+  <div style="font-size: 13px; font-weight: 700; color: var(--blue-light); margin-bottom: 8px; border-left: 3px solid var(--blue-light); padding-left: 8px; margin-top: 10px;">📊 特休與加班補休</div>
   <div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 20px; box-shadow: var(--shadow);">
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
       <thead>
@@ -2140,7 +2267,7 @@ const rowsA = [
         </tr>
       </thead>
       <tbody>
-        \${rowsA}
+        ${rowsA}
       </tbody>
     </table>
   </div>
@@ -2157,11 +2284,11 @@ const rowsA = [
         </tr>
       </thead>
       <tbody>
-        \${rowsB}
+        ${rowsB}
       </tbody>
     </table>
     <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right;">
-      💡 個人統計年度區間：<strong>\${range.label}</strong> (已用時數以審核同意為準)
+      💡 個人統計年度區間：<strong>${range.label}</strong> (已用時數以審核同意為準)
     </div>
   </div>
   `;
