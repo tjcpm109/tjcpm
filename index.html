@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="manifest" href="manifest.json">
-<title>TJCPM 員工系統 v17</title>
+<title>TJCPM 員工系統 v4</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -687,8 +687,25 @@ box-shadow:var(--shadow);
 </div>
 <!-- 我的紀錄 -->
 <div class="page" id="page-records">
-<p class="section-title">出缺勤總表（當年度累計）</p>
-<div id="profileYearAttendance"></div>
+<p class="section-title">出缺勤總表（本月）</p>
+<div class="attend-stats">
+<div class="attend-card blue">
+<div class="attend-val blue" id="attTotal">—</div>
+<div class="attend-lbl">加班次數</div>
+</div>
+<div class="attend-card red">
+<div class="attend-val red" id="attMissed">—</div>
+<div class="attend-lbl">漏打卡/補打卡</div>
+</div>
+<div class="attend-card orange">
+<div class="attend-val orange" id="attLate">—</div>
+<div class="attend-lbl">遲到 / 早退</div>
+</div>
+<div class="attend-card purple">
+<div class="attend-val purple" id="attLeave">—</div>
+<div class="attend-lbl">請假天數</div>
+</div>
+</div>
 
 <div class="filter-bar">
 <div class="filter-chip active" onclick="filterRecords('打卡',this)">打卡</div>
@@ -861,6 +878,9 @@ box-shadow:var(--shadow);
 
 <p class="section-title">出缺勤總表（當年度累計）</p>
 <div id="profileYearAttendance"></div>
+
+<div id="profileQuotaTable"></div>
+
 <p class="section-title">請假紀錄</p>
 <div class="record-list" id="profileLeaveList">
 <div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>
@@ -2100,7 +2120,7 @@ calcAttendance();
             <td style="padding: 12px 8px; text-align: center; color: var(--blue-light); font-weight: 700; font-size: 16px;">${yearlyStats.otCount} 次</td>
           </tr>
           <tr style="border-bottom: 1px solid var(--card-border);">
-            <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 500;">🔄 累計漏打卡次數</td>
+            <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 500;">🔄 累計漏打卡/補打卡次數</td>
             <td style="padding: 12px 8px; text-align: center; color: var(--accent-red); font-weight: 700; font-size: 16px;">${yearlyStats.missedCount} 次</td>
           </tr>
           <tr style="border-bottom: 1px solid var(--card-border);">
@@ -2117,7 +2137,7 @@ calcAttendance();
   }
 
   // ── 請假紀錄與額度 (動態表格呈現) ──
-const leaveEl = document.getElementById('profileLeaveList');
+const quotaEl = document.getElementById('profileQuotaTable');
 const quota = currentUser.quota || JSON.parse(localStorage.getItem('tjcpm_quota')) || {
   specialLeaveDays: 0,
   compLeaveDays: 0,
@@ -2254,7 +2274,7 @@ const rowsA = [
     `;
   }).join('');
 
-  leaveEl.innerHTML = `
+  if (quotaEl) { quotaEl.innerHTML = `
   <div style="font-size: 13px; font-weight: 700; color: var(--blue-light); margin-bottom: 8px; border-left: 3px solid var(--blue-light); padding-left: 8px; margin-top: 10px;">📊 特休與加班補休</div>
   <div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 20px; box-shadow: var(--shadow);">
     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -2292,6 +2312,16 @@ const rowsA = [
     </div>
   </div>
   `;
+  }
+
+  // ── 請假紀錄列表 (個人歷史明細) ──
+  const leaves = records.filter(r => r.empId === currentUser.empId && r.type === '請假');
+  const leaveEl = document.getElementById('profileLeaveList');
+  if (leaveEl) {
+    leaveEl.innerHTML = leaves.length
+      ? leaves.map(r => recordHTML(r)).join('')
+      : '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>';
+  }
 }
 
 function calcAttendance() {
