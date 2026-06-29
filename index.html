@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">\n<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+<link rel="manifest" href="manifest.json">
 <title>TJCPM 員工系統 v4</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -852,7 +853,8 @@ box-shadow:var(--shadow);
 <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px; line-height:1.4;">將系統加入桌面變成一個獨立 App，免除尋找網址、打卡更加便捷！</div>
 <button class="submit-btn blue" style="margin-top:0; padding:10px 14px; font-size:14px; border-radius:8px;" onclick="showPWAInstructions()">📥 點此開始安裝</button>
 </div>
-\n<p class="section-title">出缺勤總表（本月）</p>
+
+<p class="section-title">出缺勤總表（本月）</p>
 <div class="attend-stats">
 <div class="attend-card blue">
 <div class="attend-val blue" id="attTotal">—</div>
@@ -989,7 +991,9 @@ let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
 let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
-const todayStr = new Date().toISOString().split('T')[0];\n\n
+const todayStr = new Date().toISOString().split('T')[0];
+
+
 // ── PWA Install Logic ───────────────────────────────────────────
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
