@@ -693,6 +693,7 @@ box-shadow:var(--shadow);
 <div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
 <div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
 </div>
+<div id="recordsRangeNotice" style="font-size:12px; color:var(--text-secondary); margin-bottom:12px; background:var(--card-bg); border:1px solid var(--card-border); padding:8px 12px; border-radius:8px;"></div>
 <div class="record-list" id="allRecordsList"></div>
 </div>
 <!-- 請假 -->
@@ -1032,6 +1033,54 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+
+
+// ── 個人到職週年年度區間計算 ──────────────────────────────────────────
+function getPersonalYearRange(joinDateStr) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  if (!joinDateStr || joinDateStr === '—' || joinDateStr.trim() === '') {
+    const start = new Date(now.getFullYear(), 0, 1);
+    const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+    return { start, end, label: `${now.getFullYear()} 年 (月曆年)` };
+  }
+  
+  const cleanStr = joinDateStr.replace(/\./g, '-');
+  const parts = cleanStr.split('-');
+  const joinYear = parseInt(parts[0], 10);
+  const joinMonth = parseInt(parts[1], 10) - 1;
+  const joinDay = parseInt(parts[2], 10) || 1;
+  
+  let startYear = joinYear;
+  let cycleStart = new Date(startYear, joinMonth, joinDay);
+  
+  if (cycleStart > today) {
+    return {
+      start: cycleStart,
+      end: new Date(startYear + 1, joinMonth, joinDay - 1, 23, 59, 59),
+      label: `${startYear} 年度 (個人年)`
+    };
+  }
+  
+  while (true) {
+    const nextCycleStart = new Date(startYear + 1, joinMonth, joinDay);
+    if (today >= cycleStart && today < nextCycleStart) {
+      break;
+    }
+    cycleStart = nextCycleStart;
+    startYear++;
+    if (startYear > 2100) break;
+  }
+  
+  const cycleEnd = new Date(startYear + 1, joinMonth, joinDay - 1, 23, 59, 59);
+  const fmt = (d) => `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  return {
+    start: cycleStart,
+    end: cycleEnd,
+    label: `${fmt(cycleStart)} ～ ${fmt(cycleEnd)}`
+  };
+}
 
 // ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
@@ -1558,13 +1607,27 @@ renderAllList();
 
 function renderAllList() {
 let mine = records.filter(r => r.empId === currentUser?.empId);
+
+const range = getPersonalYearRange(currentUser?.joinDate);
+const noticeEl = document.getElementById('recordsRangeNotice');
+if (noticeEl) {
+  noticeEl.innerHTML = `📅 顯示個人年度統計區間：<strong>${range.label}</strong>`;
+}
+
+mine = mine.filter(r => {
+  const dStr = r.date || r.timestamp;
+  if (!dStr) return false;
+  const d = new Date(dStr);
+  return d >= range.start && d <= range.end;
+});
+
 if (currentFilter === '打卡') {
 mine = mine.filter(r => r.type === '上班' || r.type === '下班');
 } else if (currentFilter !== 'all') {
 mine = mine.filter(r => r.type === currentFilter);
 }
 const el = document.getElementById('allRecordsList');
-el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
+el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">此年度區間尚無紀錄</div></div>';
 }
 
 function recordHTML(r, showName = false, showApprove = false) {
@@ -1884,13 +1947,16 @@ const quota = currentUser.quota || JSON.parse(localStorage.getItem('tjcpm_quota'
   personalLeaveDays: 0
 };
 
-// 計算本年度主管審核同意的已用請假時數
-const currentYear = new Date().getFullYear();
+// 依到職月計算個人年度區間
+const range = getPersonalYearRange(currentUser.joinDate);
+
+// 計算本個人年度主管審核同意的已用請假時數
 const myApprovedLeaves = records.filter(r => {
   if (r.empId !== currentUser.empId || r.type !== '請假' || r.status !== '同意') return false;
   const d = r.date || r.timestamp;
   if (!d) return false;
-  return new Date(d).getFullYear() === currentYear;
+  const dt = new Date(d);
+  return dt >= range.start && dt <= range.end;
 });
 
 const usedHours = {
@@ -1935,9 +2001,34 @@ function getLeaveRecordHours(r) {
   return 8 * daysCount;
 }
 
+// 計算本個人年度內審核同意的總加班時數，自動轉入加班補休額度
+const myApprovedOvertimes = records.filter(r => {
+  if (r.empId !== currentUser.empId || r.type !== '加班' || r.status !== '同意') return false;
+  const d = r.date || r.timestamp;
+  if (!d) return false;
+  const dt = new Date(d);
+  return dt >= range.start && dt <= range.end;
+});
+
+let totalOtHours = 0;
+myApprovedOvertimes.forEach(r => {
+  if (r.hours) {
+    const val = parseFloat(r.hours);
+    if (!isNaN(val)) totalOtHours += val;
+  } else if (r.startTime && r.endTime) {
+    const sh = parseInt(r.startTime.split(':')[0], 10);
+    const sm = parseInt(r.startTime.split(':')[1] || 0, 10);
+    const eh = parseInt(r.endTime.split(':')[0], 10);
+    const em = parseInt(r.endTime.split(':')[1] || 0, 10);
+    let diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff < 0) diff = 0;
+    totalOtHours += diff / 60;
+  }
+});
+
 const quotaHours = {
   '特休': (quota.specialLeaveDays || 0) * 8,
-  '加班補休': (quota.compLeaveDays || 0) * 8,
+  '加班補休': totalOtHours, // 自動轉入加班時數
   '事假': (quota.personalLeaveDays || 14) * 8,
   '病假': (quota.sickLeaveDays || 30) * 8,
   '公假': '-',
@@ -1986,7 +2077,7 @@ leaveEl.innerHTML = `
     </tbody>
   </table>
   <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right;">
-    💡 統計年度：${currentYear} 年 (已用時數以審核同意為準)
+    💡 個人統計年度區間：<strong>${range.label}</strong> (已用時數以審核同意為準)
   </div>
 </div>
 `;
