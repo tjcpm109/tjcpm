@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="manifest" href="manifest.json">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統 v4</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1193,7 +1193,10 @@ initGPS();
 renderAllList();
 updateNotifBadge();
 
-if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
+if (currentUser.role !== 'admin') {
+  checkApprovalUpdates();
+  setInterval(checkApprovalUpdates, 60000);
+}
 if (isAdmin) switchTab('admin');
 checkConnectivity();
 setInterval(checkConnectivity, 30000);
@@ -1382,41 +1385,90 @@ el.innerHTML = notifications.map(n => `
 
 // ── Poll approval status ───────────────────────────────────────
 async function checkApprovalUpdates() {
-if (!currentUser) return;
-try {
-const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-if (data.status === 'ok') {
-if (data.quota) {
-currentUser.quota = data.quota;
-sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
-}
-if (data.updates) {
-data.updates.forEach(u => {
-const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
-if (existing) {
-let changed = false;
-if (existing.status !== u.status) {
-existing.status = u.status;
-changed = true;
-const approved = u.status === '同意';
-const msg = `您的${u.type}申請（${u.date}）已${approved ? '核准' : '拒絕'}`;
-addNotif(approved ? 'approve' : 'reject', msg);
-sendPush('TJCPM 審批結果', msg);
-}
-if (u.proofUrl && existing.proofUrl !== u.proofUrl) {
-existing.proofUrl = u.proofUrl;
-changed = true;
-}
-if (changed) {
-saveRecords();
-renderAllList();
-renderProfile(); // 即時重算儀表板出缺勤數值
-}
-}
-});
-}
+  if (!currentUser) return;
+  try {
+    const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
+    if (data.status === 'ok') {
+      if (data.quota) {
+        currentUser.quota = data.quota;
+        sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+      }
+      if (data.updates) {
+        let changed = false;
+        const serverIds = new Set();
+        
+        data.updates.forEach(u => {
+          if (u.clientId) serverIds.add(String(u.clientId));
+          
+          let localIdx = -1;
+          if (u.type === '上班' || u.type === '下班') {
+            localIdx = records.findIndex(r => (r.type === u.type) && r.date === u.date && r.time === u.time);
+          } else {
+            localIdx = records.findIndex(r => r.clientId && String(r.clientId) === String(u.clientId));
+          }
+          
+          if (localIdx > -1) {
+            const local = records[localIdx];
+            let itemChanged = false;
+            
+            if (local.status !== u.status && u.status !== '待審') {
+              const approved = u.status === '同意';
+              const msg = `您的${u.type}申請（${u.date}）已${approved ? '核准' : '拒絕'}`;
+              addNotif(approved ? 'approve' : 'reject', msg);
+              sendPush('TJCPM 審批結果', msg);
+              local.status = u.status;
+              itemChanged = true;
+            }
+            
+            if (u.proofUrl && local.proofUrl !== u.proofUrl) {
+              local.proofUrl = u.proofUrl;
+              itemChanged = true;
+            }
+            if (u.reason && local.reason !== u.reason) {
+              local.reason = u.reason;
+              itemChanged = true;
+            }
+            if (itemChanged) changed = true;
+          } else {
+            records.push(u);
+            changed = true;
+            
+            if (u.status === '同意' || u.status === '拒絕') {
+              const approved = u.status === '同意';
+              const msg = `同步：您的${u.type}申請（${u.date}）已在雲端設為${approved ? '同意' : '拒絕'}`;
+              addNotif(approved ? 'approve' : 'reject', msg);
+            }
+          }
+        });
+        
+        const originalLength = records.length;
+        records = records.filter(r => {
+          if (r.type === '上班' || r.type === '下班') {
+            const foundOnServer = data.updates.some(u => (u.type === r.type) && u.date === r.date && u.time === r.time);
+            return foundOnServer;
+          }
+          if (r.status === '待審') {
+            return true;
+          }
+          return serverIds.has(String(r.clientId));
+        });
+        if (records.length !== originalLength) changed = true;
+        
+        if (changed) {
+          records.sort((a, b) => {
+            const timeA = new Date(a.timestamp || a.id).getTime();
+            const timeB = new Date(b.timestamp || b.id).getTime();
+            return timeB - timeA;
+          });
+          saveRecords();
+          renderAllList();
+          renderProfile();
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Sync error:", e);
   }
-} catch (e) {}
 }
 
 // ── Actions ─────────────────────────────────────────────────────
@@ -2036,51 +2088,83 @@ const quotaHours = {
   '喪假': (quota.funeralLeaveDays || 8) * 8
 };
 
-const rowsHTML = [
-  { name: '特休', code: '特休' },
-  { name: '加班補休', code: '加班補休' },
-  { name: '事假', code: '事假' },
-  { name: '病假', code: '病假' },
-  { name: '公假', code: '公假' },
-  { name: '婚假', code: '婚假' },
-  { name: '喪假', code: '喪假' }
-].map(item => {
-  const ent = quotaHours[item.code];
-  const used = usedHours[item.code] || 0;
-  let rem = '-';
-  if (ent !== '-') {
-    rem = Math.max(0, ent - used);
-  }
-  return `
-    <tr style="border-bottom: 1px solid var(--card-border);">
-      <td style="padding: 10px; font-weight: 600; color: var(--text-primary);">${item.name}</td>
-      <td style="padding: 10px; text-align: center; color: var(--text-secondary);">${ent === '-' ? '無上限' : ent + 'h'}</td>
-      <td style="padding: 10px; text-align: center; color: var(--accent-red);">${used > 0 ? used + 'h' : '0h'}</td>
-      <td style="padding: 10px; text-align: center; color: var(--green-light); font-weight: 700;">${rem === '-' ? '—' : rem + 'h'}</td>
-    </tr>
-  `;
-}).join('');
-
-leaveEl.innerHTML = `
-<div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow);">
-  <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-    <thead>
-      <tr style="border-bottom: 2px solid var(--green-border); text-align: left; color: var(--blue-light); font-size: 13px;">
-        <th style="padding: 8px 10px;">假別</th>
-        <th style="padding: 8px 10px; text-align: center;">應有時數</th>
-        <th style="padding: 8px 10px; text-align: center;">已用時數</th>
-        <th style="padding: 8px 10px; text-align: center;">剩餘時數</th>
+const rowsA = [
+    { name: '特休', code: '特休' },
+    { name: '加班補休', code: '加班補休' }
+  ].map(item => {
+    const ent = quotaHours[item.code] || 0;
+    const used = usedHours[item.code] || 0;
+    const rem = Math.max(0, ent - used);
+    return `
+      <tr style="border-bottom: 1px solid var(--card-border);">
+        <td style="padding: 10px; font-weight: 600; color: var(--text-primary);">${item.name}</td>
+        <td style="padding: 10px; text-align: center; color: var(--text-secondary);">${ent}h</td>
+        <td style="padding: 10px; text-align: center; color: var(--accent-red);">${used > 0 ? used + 'h' : '0h'}</td>
+        <td style="padding: 10px; text-align: center; color: var(--green-light); font-weight: 700;">${rem}h</td>
       </tr>
-    </thead>
-    <tbody>
-      ${rowsHTML}
-    </tbody>
-  </table>
-  <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right;">
-    💡 個人統計年度區間：<strong>${range.label}</strong> (已用時數以審核同意為準)
+    `;
+  }).join('');
+
+  const otherLeaves = [
+    { name: '事假 (無給薪)', code: '事假', note: '一年內最長 14 天，事假不給薪' },
+    { name: '病假 (半薪)', code: '病假', note: '一年內 30 天內半薪，超過不給薪' },
+    { name: '公假 (全薪)', code: '公假', note: '公假期間薪資照給，核實核給' },
+    { name: '婚假 (全薪)', code: '婚假', note: '結婚給予 8 天，工資照給' },
+    { name: '喪假 (全薪)', code: '喪假', note: '依親等給予 3~8 天喪假，工資照給' }
+  ];
+
+  const rowsB = otherLeaves.map(item => {
+    const ent = quotaHours[item.code];
+    const used = usedHours[item.code] || 0;
+    const entStr = ent === '-' ? '無上限' : ent + 'h';
+    return `
+      <tr style="border-bottom: 1px solid var(--card-border);">
+        <td style="padding: 10px; font-weight: 600; color: var(--text-primary);">${item.name}</td>
+        <td style="padding: 10px; text-align: center; color: var(--text-secondary);">${entStr}</td>
+        <td style="padding: 10px; text-align: center; color: var(--accent-red);">${used > 0 ? used + 'h' : '0h'}</td>
+        <td style="padding: 10px; text-align: left; color: var(--text-muted); font-size: 12px; line-height: 1.4;">${item.note}</td>
+      </tr>
+    `;
+  }).join('');
+
+  leaveEl.innerHTML = `
+  <div style="font-size: 13px; font-weight: 700; color: var(--blue-light); margin-bottom: 8px; border-left: 3px solid var(--blue-light); padding-left: 8px; margin-top: 10px;">📊 特休與加班補休 (標準額度表)</div>
+  <div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 20px; box-shadow: var(--shadow);">
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="border-bottom: 2px solid var(--blue-border); text-align: left; color: var(--blue-light); font-size: 13px;">
+          <th style="padding: 8px 10px;">假別</th>
+          <th style="padding: 8px 10px; text-align: center;">應有時數</th>
+          <th style="padding: 8px 10px; text-align: center;">已用時數</th>
+          <th style="padding: 8px 10px; text-align: center;">剩餘時數</th>
+        </tr>
+      </thead>
+      <tbody>
+        \${rowsA}
+      </tbody>
+    </table>
   </div>
-</div>
-`;
+
+  <div style="font-size: 13px; font-weight: 700; color: var(--accent-orange); margin-bottom: 8px; border-left: 3px solid var(--accent-orange); padding-left: 8px;">📋 其他假別時數上限與說明</div>
+  <div style="overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow);">
+    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+      <thead>
+        <tr style="border-bottom: 2px solid #5c4308; text-align: left; color: var(--accent-orange); font-size: 13px;">
+          <th style="padding: 8px 10px; width: 25%;">假別</th>
+          <th style="padding: 8px 10px; text-align: center; width: 20%;">時數上限</th>
+          <th style="padding: 8px 10px; text-align: center; width: 20%;">已用時數</th>
+          <th style="padding: 8px 10px; text-align: left; width: 35%;">說明/備註</th>
+        </tr>
+      </thead>
+      <tbody>
+        \${rowsB}
+      </tbody>
+    </table>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: right;">
+      💡 個人統計年度區間：<strong>\${range.label}</strong> (已用時數以審核同意為準)
+    </div>
+  </div>
+  `;
 }
 
 function calcAttendance() {
