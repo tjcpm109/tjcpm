@@ -9,272 +9,261 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統 V36</title>
+<title>TJCPM 員工系統 v33</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-  --bg-page:#eaf5f0;
-  --bg-page-alt:#ddeaf8;
-  --card-bg:#111827;
-  --card-bg-soft:#1a2333;
-  --card-bg-hover:#1f2a3d;
-  --card-border:#2a3650;
-  --blue-main:#3b82f6;
-  --blue-light:#60a5fa;
-  --blue-pale:#1e293b;
-  --blue-border:#3b5375;
-  --blue-text-on-pale:#93c5fd;
-  --green-main:#22c58a;
-  --green-light:#34d399;
-  --green-pale:#10241c;
-  --green-border:#1f5c44;
-  --accent-red:#f87171;
-  --accent-red-pale:#2a1518;
-  --accent-orange:#fbbf24;
-  --accent-orange-pale:#2a2010;
-  --accent-purple:#a78bfa;
-  --accent-purple-pale:#211a36;
-  --text-primary:#f3f6fa;
-  --text-secondary:#aab4c5;
-  --text-muted:#6b7488;
-  --page-text-primary:#1a2e22;
-  --page-text-secondary:#4a6858;
-  --border:#2a3650;
-  --border-bright:#3b475f;
-  --shadow:0 2px 10px rgba(17,24,39,0.18);
-  --shadow-md:0 6px 22px rgba(17,24,39,0.28);
-  --radius:10px;
-  --radius-lg:16px;
-  --fs-body:16px;
-  --fs-label:14px;
-  --fs-btn:16px;
+/* ── 頁面底：淺綠色 ── */
+--bg-page:#eaf5f0;
+--bg-page-alt:#ddeaf8;
+/* ── 卡片：深藍灰（高對比） ── */
+--card-bg:#111827;
+--card-bg-soft:#1a2333;
+--card-bg-hover:#1f2a3d;
+--card-border:#2a3650;
+/* ── 藍色系（強調色） ── */
+--blue-main:#3b82f6;
+--blue-light:#60a5fa;
+--blue-pale:#1e293b;
+--blue-border:#3b5375;
+--blue-text-on-pale:#93c5fd;
+/* ── 綠色系（強調色） ── */
+--green-main:#22c58a;
+--green-light:#34d399;
+--green-pale:#10241c;
+--green-border:#1f5c44;
+--accent-red:#f87171;
+--accent-red-pale:#2a1518;
+--accent-orange:#fbbf24;
+--accent-orange-pale:#2a2010;
+--accent-purple:#a78bfa;
+--accent-purple-pale:#211a36;
+/* ── 文字（卡片內，深底用白字） ── */
+--text-primary:#f3f6fa;
+--text-secondary:#aab4c5;
+--text-muted:#6b7488;
+/* ── 頁面底色上的文字（淺色區塊） ── */
+--page-text-primary:#1a2e22;
+--page-text-secondary:#4a6858;
+--border:#2a3650;
+--border-bright:#3b475f;
+--shadow:0 2px 10px rgba(17,24,39,0.18);
+--shadow-md:0 6px 22px rgba(17,24,39,0.28);
+--radius:10px;
+--radius-lg:16px;
+/* ── 字級 ── */
+--fs-body:16px;
+--fs-label:14px;
+--fs-btn:16px;
 }
 body {
-  background:var(--bg-page);
-  color:var(--page-text-primary);
-  font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
-  min-height:100vh;
-  font-size:var(--fs-body);
+background:var(--bg-page);
+color:var(--page-text-primary);
+font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+min-height:100vh;
+font-size:var(--fs-body);
 }
-
-/* ── Login: Optimized Mobile Keyboard Safe-Area ── */
+/* ── Login ── */
 #loginScreen {
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-start; /* 改成 flex-start 防止鍵盤彈出壓縮版面 */
-  padding:40px 24px;
-  background:linear-gradient(160deg, #d0ede0 0%, #e8f5f0 50%, #ddeaf8 100%);
-  overflow-y:auto; /* 允許滾動 */
-  -webkit-overflow-scrolling:touch;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+padding:24px;
+background:linear-gradient(160deg, #d0ede0 0%, #e8f5f0 50%, #ddeaf8 100%);
 }
 .login-logo { margin-bottom:22px; width:100%; max-width:440px; }
-.login-logo img { width:100%; max-width:440px; display:block; margin: 0 auto; }
+.login-logo img { width:100%; max-width:440px; display:block; }
 .login-logo .logo-fallback {
-  display:none;
-  background:var(--blue-main);
-  color:#fff;
-  font-size:42px;
-  font-weight:700;
+display:none;
+background:var(--blue-main);
+color:#fff;
+font-size:42px;
+font-weight:700;
+padding:28px 48px;
+border-radius:20px;
+letter-spacing:4px;
 }
-.login-card {
-  width: 100%;
-  max-width: 440px;
-  background: rgba(255,255,255,0.92);
-  border: 2px solid var(--blue-border);
-  border-radius: 20px;
-  padding: 32px 24px;
-  box-shadow: 0 20px 50px rgba(26,111,196,0.15);
+.login-title { font-size:28px; font-weight:700; color:#1a6fc4; margin-bottom:4px; }
+.login-sub { font-size:16px; color:var(--page-text-secondary); margin-bottom:32px; }
+/* ── 登入框：淺色、放大、凸顯 ── */
+.login-box {
+background:#ffffff;
+border:2px solid var(--blue-border);
+border-radius:20px;
+padding:40px 32px;
+width:100%;
+max-width:440px;
+box-shadow:0 20px 50px rgba(26,111,196,0.22), 0 6px 18px rgba(17,24,39,0.10);
 }
-#loginScreen .input-field {
-  background:#f4f9f7;
-  border:1.5px solid #c8e2d8;
-  color:var(--page-text-primary);
+#loginScreen .input-field,
+#loginScreen .select-field {
+background:#f4f9f7;
+border:1.5px solid #c8e2d8;
+color:var(--page-text-primary);
 }
 #loginScreen .input-field::placeholder { color:#94a8a0; }
-#loginScreen .input-field:focus {
-  border-color:#1a6fc4;
-  box-shadow:0 0 0 3px rgba(26,111,196,0.15);
-  background:#ffffff;
+#loginScreen .input-field:focus,
+#loginScreen .select-field:focus {
+border-color:#1a6fc4;
+box-shadow:0 0 0 3px rgba(26,111,196,0.15);
+background:#ffffff;
 }
 #loginScreen .input-label { color:#3a5a4a; }
 .login-err {
-  background:#fef2f2;
-  border:1px solid #fecaca;
-  border-radius:var(--radius);
-  padding:11px 14px;
-  font-size:var(--fs-body);
-  color:#dc2626;
-  margin-bottom:16px;
-  display:none;
+background:#fef2f2;
+border:1px solid #fecaca;
+border-radius:var(--radius);
+padding:11px 14px;
+font-size:var(--fs-body);
+color:#dc2626;
+margin-bottom:16px;
+display:none;
 }
-
-/* ── Header: Black & Centered-Logo (V36定案) ── */
+/* ── Header ── */
 .header {
-  background:#000000 !important; /* 🟢 永恆純黑色 */
-  border-bottom:2px solid var(--card-border);
-  padding:10px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  position:sticky;
-  top:0;
-  z-index:100;
-  box-shadow:var(--shadow);
-  min-height:64px;
+background:var(--card-bg);
+border-bottom:2px solid var(--green-border);
+padding:12px 20px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+position:sticky;
+top:0;
+z-index:100;
+box-shadow:var(--shadow);
 }
-.header-left { display:flex; align-items:center; width:100%; justify-content:center; }
-.header-left img { height:48px; display:block; margin:0 auto; transition:all 0.3s; } /* 🟢 Logo 放大置中 */
-.header-right { 
-  display:flex; 
-  align-items:center; 
-  gap:12px; 
-  position:absolute; 
-  right:16px; 
-  font-size:13px; 
-  color:var(--text-secondary);
-}
+.header-left { display:flex; align-items:center; gap:10px; }
+.header-left img { height:42px; }
+.header-right { display:flex; align-items:center; gap:10px; }
 .header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
 .header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; }
 .logout-btn {
-  font-size:12px;
-  color:var(--accent-red);
-  cursor:pointer;
-  background:none;
-  border:1px solid #5c2a2e;
-  font-family:inherit;
-  padding:5px 10px;
-  border-radius:6px;
-  transition:background 0.15s;
+font-size:var(--fs-label);
+color:var(--accent-red);
+cursor:pointer;
+background:none;
+border:1px solid #5c2a2e;
+font-family:inherit;
+padding:6px 12px;
+border-radius:6px;
+transition:background 0.15s;
 }
 .logout-btn:hover { background:var(--accent-red-pale); }
-.notif-bell { font-size:20px; cursor:pointer; position:relative; }
+.notif-bell { font-size:21px; cursor:pointer; position:relative; }
 .notif-badge {
-  position:absolute;
-  top:-4px;
-  right:-4px;
-  background:var(--accent-red);
-  color:#fff;
-  font-size:11px;
-  font-weight:900;
-  width:16px;
-  height:17px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  pointer-events:none;
+position:absolute;
+top:-4px;
+right:-4px;
+background:var(--accent-red);
+color:#fff;
+font-size:11px;
+font-weight:900;
+width:17px;
+height:17px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+pointer-events:none;
 }
-
-@media (max-width: 550px) {
-  /* 手機端防碰撞：自動隱藏時鐘與姓名，Logo 完美置中，Logout 居右 */
-  .header-clock, .header-user {
-    display:none !important;
-  }
-}
-
 /* ── Nav ── */
 .nav {
-  background:var(--card-bg);
-  border-bottom:1px solid var(--card-border);
-  display:flex;
-  overflow-x:auto;
-  scrollbar-width:none;
+background:var(--card-bg);
+border-bottom:1px solid var(--card-border);
+display:flex;
+overflow-x:auto;
+scrollbar-width:none;
 }
 .nav::-webkit-scrollbar { display:none; }
 .nav-tab {
-  padding:13px 16px;
-  font-size:var(--fs-label);
-  color:var(--text-secondary);
-  cursor:pointer;
-  white-space:nowrap;
-  border-bottom:3px solid transparent;
-  transition:all 0.2s;
-  user-select:none;
-  font-weight:500;
+padding:13px 16px;
+font-size:var(--fs-label);
+color:var(--text-secondary);
+cursor:pointer;
+white-space:nowrap;
+border-bottom:3px solid transparent;
+transition:all 0.2s;
+user-select:none;
+font-weight:500;
 }
 .nav-tab:hover { color:var(--blue-light); background:var(--card-bg-hover); }
 .nav-tab.active { color:var(--blue-light); border-bottom-color:var(--blue-light); background:var(--card-bg-hover); }
-
 /* ── Pages ── */
 .page { display:none; padding:20px; max-width:700px; margin:0 auto; }
 .page.active { display:block; }
-
 /* ── Clock card ── */
 .clock-card {
-  background:linear-gradient(135deg, #1a6fc4 0%, #2484e0 100%);
-  border-radius:var(--radius-lg);
-  padding:28px 24px;
-  text-align:center;
-  margin-bottom:16px;
-  box-shadow:var(--shadow-md);
-  color:#fff;
+background:linear-gradient(135deg, #1a6fc4 0%, #2484e0 100%);
+border-radius:var(--radius-lg);
+padding:28px 24px;
+text-align:center;
+margin-bottom:16px;
+box-shadow:var(--shadow-md);
+color:#fff;
 }
 .clock-time { font-size:54px; font-weight:200; font-variant-numeric:tabular-nums; letter-spacing:-1px; line-height:1; }
 .clock-date { font-size:var(--fs-label); opacity:0.85; margin-top:8px; }
 .clock-user { font-size:var(--fs-label); margin-top:10px; font-weight:600; opacity:0.95; }
-
 /* ── Inputs ── */
 .input-group { margin-bottom:16px; }
 .input-label { font-size:var(--fs-label); color:var(--page-text-secondary); margin-bottom:7px; display:block; font-weight:600; }
 .input-field {
-  width:100%;
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius);
-  padding:13px 14px;
-  color:var(--text-primary);
-  font-size:var(--fs-body);
-  font-family:inherit;
-  transition:border-color 0.2s,box-shadow 0.2s;
-  outline:none;
+width:100%;
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:13px 14px;
+color:var(--text-primary);
+font-size:var(--fs-body);
+font-family:inherit;
+transition:border-color 0.2s,box-shadow 0.2s;
+outline:none;
 }
 .input-field:focus { border-color:var(--blue-light); box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
 .input-field::placeholder { color:var(--text-muted); }
 .select-field {
-  width:100%;
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius);
-  padding:13px 14px;
-  color:var(--text-primary);
-  font-size:var(--fs-body);
-  font-family:inherit;
-  outline:none;
-  appearance:none;
-  cursor:pointer;
-  transition:border-color 0.2s;
+width:100%;
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:13px 14px;
+color:var(--text-primary);
+font-size:var(--fs-body);
+font-family:inherit;
+outline:none;
+appearance:none;
+cursor:pointer;
+transition:border-color 0.2s;
 }
 .select-field:focus { border-color:var(--blue-light); box-shadow:0 0 0 3px rgba(96,165,250,0.2); }
-
-/* ── Info box ── */
+/* ── Info box（藍色資訊欄） ── */
 .info-box {
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-  background:var(--blue-pale);
-  border:1px solid var(--blue-border);
-  border-radius:var(--radius);
-  padding:13px 14px;
-  margin-bottom:20px;
+display:flex;
+align-items:flex-start;
+gap:10px;
+background:var(--blue-pale);
+border:1px solid var(--blue-border);
+border-radius:var(--radius);
+padding:13px 14px;
+margin-bottom:20px;
 }
 .info-box .info-icon { font-size:19px; flex-shrink:0; margin-top:1px; }
 .info-box .info-text { font-size:var(--fs-body); color:var(--blue-text-on-pale); line-height:1.65; }
 .info-box .info-text strong { color:#fff; }
-
 /* ── Action buttons ── */
 .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
 .action-btn {
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius-lg);
-  padding:24px 16px;
-  cursor:pointer;
-  text-align:center;
-  transition:all 0.18s;
-  user-select:none;
-  box-shadow:var(--shadow);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius-lg);
+padding:24px 16px;
+cursor:pointer;
+text-align:center;
+transition:all 0.18s;
+user-select:none;
+box-shadow:var(--shadow);
 }
 .action-btn:hover { background:var(--card-bg-hover); transform:translateY(-2px); box-shadow:var(--shadow-md); }
 .action-btn:active { transform:scale(0.97); }
@@ -285,70 +274,68 @@ body {
 .btn-checkin .btn-label { color:var(--green-light); }
 .btn-checkout { border-top:4px solid var(--accent-red); }
 .btn-checkout .btn-label { color:var(--accent-red); }
+/* ── 離線時停用打卡按鈕 ── */
 .action-btn.disabled {
-  opacity:0.45;
-  cursor:not-allowed;
-  pointer-events:none;
-  filter:grayscale(0.4);
+opacity:0.45;
+cursor:not-allowed;
+pointer-events:none;
+filter:grayscale(0.4);
 }
 .action-btn.disabled:hover { transform:none; box-shadow:var(--shadow); }
-
 .offline-banner {
-  background:var(--accent-orange-pale);
-  border:1px solid #6b4f12;
-  color:var(--accent-orange);
-  border-radius:var(--radius);
-  padding:12px 16px;
-  margin-bottom:16px;
-  font-size:var(--fs-body);
-  display:none;
-  align-items:center;
-  gap:10px;
+background:var(--accent-orange-pale);
+border:1px solid #6b4f12;
+color:var(--accent-orange);
+border-radius:var(--radius);
+padding:12px 16px;
+margin-bottom:16px;
+font-size:var(--fs-body);
+display:none;
+align-items:center;
+gap:10px;
 }
 .offline-banner.show { display:flex; }
-
 /* ── GPS bar ── */
 .gps-bar {
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius);
-  padding:12px 14px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-bottom:10px;
-  font-size:var(--fs-body);
-  box-shadow:var(--shadow);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:12px 14px;
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:10px;
+font-size:var(--fs-body);
+box-shadow:var(--shadow);
 }
 .gps-dot { width:9px; height:9px; border-radius:50%; background:var(--text-muted); flex-shrink:0; transition:background 0.3s; }
 .gps-dot.active { background:var(--green-main); box-shadow:0 0 6px var(--green-main); }
 .gps-dot.error { background:var(--accent-red); }
 .gps-text { color:var(--text-secondary); flex:1; }
 .gps-coords { font-size:var(--fs-label); color:var(--text-muted); font-variant-numeric:tabular-nums; }
-
+/* ── Section title ── */
 .section-title {
-  font-size:13px;
-  color:#1a6fc4;
-  letter-spacing:0.8px;
-  text-transform:uppercase;
-  margin-bottom:12px;
-  margin-top:4px;
-  font-weight:700;
-  border-left:3px solid #1a6fc4;
-  padding-left:8px;
+font-size:13px;
+color:#1a6fc4;
+letter-spacing:0.8px;
+text-transform:uppercase;
+margin-bottom:12px;
+margin-top:4px;
+font-weight:700;
+border-left:3px solid #1a6fc4;
+padding-left:8px;
 }
-
-/* ── Records Card ── */
+/* ── Records ── */
 .record-list { display:flex; flex-direction:column; gap:8px; }
 .record-item {
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius);
-  padding:14px 16px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  box-shadow:var(--shadow);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:14px 16px;
+display:flex;
+flex-direction:column;
+gap:8px;
+box-shadow:var(--shadow);
 }
 .record-row { display:flex; align-items:center; gap:14px; }
 .record-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
@@ -361,49 +348,46 @@ body {
 .record-type { font-size:var(--fs-body); font-weight:600; color:var(--text-primary); }
 .record-meta { font-size:var(--fs-label); color:var(--text-secondary); margin-top:3px; }
 .record-time { font-size:var(--fs-body); color:var(--text-secondary); font-variant-numeric:tabular-nums; font-weight:500; }
-
 .empty-state { text-align:center; padding:40px 20px; color:var(--page-text-secondary); }
 .empty-icon { font-size:38px; margin-bottom:12px; }
 .empty-text { font-size:var(--fs-body); }
-
 /* ── Modal ── */
 .modal-overlay {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(8,12,20,0.6);
-  z-index:200;
-  align-items:flex-end;
-  justify-content:center;
+display:none;
+position:fixed;
+inset:0;
+background:rgba(8,12,20,0.6);
+z-index:200;
+align-items:flex-end;
+justify-content:center;
 }
 .modal-overlay.open { display:flex; }
 .modal {
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
-  padding:24px 20px 36px;
-  width:100%;
-  max-width:700px;
-  animation:slideUp 0.25s ease;
-  box-shadow:0 -4px 28px rgba(0,0,0,0.4);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+padding:24px 20px 36px;
+width:100%;
+max-width:700px;
+animation:slideUp 0.25s ease;
+box-shadow:0 -4px 28px rgba(0,0,0,0.4);
 }
 @keyframes slideUp { from{ transform:translateY(40px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
 .modal-title { font-size:18px; font-weight:700; color:var(--blue-light); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
 .modal-close { margin-left:auto; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:22px; line-height:1; padding:0; }
-
 /* ── Buttons ── */
 .submit-btn {
-  width:100%;
-  padding:15px;
-  border-radius:var(--radius);
-  border:none;
-  font-size:var(--fs-btn);
-  font-weight:700;
-  font-family:inherit;
-  cursor:pointer;
-  margin-top:8px;
-  transition:opacity 0.2s,transform 0.15s,box-shadow 0.15s;
-  box-shadow:var(--shadow);
+width:100%;
+padding:15px;
+border-radius:var(--radius);
+border:none;
+font-size:var(--fs-btn);
+font-weight:700;
+font-family:inherit;
+cursor:pointer;
+margin-top:8px;
+transition:opacity 0.2s,transform 0.15s,box-shadow 0.15s;
+box-shadow:var(--shadow);
 }
 .submit-btn:hover { opacity:0.92; box-shadow:var(--shadow-md); }
 .submit-btn:active { transform:scale(0.98); }
@@ -411,27 +395,25 @@ body {
 .submit-btn.green { background:var(--green-main); color:#06241a; }
 .submit-btn.orange { background:var(--accent-orange); color:#2b1f02; }
 .submit-btn.purple { background:var(--accent-purple); color:#1c1334; }
-
 /* ── Toast ── */
 .toast {
-  position:fixed;
-  bottom:24px;
-  left:50%;
-  transform:translateX(-50%) translateY(80px);
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  color:#fff;
-  border-radius:50px;
-  padding:12px 22px;
-  font-size:var(--fs-label);
-  font-weight:500;
-  z-index:300;
-  transition:transform 0.3s ease;
-  white-space:nowrap;
-  box-shadow:var(--shadow-md);
+position:fixed;
+bottom:24px;
+left:50%;
+transform:translateX(-50%) translateY(80px);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+color:#fff;
+border-radius:50px;
+padding:12px 22px;
+font-size:var(--fs-label);
+font-weight:500;
+z-index:300;
+transition:transform 0.3s ease;
+white-space:nowrap;
+box-shadow:var(--shadow-md);
 }
 .toast.show { transform:translateX(-50%) translateY(0); }
-
 /* ── Badges ── */
 .badge { display:inline-block; font-size:12px; font-weight:700; padding:3px 9px; border-radius:20px; letter-spacing:0.3px; }
 .badge-green { background:var(--green-pale); color:var(--green-light); }
@@ -440,66 +422,165 @@ body {
 .badge-purple { background:var(--accent-purple-pale); color:var(--accent-purple); }
 .badge-blue { background:var(--blue-pale); color:var(--blue-light); }
 .badge-gray { background:#1f2937; color:#9ca3af; }
-
 /* ── Stats ── */
 .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
 .stat-card {
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius);
-  padding:16px;
-  box-shadow:var(--shadow);
-  border-top:3px solid var(--blue-light);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:16px;
+box-shadow:var(--shadow);
+border-top:3px solid var(--blue-light);
 }
 .stat-label { font-size:13px; color:var(--text-secondary); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.6px; font-weight:700; }
 .stat-value { font-size:30px; font-weight:300; color:var(--blue-light); }
 .stat-value span { font-size:var(--fs-label); color:var(--text-muted); margin-left:4px; }
-
 /* ── Approve buttons ── */
 .approve-row { display:flex; gap:8px; }
 .approve-btn {
-  font-size:var(--fs-label);
-  padding:8px 16px;
-  border-radius:6px;
-  border:none;
-  cursor:pointer;
-  font-family:inherit;
-  font-weight:600;
-  transition:opacity 0.15s;
+font-size:var(--fs-label);
+padding:8px 16px;
+border-radius:6px;
+border:none;
+cursor:pointer;
+font-family:inherit;
+font-weight:600;
+transition:opacity 0.15s;
 }
 .approve-btn.ok { background:var(--green-pale); color:var(--green-light); border:1px solid var(--green-border); }
 .approve-btn.ok:hover { background:var(--green-border); }
 .approve-btn.reject { background:var(--accent-red-pale); color:var(--accent-red); border:1px solid #5c2a2e; }
 .approve-btn.reject:hover { background:#5c2a2e; }
-
-/* ── Profile page ── */
+/* ── Notif ── */
+.notif-panel {
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:14px 16px;
+margin-bottom:8px;
+display:flex;
+gap:12px;
+align-items:flex-start;
+box-shadow:var(--shadow);
+}
+.notif-icon { font-size:20px; flex-shrink:0; }
+.notif-text { font-size:var(--fs-body); color:var(--text-primary); }
+.notif-time { font-size:var(--fs-label); color:var(--text-muted); margin-top:3px; }
+/* ── Push banner ── */
+.push-banner {
+background:var(--blue-pale);
+border:1px solid var(--blue-border);
+border-radius:var(--radius);
+padding:12px 16px;
+margin-bottom:16px;
+display:flex;
+align-items:center;
+gap:12px;
+font-size:var(--fs-body);
+color:var(--blue-text-on-pale);
+}
+.push-banner button {
+background:var(--blue-main);
+color:#fff;
+border:none;
+border-radius:6px;
+padding:8px 14px;
+font-size:var(--fs-label);
+cursor:pointer;
+font-family:inherit;
+white-space:nowrap;
+font-weight:600;
+}
+/* ── Filter chips ── */
+.filter-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-chip {
+font-size:var(--fs-label);
+padding:7px 15px;
+border-radius:20px;
+background:var(--card-bg);
+border:1px solid var(--card-border);
+color:var(--text-secondary);
+cursor:pointer;
+transition:all 0.15s;
+font-weight:500;
+}
+.filter-chip.active { background:var(--blue-pale); border-color:var(--blue-light); color:var(--blue-light); font-weight:700; }
+/* ── Spinner ── */
+.spinner {
+display:inline-block;
+width:16px;
+height:16px;
+border:2px solid rgba(255,255,255,0.4);
+border-top-color:#fff;
+border-radius:50%;
+animation:spin 0.7s linear infinite;
+vertical-align:middle;
+margin-right:6px;
+}
+@keyframes spin { to{ transform:rotate(360deg); } }
+/* ── Approve comment ── */
+.approve-comment-area {
+margin-top:10px;
+display:none;
+flex-direction:column;
+gap:8px;
+}
+.approve-comment-area.open { display:flex; }
+.approve-comment-input {
+width:100%;
+background:var(--card-bg-soft);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:10px 12px;
+color:var(--text-primary);
+font-size:var(--fs-label);
+font-family:inherit;
+resize:vertical;
+min-height:60px;
+outline:none;
+transition:border-color 0.2s;
+}
+.approve-comment-input:focus { border-color:var(--blue-light); }
+.approve-comment-input::placeholder { color:var(--text-muted); }
+.approve-confirm-row { display:flex; gap:8px; }
+/* ── Profile page (V33 方案 A 精美漸層陰影置中大卡片) ── */
+.profile-card {
+background:linear-gradient(135deg, var(--card-bg-soft) 0%, var(--card-bg) 100%);
+border:2px solid var(--card-border);
+border-radius:var(--radius-lg);
+padding:28px 24px;
+margin-bottom:16px;
+box-shadow:var(--shadow-md);
+text-align:center;
+}
+.profile-name { font-size:26px; font-weight:700; color:var(--text-primary); margin-bottom:6px; letter-spacing:1px; }
+.profile-empid { font-size:15px; color:var(--text-secondary); font-weight:500; }
 .profile-meta-row {
-  display:flex; align-items:center; gap:10px;
-  padding:12px 0; border-bottom:1px solid var(--card-border);
-  font-size:var(--fs-body);
+display:flex; align-items:center; gap:10px;
+padding:12px 0; border-bottom:1px solid var(--card-border);
+font-size:var(--fs-body);
 }
 .profile-meta-row:last-child { border-bottom:none; }
 .profile-meta-icon { font-size:18px; width:26px; flex-shrink:0; }
 .profile-meta-label { color:var(--text-secondary); width:70px; flex-shrink:0; }
 .profile-meta-value { color:var(--text-primary); flex:1; font-weight:500; }
 .pw-toggle-btn {
-  background:none; border:1px solid var(--blue-border);
-  color:var(--blue-light); border-radius:6px;
-  padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit;
-  transition:background 0.15s;
+background:none; border:1px solid var(--blue-border);
+color:var(--blue-light); border-radius:6px;
+padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit;
+transition:background 0.15s;
 }
 .pw-toggle-btn:hover { background:var(--blue-pale); }
 .pw-change-area { display:none; margin-top:12px; }
 .pw-change-area.open { display:block; }
-
 /* ── Attendance summary stats ── */
 .attend-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
 .attend-card {
-  background:var(--card-bg);
-  border:1px solid var(--card-border);
-  border-radius:var(--radius);
-  padding:14px 12px; text-align:center;
-  box-shadow:var(--shadow);
+background:var(--card-bg);
+border:1px solid var(--card-border);
+border-radius:var(--radius);
+padding:14px 12px; text-align:center;
+box-shadow:var(--shadow);
 }
 .attend-card.red { border-top:3px solid var(--accent-red); }
 .attend-card.orange { border-top:3px solid var(--accent-orange); }
@@ -511,1366 +592,1172 @@ body {
 .attend-val.purple { color:var(--accent-purple); }
 .attend-val.blue { color:var(--blue-light); }
 .attend-lbl { font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
-
 @media(min-width:600px) {
-  .page{ padding:28px 24px; }
-  .clock-time{ font-size:64px; }
+.page{ padding:28px 24px; }
+.clock-time{ font-size:64px; }
 }
 </style>
 </head>
 <body>
-
-<!-- Login Screen -->
+<!-- Login -->
 <div id="loginScreen">
-  <div class="login-logo">
-    <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
-    <div id="logoTextLogin" class="logo-fallback">TJCPM</div>
-  </div>
-  <div class="login-card">
-    <div class="login-err" id="loginErr"></div>
-    <div class="input-group">
-      <label class="input-label">員工編號</label>
-      <input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
-    </div>
-    <div class="input-group">
-      <label class="input-label">密碼</label>
-      <input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
-    </div>
-    <button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
-  </div>
+<div class="login-logo">
+<img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
+<div id="logoTextLogin" class="logo-fallback">TJCPM</div>
 </div>
-
+<div class="login-title">TJCPM</div>
+<div class="login-sub">員工管理系統</div>
+<div class="login-box">
+<div class="login-err" id="loginErr"></div>
+<div class="input-group">
+<label class="input-label">員工編號</label>
+<input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
+</div>
+<div class="input-group">
+<label class="input-label">密碼</label>
+<input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
+</div>
+<button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
+</div>
+</div>
 <!-- Main App -->
 <div id="mainApp" style="display:none">
-  <div class="header">
-    <div class="header-left">
-      <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextHeader').style.display='inline-block'" />
-      <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
-    </div>
-    <div class="header-right">
-      <div class="notif-bell" id="notifBell">
-        🔔<span class="notif-badge" id="notifCount" style="display:none">!</span>
-      </div>
-      <span class="header-user" id="headerUser"></span>
-      <span class="header-clock" id="headerClock">--:--:--</span>
-      <button class="logout-btn" onclick="doLogout()">登出</button>
-    </div>
-  </div>
-
-  <div class="nav" id="mainNav">
-    <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨💼 主管</div>
-    <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
-    <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
-    <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
-    <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
-    <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
-    <div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
-  </div>
-
-  <!-- 打卡 -->
-  <div class="page active" id="page-home">
-    <div class="clock-card">
-      <div class="clock-time" id="mainClock">00:00:00</div>
-      <div class="clock-date" id="mainDate"></div>
-      <div class="clock-user" id="clockUser"></div>
-    </div>
-    <div id="pushBanner" class="push-banner" style="display:none">
-      🔔 開啟推播通知，及時收到審批結果 <button onclick="requestPush()">開啟</button>
-    </div>
-    <div class="gps-bar">
-      <div class="gps-dot" id="gpsDot"></div>
-      <span class="gps-text" id="gpsText">取得位置中…</span>
-      <span class="gps-coords" id="gpsCoords"></span>
-    </div>
-    <div class="offline-banner" id="offlineBanner">
-      ⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試
-    </div>
-    
-    <!-- ✍️ 打卡新增非必填備註說明欄 -->
-    <div class="input-group" style="margin-bottom: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 12px;">
-      <label class="input-label" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">✍️ 簽到退備註說明 (選填)</label>
-      <textarea class="input-field" id="punchRemark" rows="2" style="resize: none; font-size: 13px; background: var(--card-bg-soft); border: 1px solid var(--card-border); color: var(--text-primary); padding: 8px; border-radius: 6px; height: 50px;" 
-                placeholder="若非在雙和簽到退請說明，e.g.，人才課程至重慶上班、人才課程文大下班...等，詳細說明。"></textarea>
-    </div>
-
-    <div style="text-align:right;font-size:14px;margin-bottom:12px;min-height:18px;">
-      <span id="syncStatus" style="transition:color 0.3s;"></span>
-    </div>
-    <div class="action-grid">
-      <div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
-        <span class="btn-icon">✅</span>
-        <div class="btn-label">上班</div>
-        <div class="btn-sub" id="checkinSub">打卡上班</div>
-      </div>
-      <div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction('下班')">
-        <span class="btn-icon">🏁</span>
-        <div class="btn-label">下班</div>
-        <div class="btn-sub" id="checkoutSub">打卡下班</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 我的紀錄 -->
-  <div class="page" id="page-records">
-    <div class="filter-bar">
-      <div class="filter-chip active" onclick="filterRecords('打卡',this)">打卡</div>
-      <div class="filter-chip" onclick="filterRecords('請假',this)">請假</div>
-      <div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
-      <div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
-    </div>
-    <div class="record-list" id="allRecordsList"></div>
-  </div>
-
-  <!-- 請假 -->
-  <div class="page" id="page-leave">
-    <div class="info-box">
-      <div class="info-icon">📅</div>
-      <div class="info-text">
-        <strong>請假說明：</strong>請假以<strong>小時</strong>為單位，請填寫開始與結束時間。<br>
-        半天假 = 4 小時；全天假 = 8 小時。
-      </div>
-    </div>
-    <p class="section-title">請假申請</p>
-    <div class="input-group">
-      <label class="input-label">假別</label>
-      <select class="select-field" id="leaveType">
-        <option>特休</option>
-        <option>加班補休</option>
-        <option>事假</option>
-        <option>病假</option>
-        <option>公假</option>
-        <option>婚假</option>
-        <option>喪假</option>
-      </select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">開始日期</label>
-      <input type="date" class="input-field" id="leaveStart" />
-    </div>
-    <div class="input-group">
-      <label class="input-label">開始時間</label>
-      <select class="select-field" id="leaveStartTime"></select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">結束日期</label>
-      <input type="date" class="input-field" id="leaveEnd" />
-    </div>
-    <div class="input-group">
-      <label class="input-label">結束時間</label>
-      <select class="select-field" id="leaveEndTime"></select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">原因（選填）</label>
-      <input class="input-field" id="leaveReason" placeholder="請假原因" />
-    </div>
-    <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
-  </div>
-
-  <!-- 加班 -->
-  <div class="page" id="page-overtime">
-    <div class="info-box">
-      <div class="info-icon">⏰</div>
-      <div class="info-text">
-        <strong>加班說明：</strong>滿<strong>1 小時</strong>後起算，以<strong>0.5 小時</strong>為單位遞增。<br>
-        例：1h、1.5h、2h、2.5h…
-      </div>
-    </div>
-    <p class="section-title">加班申請</p>
-    <div class="input-group">
-      <label class="input-label">加班日期</label>
-      <input type="date" class="input-field" id="otDate" />
-    </div>
-    <div class="input-group">
-      <label class="input-label">開始時間</label>
-      <select class="select-field" id="otStart"></select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">結束時間</label>
-      <select class="select-field" id="otEnd"></select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">加班原因</label>
-      <input class="input-field" id="otReason" placeholder="加班原因" />
-    </div>
-    <button class="submit-btn purple" onclick="submitOvertime()">送出加班申請</button>
-  </div>
-
-  <!-- 補打卡 -->
-  <div class="page" id="page-supp">
-    <div class="info-box">
-      <div class="info-icon">🔄</div>
-      <div class="info-text">
-        <strong>補打卡說明：</strong>若因離開辦公室忘記打卡，請在此填寫補打卡申請，送出後由主管審核確認。
-      </div>
-    </div>
-    <p class="section-title">補打卡申請</p>
-    <div class="input-group">
-      <label class="input-label">上班或下班</label>
-      <select class="select-field" id="suppType">
-        <option>上班</option>
-        <option>下班</option>
-      </select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">日期</label>
-      <input type="date" class="input-field" id="suppDate" />
-    </div>
-    <div class="input-group">
-      <label class="input-label">時間</label>
-      <select class="select-field" id="suppTime"></select>
-    </div>
-    <div class="input-group">
-      <label class="input-label">未打卡原因</label>
-      <input class="input-field" id="suppReason" placeholder="請說明未打卡原因" />
-    </div>
-    <button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
-  </div>
-
-  <!-- 個人資料（🧩 V36 移除頂部大頭貼卡片以維持簡潔） -->
-  <div class="page" id="page-profile">
-    <!-- 🟢 頂部 avatar 與 duplicate name card 依要求已移除 -->
-    
-    <p class="section-title">基本資料</p>
-    <div class="profile-card" style="background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius-lg); padding:16px 20px; margin-bottom:16px; box-shadow:var(--shadow);">
-      <div class="profile-meta-row">
-        <div class="profile-meta-icon">👤</div>
-        <div class="profile-meta-label">姓名</div>
-        <div class="profile-meta-value" id="profileNameVal">—</div>
-      </div>
-      <div class="profile-meta-row">
-        <div class="profile-meta-icon">📅</div>
-        <div class="profile-meta-label">到職日</div>
-        <div class="profile-meta-value" id="profileJoinDate">—</div>
-      </div>
-      <div class="profile-meta-row">
-        <div class="profile-meta-icon">🏷️</div>
-        <div class="profile-meta-label">員編</div>
-        <div class="profile-meta-value" id="profileEmpIdVal">—</div>
-      </div>
-      <div class="profile-meta-row">
-        <div class="profile-meta-icon">🔑</div>
-        <div class="profile-meta-label">密碼</div>
-        <div class="profile-meta-value" style="display:flex;align-items:center;gap:8px;">
-          <span>••••••</span>
-          <button class="pw-toggle-btn" onclick="togglePwChange()">修改密碼</button>
-        </div>
-      </div>
-      <div class="pw-change-area" id="pwChangeArea">
-        <div class="input-group" style="margin-bottom:10px;">
-          <label class="input-label">舊密碼</label>
-          <input type="password" class="input-field" id="pwOld" placeholder="請輸入舊密碼" />
-        </div>
-        <div class="input-group" style="margin-bottom:10px;">
-          <label class="input-label">新密碼</label>
-          <input type="password" class="input-field" id="pwNew" placeholder="請輸入新密碼" />
-        </div>
-        <div class="input-group" style="margin-bottom:10px;">
-          <label class="input-label">確認新密碼</label>
-          <input type="password" class="input-field" id="pwConfirm" placeholder="再次輸入新密碼" />
-        </div>
-        <button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
-      </div>
-    </div>
-
-    <p class="section-title">出缺勤總表（本月）</p>
-    <div class="attend-stats">
-      <div class="attend-card blue">
-        <div class="attend-val blue" id="attTotal">—</div>
-        <div class="attend-lbl">出勤天數</div>
-      </div>
-      <div class="attend-card red">
-        <div class="attend-val red" id="attMissed">—</div>
-        <div class="attend-lbl">未打卡</div>
-      </div>
-      <div class="attend-card orange">
-        <div class="attend-val orange" id="attLate">—</div>
-        <div class="attend-lbl">遲到次數</div>
-      </div>
-      <div class="attend-card purple">
-        <div class="attend-val purple" id="attLeave">—</div>
-        <div class="attend-lbl">請假天數</div>
-      </div>
-    </div>
-
-    <!-- 🟢 V36 專屬：智慧加減明細對帳看板 -->
-    <p class="section-title" id="formulaTitle" style="display:none;">特特休補休餘額對帳卡片</p>
-    <div id="formulaCardArea" style="display:none; margin-bottom:16px;"></div>
-
-    <p class="section-title">請假紀錄 (分流顯示)</p>
-    <div class="record-list" id="profileLeaveList">
-      <div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>
-    </div>
-  </div>
-
-  <!-- 主管專區 -->
-  <div class="page" id="page-admin">
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">今日上班</div>
-        <div class="stat-value" id="statCheckin">—<span>人</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">今日下班</div>
-        <div class="stat-value" id="statCheckout">—<span>人</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">待審請假</div>
-        <div class="stat-value" id="statLeave">—<span>筆</span></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">待審加班/補</div>
-        <div class="stat-value" id="statOT">—<span>筆</span></div>
-      </div>
-    </div>
-    
-    <!-- 主管穿透查詢 -->
-    <div class="input-group" style="background:var(--card-bg-soft); border:1px solid var(--card-border); border-radius:var(--radius); padding:16px; margin-bottom:20px;">
-      <label class="input-label" style="color:var(--blue-light);">👤 員工考勤多維度穿透查詢</label>
-      <select class="select-field" id="adminUserQuery" onchange="queryEmployeeStats(this.value)">
-        <option value="">選擇要查看的同仁...</option>
-        <option value="115">115 劉玟君</option>
-        <option value="114">114 邱郁倫</option>
-        <option value="111">111 test</option>
-      </select>
-      <div id="userQueryResults" style="margin-top:14px; display:none; border-top:1px dashed var(--card-border); padding-top:12px;"></div>
-    </div>
-
-    <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
-    <div class="record-list" id="pendingList"></div>
-    
-    <p class="section-title" style="margin-top:24px;">所有打卡紀錄</p>
-    <div class="record-list" id="adminRecords"></div>
-  </div>
+<div class="header">
+<div class="header-left">
+<img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextHeader').style.display='inline-block'" />
+<span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
 </div>
-
+<div class="header-right">
+<div class="notif-bell" id="notifBell">
+🔔<span class="notif-badge" id="notifCount" style="display:none">!</span>
+</div>
+<span class="header-user" id="headerUser"></span>
+<span class="header-clock" id="headerClock">--:--:--</span>
+<button class="logout-btn" onclick="doLogout()">登出</button>
+</div>
+</div>
+<div class="nav" id="mainNav">
+<div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨💼 主管</div>
+<div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
+<div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
+<div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
+<div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
+<div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
+<div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
+</div>
+<!-- 打卡 -->
+<div class="page active" id="page-home">
+<div class="clock-card">
+<div class="clock-time" id="mainClock">00:00:00</div>
+<div class="clock-date" id="mainDate"></div>
+<div class="clock-user" id="clockUser"></div>
+</div>
+<div id="pushBanner" class="push-banner" style="display:none">
+🔔 開啟推播通知，及時收到審批結果 <button onclick="requestPush()">開啟</button>
+</div>
+<div class="gps-bar">
+<div class="gps-dot" id="gpsDot"></div>
+<span class="gps-text" id="gpsText">取得位置中…</span>
+<span class="gps-coords" id="gpsCoords"></span>
+</div>
+<div class="offline-banner" id="offlineBanner">
+⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試
+</div>
+<div style="text-align:right;font-size:14px;margin-bottom:12px;min-height:18px;">
+<span id="syncStatus" style="transition:color 0.3s;"></span>
+</div>
+<div class="action-grid">
+<div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
+<span class="btn-icon">✅</span>
+<div class="btn-label">上班</div>
+<div class="btn-sub" id="checkinSub">打卡上班</div>
+</div>
+<div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction('下班')">
+<span class="btn-icon">🏁</span>
+<div class="btn-label">下班</div>
+<div class="btn-sub" id="checkoutSub">打卡下班</div>
+</div>
+</div>
+</div>
+<!-- 我的紀錄 -->
+<div class="page" id="page-records">
+<div class="filter-bar">
+<div class="filter-chip active" onclick="filterRecords('打卡',this)">打卡</div>
+<div class="filter-chip" onclick="filterRecords('請假',this)">請假</div>
+<div class="filter-chip" onclick="filterRecords('加班',this)">加班</div>
+<div class="filter-chip" onclick="filterRecords('補打卡',this)">補打卡</div>
+</div>
+<div class="record-list" id="allRecordsList"></div>
+</div>
+<!-- 請假 (V33 防呆更名為 補休) -->
+<div class="page" id="page-leave">
+<div class="info-box">
+<div class="info-icon">📅</div>
+<div class="info-text">
+<strong>請假說明：</strong>請假以<strong>小時</strong>為單位，請填寫開始與結束時間。<br>
+半天假 = 4 小時；全天假 = 8 小時。
+</div>
+</div>
+<p class="section-title">請假申請</p>
+<div class="input-group">
+<label class="input-label">假別</label>
+<select class="select-field" id="leaveType">
+<option>特休</option>
+<option>補休</option>
+<option>事假</option>
+<option>病假</option>
+<option>公假</option>
+<option>婚假</option>
+<option>喪假</option>
+</select>
+</div>
+<div class="input-group">
+<label class="input-label">開始日期</label>
+<input type="date" class="input-field" id="leaveStart" />
+</div>
+<div class="input-group">
+<label class="input-label">開始時間</label>
+<select class="select-field" id="leaveStartTime"></select>
+</div>
+<div class="input-group">
+<label class="input-label">結束日期</label>
+<input type="date" class="input-field" id="leaveEnd" />
+</div>
+<div class="input-group">
+<label class="input-label">結束時間</label>
+<select class="select-field" id="leaveEndTime"></select>
+</div>
+<div class="input-group">
+<label class="input-label">原因（選填）</label>
+<input class="input-field" id="leaveReason" placeholder="請假原因" />
+</div>
+<button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
+</div>
+<!-- 加班 -->
+<div class="page" id="page-overtime">
+<div class="info-box">
+<div class="info-icon">⏰</div>
+<div class="info-text">
+<strong>加班說明：</strong>滿<strong>1 小時</strong>後起算，以<strong>0.5 小時</strong>為單位遞增。<br>
+例：1h、1.5h、2h、2.5h…
+</div>
+</div>
+<p class="section-title">加班申請</p>
+<div class="input-group">
+<label class="input-label">加班日期</label>
+<input type="date" class="input-field" id="otDate" />
+</div>
+<div class="input-group">
+<label class="input-label">開始時間</label>
+<select class="select-field" id="otStartTime"></select>
+</div>
+<div class="input-group">
+<label class="input-label">結束時間</label>
+<select class="select-field" id="otEndTime"></select>
+</div>
+<div class="input-group">
+<label class="input-label">加班原因</label>
+<input class="input-field" id="otReason" placeholder="加班原因" />
+</div>
+<button class="submit-btn purple" onclick="submitOvertime()">送出加班申請</button>
+</div>
+<!-- 補打卡 -->
+<div class="page" id="page-supp">
+<div class="info-box">
+<div class="info-icon">🔄</div>
+<div class="info-text">
+<strong>補打卡說明：</strong>若因離開辦公室忘記打卡，請在此填寫補打卡申請，送出後由主管審核確認。
+</div>
+</div>
+<p class="section-title">補打卡申請</p>
+<div class="input-group">
+<label class="input-label">上班或下班</label>
+<select class="select-field" id="suppType">
+<option>上班</option>
+<option>下班</option>
+</select>
+</div>
+<div class="input-group">
+<label class="input-label">日期</label>
+<input type="date" class="input-field" id="suppDate" />
+</div>
+<div class="input-group">
+<label class="input-label">時間</label>
+<select class="select-field" id="suppTime"></select>
+</div>
+<div class="input-group">
+<label class="input-label">未打卡原因</label>
+<input class="input-field" id="suppReason" placeholder="請說明未打卡原因" />
+</div>
+<button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
+</div>
+<!-- 個人資料 (V33 方案 A 中心化極簡大卡片) -->
+<div class="page" id="page-profile">
+<div class="profile-card">
+<div class="profile-name" id="profileName">—</div>
+<div class="profile-empid" id="profileEmpId">員編：—</div>
+</div>
+<p class="section-title">基本資料</p>
+<div class="profile-card" style="text-align:left; padding:16px 20px;">
+<div class="profile-meta-row">
+<div class="profile-meta-icon">👤</div>
+<div class="profile-meta-label">姓名</div>
+<div class="profile-meta-value" id="profileNameVal">—</div>
+</div>
+<div class="profile-meta-row">
+<div class="profile-meta-icon">📅</div>
+<div class="profile-meta-label">到職日</div>
+<div class="profile-meta-value" id="profileJoinDate">—</div>
+</div>
+<div class="profile-meta-row">
+<div class="profile-meta-icon">🏷️</div>
+<div class="profile-meta-label">員編</div>
+<div class="profile-meta-value" id="profileEmpIdVal">—</div>
+</div>
+<div class="profile-meta-row">
+<div class="profile-meta-icon">🔑</div>
+<div class="profile-meta-label">密碼</div>
+<div class="profile-meta-value" style="display:flex;align-items:center;gap:8px;">
+<span>••••••</span>
+<button class="pw-toggle-btn" onclick="togglePwChange()">修改密碼</button>
+</div>
+</div>
+<div class="pw-change-area" id="pwChangeArea">
+<div class="input-group" style="margin-bottom:10px;">
+<label class="input-label">舊密碼</label>
+<input type="password" class="input-field" id="pwOld" placeholder="請輸入舊密碼" />
+</div>
+<div class="input-group" style="margin-bottom:10px;">
+<label class="input-label">新密碼</label>
+<input type="password" class="input-field" id="pwNew" placeholder="請輸入新密碼" />
+</div>
+<div class="input-group" style="margin-bottom:10px;">
+<label class="input-label">確認新密碼</label>
+<input type="password" class="input-field" id="pwConfirm" placeholder="再次輸入新密碼" />
+</div>
+<button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
+</div>
+</div>
+<p class="section-title">請假與特休剩餘額度表</p>
+<div class="attend-stats" id="profileQuotaArea" style="grid-template-columns: 1fr; gap:12px; margin-bottom:20px;">
+<div class="attend-card blue" style="text-align:left; padding: 16px; border-top:4px solid var(--blue-main);">
+<div class="attend-val blue" style="font-size:20px; font-weight:700;" id="profileSpecialRemaining">— h</div>
+<div class="attend-lbl" style="margin-top:4px;" id="profileSpecialFormula">特休賸餘：— (總額 — - 已休 —)</div>
+</div>
+<div class="attend-card purple" style="text-align:left; padding: 16px; border-top:4px solid var(--accent-purple);">
+<div class="attend-val purple" style="font-size:20px; font-weight:700;" id="profileCompRemaining">— h</div>
+<div class="attend-lbl" style="margin-top:4px;" id="profileCompFormula">補休賸餘：— (加班 — - 補休已休 —)</div>
+</div>
+</div>
+<p class="section-title">出缺勤總表（本月）</p>
+<div class="attend-stats">
+<div class="attend-card blue">
+<div class="attend-val blue" id="attTotal">—</div>
+<div class="attend-lbl">出勤天數</div>
+</div>
+<div class="attend-card red">
+<div class="attend-val red" id="attMissed">—</div>
+<div class="attend-lbl">未打卡</div>
+</div>
+<div class="attend-card orange">
+<div class="attend-val orange" id="attLate">—</div>
+<div class="attend-lbl">遲到次數</div>
+</div>
+<div class="attend-card purple">
+<div class="attend-val purple" id="attLeave">—</div>
+<div class="attend-lbl">請假天數</div>
+</div>
+</div>
+<p class="section-title">請假紀錄</p>
+<div class="record-list" id="profileLeaveList">
+<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>
+</div>
+</div>
+<!-- 主管 -->
+<div class="page" id="page-admin">
+<div class="stats-grid">
+<div class="stat-card">
+<div class="stat-label">今日上班</div>
+<div class="stat-value" id="statCheckin">—<span>人</span></div>
+</div>
+<div class="stat-card">
+<div class="stat-label">今日下班</div>
+<div class="stat-value" id="statCheckout">—<span>人</span></div>
+</div>
+<div class="stat-card">
+<div class="stat-label">待審請假</div>
+<div class="stat-value" id="statLeave">—<span>筆</span></div>
+</div>
+<div class="stat-card">
+<div class="stat-label">待審加班/補</div>
+<div class="stat-value" id="statOT">—<span>筆</span></div>
+</div>
+</div>
+<p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
+<div class="record-list" id="pendingList"></div>
+<!-- V33 智慧穿透查詢模組 -->
+<p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
+<div class="input-group">
+<select class="select-field" id="adminEmpSelect" onchange="handleAdminEmpChange()">
+<option value="">-- 請選擇員工 --</option>
+</select>
+</div>
+<div id="adminEmpDetailArea" style="display:none; margin-bottom:20px;">
+<div class="profile-card" style="text-align:left; padding: 18px;">
+<div style="font-size:18px; font-weight:700; color:var(--blue-light); margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:8px;">同仁考勤年資看板</div>
+<div class="profile-meta-row"><div class="profile-meta-icon">👤</div><div class="profile-meta-label">姓名</div><div class="profile-meta-value" id="detailName">—</div></div>
+<div class="profile-meta-row"><div class="profile-meta-icon">📅</div><div class="profile-meta-label">到職日</div><div class="profile-meta-value" id="detailJoinDate">—</div></div>
+<div class="profile-meta-row"><div class="profile-meta-icon">⏳</div><div class="profile-meta-label">當前年資</div><div class="profile-meta-value" id="detailSeniority" style="color:var(--green-light); font-weight:bold;">—</div></div>
+<div class="profile-meta-row" style="border-bottom:none;"><div class="profile-meta-icon">🎂</div><div class="profile-meta-label">下一週年</div><div class="profile-meta-value" id="detailCountdown" style="color:var(--accent-orange); font-weight:bold;">—</div></div>
+</div>
+<div class="attend-stats" style="grid-template-columns: 1fr; gap:10px; margin-bottom:16px;">
+<div class="attend-card blue" style="text-align:left; padding:12px; border-top:3px solid var(--blue-main);">
+<div class="attend-val blue" style="font-size:18px; font-weight:700;" id="detailSpecialRemaining">— h</div>
+<div class="attend-lbl" id="detailSpecialFormula">特休賸餘：— (總額 — - 已休 —)</div>
+</div>
+<div class="attend-card purple" style="text-align:left; padding:12px; border-top:3px solid var(--accent-purple);">
+<div class="attend-val purple" style="font-size:18px; font-weight:700;" id="detailCompRemaining">— h</div>
+<div class="attend-lbl" id="detailCompFormula">補休賸餘：— (加班 — - 補休已休 —)</div>
+</div>
+</div>
+<p class="section-title">📊 該同仁：月度出缺勤歷史表格</p>
+<div id="detailMonthlyTableArea" style="overflow-x:auto; margin-bottom:16px;"></div>
+<p class="section-title">📋 該同仁：詳細請假紀錄</p>
+<div class="record-list" id="detailLeaveList"></div>
+</div>
+<p class="section-title" style="margin-top:24px;">所有打卡紀錄 (近一週)</p>
+<div class="record-list" id="adminRecords"></div>
+</div>
+</div>
+<!-- Modals (V33 加班補休更名為 補休) -->
+<div class="modal-overlay" id="modal-leave">
+<div class="modal">
+<div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal('leave')">×</button></div>
+<div class="input-group">
+<label class="input-label">假別</label>
+<select class="select-field" id="modalLeaveType">
+<option>特休</option>
+<option>補休</option>
+<option>事假</option>
+<option>病假</option>
+<option>公假</option>
+</select>
+</div>
+<div class="input-group">
+<label class="input-label">日期</label>
+<input type="date" class="input-field" id="modalLeaveDate" />
+</div>
+<button class="submit-btn orange" onclick="quickLeave()">確認送出</button>
+</div>
+</div>
+<div class="modal-overlay" id="modal-overtime">
+<div class="modal">
+<div class="modal-title">🌙 加班申請<button class="modal-close" onclick="closeModal('overtime')">×</button></div>
+<div class="input-group">
+<label class="input-label">加班時數</label>
+<select class="select-field" id="modalOTHours">
+<option>1 小時</option>
+<option>1.5 小時</option>
+<option>2 小時</option>
+<option>2.5 小時</option>
+<option>3 小時</option>
+<option>3.5 小時</option>
+<option>4 小時</option>
+<option>4.5 小時</option>
+<option>5 小時</option>
+<option>5.5 小時</option>
+<option>6 小時</option>
+</select>
+</div>
+<div class="input-group">
+<label class="input-label">原因</label>
+<input class="input-field" id="modalOTReason" placeholder="加班原因" />
+</div>
+<button class="submit-btn purple" onclick="quickOvertime()">確認送出</button>
+</div>
+</div>
 <div class="toast" id="toast"></div>
-
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
-
 let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || 'null');
 let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
 let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
-const todayStr = new Date().toISOString().split('T')[0];
-
+const todayStr = new Date().toLocaleDateString('zh-TW', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\//g, '-');
+// ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-    const url = GAS_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
-    const script = document.createElement('script');
-    const timer = setTimeout(() => {
-      delete window[cbName];
-      script.remove();
-      reject(new Error('timeout'));
-    }, timeoutMs);
-    window[cbName] = (res) => {
-      clearTimeout(timer);
-      delete window[cbName];
-      script.remove();
-      resolve(res);
-    };
-    script.onerror = () => {
-      clearTimeout(timer);
-      delete window[cbName];
-      script.remove();
-      reject(new Error('network'));
-    };
-    script.src = url;
-    document.head.appendChild(script);
-  });
+return new Promise((resolve, reject) => {
+const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+const url = GAS_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
+const script = document.createElement('script');
+const timer = setTimeout(() => {
+delete window[cbName];
+script.remove();
+reject(new Error('timeout'));
+}, timeoutMs);
+window[cbName] = (res) => {
+clearTimeout(timer);
+delete window[cbName];
+script.remove();
+resolve(res);
+};
+script.onerror = () => {
+clearTimeout(timer);
+delete window[cbName];
+script.remove();
+reject(new Error('network'));
+};
+script.src = url;
+document.head.appendChild(script);
+});
 }
-
+// ── 連線狀態偵測 ──────────────────────────────────────────────
 let isOnline = navigator.onLine;
 let isGpsLocked = false;
 let connectivityCheckInFlight = false;
-
 function updateActionButtonsState() {
-  const btnCheckin = document.getElementById('btnCheckin');
-  const btnCheckout = document.getElementById('btnCheckout');
-  const banner = document.getElementById('offlineBanner');
-  const checkinSub = document.getElementById('checkinSub');
-  const checkoutSub = document.getElementById('checkoutSub');
-  if (!btnCheckin || !btnCheckout) return;
-  const canPunch = isOnline && isGpsLocked;
-  btnCheckin.classList.toggle('disabled', !canPunch);
-  btnCheckout.classList.toggle('disabled', !canPunch);
-  let reason = '';
-  if (!isOnline) reason = '⚠️ 無法連線';
-  else if (!isGpsLocked) reason = '⚠️ 無 GPS 定位';
-  
-  if (banner) {
-    banner.classList.toggle('show', !canPunch);
-    if (!canPunch) {
-      banner.textContent = !isOnline
-        ? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試'
-        : '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
-    }
-  }
-  if (checkinSub) checkinSub.textContent = canPunch ? '打卡上班' : reason;
-  if (checkoutSub) checkoutSub.textContent = canPunch ? '打卡下班' : reason;
+const btnCheckin = document.getElementById('btnCheckin');
+const btnCheckout = document.getElementById('btnCheckout');
+const banner = document.getElementById('offlineBanner');
+const checkinSub = document.getElementById('checkinSub');
+const checkoutSub = document.getElementById('checkoutSub');
+if (!btnCheckin || !btnCheckout) return; 
+const canPunch = isOnline && isGpsLocked;
+btnCheckin.classList.toggle('disabled', !canPunch);
+btnCheckout.classList.toggle('disabled', !canPunch);
+let reason = '';
+if (!isOnline) reason = '⚠️ 無法連線';
+else if (!isGpsLocked) reason = '⚠️ 無 GPS 定位';
+if (banner) {
+banner.classList.toggle('show', !canPunch);
+if (!canPunch) {
+banner.textContent = !isOnline
+? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試'
+: '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
 }
-
+}
+if (checkinSub) checkinSub.textContent = canPunch ? '打卡上班' : reason;
+if (checkoutSub) checkoutSub.textContent = canPunch ? '打卡下班' : reason;
+}
 function setOnlineStatus(online) {
-  isOnline = online;
-  updateActionButtonsState();
+isOnline = online;
+updateActionButtonsState();
 }
 function setGpsLocked(locked) {
-  isGpsLocked = locked;
-  updateActionButtonsState();
+isGpsLocked = locked;
+updateActionButtonsState();
 }
-
 async function checkConnectivity() {
-  if (connectivityCheckInFlight) return;
-  connectivityCheckInFlight = true;
-  try {
-    await callGAS({}, 6000);
-    setOnlineStatus(true);
-  } catch (e) {
-    setOnlineStatus(false);
-  } finally {
-    connectivityCheckInFlight = false;
-  }
+if (connectivityCheckInFlight) return;
+connectivityCheckInFlight = true;
+try {
+await callGAS({}, 6000);
+setOnlineStatus(true);
+} catch (e) {
+setOnlineStatus(false);
+} finally {
+connectivityCheckInFlight = false;
 }
-
+}
 window.addEventListener('online', () => { checkConnectivity(); });
 window.addEventListener('offline', () => { setOnlineStatus(false); });
-
+// ── Boot ────────────────────────────────────────────────────────
 if (currentUser) showApp();
 else showLogin();
-
 function showLogin() {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('mainApp').style.display = 'none';
+document.getElementById('loginScreen').style.display = 'flex';
+document.getElementById('mainApp').style.display = 'none';
 }
-
 function showApp() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-  
-  const isAdmin = currentUser.role === 'admin';
-  document.getElementById('adminTab').style.display = isAdmin ? 'block' : 'none';
-  if (!isAdmin) {
-    const adminPage = document.getElementById('page-admin');
-    if (adminPage.classList.contains('active')) switchTab('home');
-  }
-  document.getElementById('headerUser').textContent = currentUser.name;
-  document.getElementById('clockUser').innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
-  
-  ['leaveStart','leaveEnd','otDate','suppDate'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = todayStr;
-  });
-  
-  initGPS();
-  renderAllList();
-  updateNotifBadge();
-  if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
-  if (isAdmin) switchTab('admin');
-  
-  checkConnectivity();
-  setInterval(checkConnectivity, 30000);
-  
-  // 🟢 V36 雲端全量數據自動拉取同步
-  syncRecordsFromServer();
+document.getElementById('loginScreen').style.display = 'none';
+document.getElementById('mainApp').style.display = 'block';
+const isAdmin = currentUser.role === 'admin';
+document.getElementById('adminTab').style.display = isAdmin ? 'block' : 'none';
+if (!isAdmin) {
+const adminPage = document.getElementById('page-admin');
+if (adminPage.classList.contains('active')) switchTab('home');
 }
-
-async function syncRecordsFromServer() {
-  if (!currentUser) return;
-  const el = document.getElementById('syncStatus');
-  if (el) {
-    el.textContent = '☁️ 雲端同步中…';
-    el.style.color = 'var(--blue-light)';
-  }
-  try {
-    const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-    if (data.status === 'ok' && data.updates) {
-      records = data.updates; // 全量拉回覆蓋本機 localStorage
-      saveRecords();
-      renderAllList();
-      if (el) {
-        el.textContent = '✅ 已同步最新考勤';
-        el.style.color = 'var(--green-main)';
-      }
-      setTimeout(() => { if (el) el.textContent = ''; }, 3000);
-    }
-  } catch (e) {
-    if (el) {
-      el.textContent = '⚠️ 同步失敗（已載入本機快取）';
-      el.style.color = 'var(--accent-orange)';
-    }
-    setTimeout(() => { if (el) el.textContent = ''; }, 4000);
-  }
+document.getElementById('headerUser').textContent = currentUser.name;
+document.getElementById('clockUser').innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
+['leaveStart','leaveEnd','suppDate','modalLeaveDate'].forEach(id => {
+const el = document.getElementById(id);
+if (el) el.value = todayStr;
+});
+const otDateEl = document.getElementById('otDate');
+if (otDateEl) otDateEl.value = todayStr;
+initGPS();
+renderAllList();
+updateNotifBadge();
+if (Notification && Notification.permission === 'default') document.getElementById('pushBanner').style.display = 'flex';
+if (currentUser.role !== 'admin') setInterval(checkApprovalUpdates, 60000);
+if (isAdmin) switchTab('admin');
+checkConnectivity();
+setInterval(checkConnectivity, 30000);
 }
-
+// ── Login / Logout ─────────────────────────────────────────────
 async function doLogin() {
-  const empId = document.getElementById('loginId').value.trim();
-  const password = document.getElementById('loginPw').value;
-  if (!empId || !password) {
-    showLoginErr('請輸入員工編號和密碼');
-    return;
-  }
-  const btn = document.getElementById('loginBtn');
-  btn.innerHTML = '<span class="spinner"></span>驗證中…';
-  btn.disabled = true;
-  document.getElementById('loginErr').style.display = 'none';
-  
-  try {
-    const data = await callGAS({ action: 'login', empId, password });
-    if (data.status === 'ok') {
-      currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate };
-      sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
-      showApp();
-    } else {
-      showLoginErr(data.message || '帳號或密碼錯誤，請再試一次');
-    }
-  } catch (e) {
-    showLoginErr('連線失敗，請確認網路後再試');
-  }
-  btn.innerHTML = '登入';
-  btn.disabled = false;
+const empId = document.getElementById('loginId').value.trim();
+const password = document.getElementById('loginPw').value;
+if (!empId || !password) {
+showLoginErr('請輸入員工編號和密碼');
+return;
 }
-
+const btn = document.getElementById('loginBtn');
+btn.innerHTML = '<span class="spinner"></span>驗證中…';
+btn.disabled = true;
+document.getElementById('loginErr').style.display = 'none';
+try {
+const data = await callGAS({ action: 'login', empId, password });
+if (data.status === 'ok') {
+currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, quota: data.quota, employeeList: data.employeeList };
+sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+showApp();
+} else {
+showLoginErr(data.message || '帳號或密碼錯誤，請再試一次');
+}
+} catch (e) {
+showLoginErr('連線失敗，請確認網路後再試');
+}
+btn.innerHTML = '登入';
+btn.disabled = false;
+}
 function showLoginErr(msg) {
-  const el = document.getElementById('loginErr');
-  el.textContent = msg;
-  el.style.display = 'block';
+const el = document.getElementById('loginErr');
+el.textContent = msg;
+el.style.display = 'block';
 }
-
 function doLogout() {
-  sessionStorage.removeItem('tjcpm_user');
-  currentUser = null;
-  isOnline = true;
-  isGpsLocked = false;
-  document.getElementById('adminTab').style.display = 'none';
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-home').classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.tab === 'home');
-  });
-  document.getElementById('notifCount').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('mainApp').style.display = 'none';
-  document.getElementById('loginId').value = '';
-  document.getElementById('loginPw').value = '';
-  document.getElementById('loginErr').style.display = 'none';
-  setTimeout(() => document.getElementById('loginId').focus(), 100);
+sessionStorage.removeItem('tjcpm_user');
+currentUser = null;
+isOnline = true;
+isGpsLocked = false;
+document.getElementById('adminTab').style.display = 'none';
+document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+document.getElementById('page-home').classList.add('active');
+document.querySelectorAll('.nav-tab').forEach(t => {
+t.classList.toggle('active', t.dataset.tab === 'home');
+});
+document.getElementById('notifCount').style.display = 'none';
+document.getElementById('loginScreen').style.display = 'flex';
+document.getElementById('mainApp').style.display = 'none';
+document.getElementById('loginId').value = '';
+document.getElementById('loginPw').value = '';
+document.getElementById('loginErr').style.display = 'none';
+setTimeout(() => document.getElementById('loginId').focus(), 100);
 }
-
+// ── Clock ───────────────────────────────────────────────────────
 function updateClock() {
-  const now = new Date();
-  const sDate = now.toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
-  const sTime = now.toLocaleTimeString('zh-TW', { hour12: false });
-  if (document.getElementById('mainClock')) document.getElementById('mainClock').textContent = sTime;
-  if (document.getElementById('mainDate')) document.getElementById('mainDate').textContent = sDate;
-  if (document.getElementById('headerClock')) document.getElementById('headerClock').textContent = sTime;
+const now = new Date();
+document.getElementById('mainClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+document.getElementById('mainDate').textContent = now.toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
 }
 setInterval(updateClock, 1000);
 updateClock();
-
+// ── GPS ─────────────────────────────────────────────────────────
 function initGPS() {
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(
-      p => {
-        gpsLat = p.coords.latitude.toFixed(5);
-        gpsLng = p.coords.longitude.toFixed(5);
-        document.getElementById('gpsDot').className = 'gps-dot active';
-        document.getElementById('gpsText').textContent = 'GPS 定位成功';
-        document.getElementById('gpsCoords').textContent = `${gpsLat}, ${gpsLng}`;
-        setGpsLocked(true);
-      },
-      err => {
-        document.getElementById('gpsDot').className = 'gps-dot error';
-        document.getElementById('gpsText').textContent = '定位失敗，請開啟GPS及權限';
-        setGpsLocked(false);
-      }
-    );
-  } else {
-    document.getElementById('gpsText').textContent = '不支援地理定位';
-    setGpsLocked(false);
-  }
+if (!navigator.geolocation) {
+setGPS('error','不支援 GPS','');
+setGpsLocked(false);
+return;
 }
-
+navigator.geolocation.watchPosition(
+p => {
+gpsLat = p.coords.latitude.toFixed(5);
+gpsLng = p.coords.longitude.toFixed(5);
+setGPS('active', 'GPS 已定位', `${gpsLat}, ${gpsLng}`);
+setGpsLocked(true);
+},
+() => {
+setGPS('error', 'GPS 定位失敗', '請允許位置存取');
+setGpsLocked(false);
+}
+);
+}
+function setGPS(state, text, coords) {
+document.getElementById('gpsDot').className = 'gps-dot' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
+document.getElementById('gpsText').textContent = text;
+document.getElementById('gpsCoords').textContent = coords;
+}
+// ── Sync (fetch mode no-cors) ──
 async function syncToSheet(record) {
-  const el = document.getElementById('syncStatus');
-  if (el) {
-    el.textContent = '☁️ 同步中…';
-    el.style.color = 'var(--blue-light)';
-  }
-  try {
-    await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(record)
-    });
-    if (el) {
-      el.textContent = '✅ 已同步雲端';
-      el.style.color = 'var(--green-main)';
-    }
-    setTimeout(() => { if (el) el.textContent = ''; }, 3000);
-  } catch (e) {
-    if (el) {
-      el.textContent = '⚠️ 離線（本機已儲存）';
-      el.style.color = 'var(--accent-orange)';
-    }
-    setTimeout(() => { if (el) el.textContent = ''; }, 4000);
-  }
+const el = document.getElementById('syncStatus');
+if (el) {
+el.textContent = '☁️ 同步中…';
+el.style.color = 'var(--blue-light)';
 }
-
+try {
+await fetch(GAS_URL, {
+method: 'POST',
+mode: 'no-cors',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(record)
+});
+if (el) {
+el.textContent = '✅ 已同步雲端';
+el.style.color = 'var(--green-main)';
+}
+setTimeout(() => { if (el) el.textContent = ''; }, 3000);
+} catch (e) {
+if (el) {
+el.textContent = '⚠️ 離線（本機已儲存）';
+el.style.color = 'var(--accent-orange)';
+}
+}
+}
+// ── Push and Notification ──
+function updateNotifBadge() {
+const unread = notifications.filter(n => !n.read).length;
+const badge = document.getElementById('notifBadge');
+if (unread > 0) {
+badge.textContent = unread;
+badge.style.display = 'flex';
+} else {
+badge.style.display = 'none';
+}
+}
+function requestPush() {
+if (Notification && Notification.permission !== 'granted') {
+Notification.requestPermission().then(permission => {
+if (permission === 'granted') {
+showToast('🔔 推播通知已開啟');
+}
+});
+}
+}
+// ── Actions ─────────────────────────────────────────────────────
 function handleAction(type) {
-  if (!currentUser) return;
-  if (!isOnline) {
-    showToast('⚠️ 目前無法連線，請確認網路後再試');
-    return;
-  }
-  if (!isGpsLocked) {
-    showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試');
-    return;
-  }
-  const remarkVal = document.getElementById('punchRemark') ? document.getElementById('punchRemark').value.trim() : '';
-  const now = new Date();
-  const record = {
-    id: Date.now(),
-    type,
-    empId: currentUser.empId,
-    name: currentUser.name,
-    time: now.toLocaleTimeString('zh-TW', { hour12: false }),
-    date: now.toLocaleDateString('zh-TW'),
-    timestamp: now.toISOString(),
-    lat: gpsLat,
-    lng: gpsLng,
-    remark: remarkVal, // 🟢 備註
-    action: 'punch'
-  };
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
-  syncToSheet(record);
-  
-  if (document.getElementById('punchRemark')) document.getElementById('punchRemark').value = ''; // 🟢 清空
-  addNotif('system', `${type}打卡成功 ${record.time}`);
-  showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
+if (!currentUser) return;
+if (!isOnline) {
+showToast('⚠️ 目前無法連線，請確認網路後再試');
+return;
 }
-
+if (!isGpsLocked) {
+showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試');
+return;
+}
+const now = new Date();
+const record = {
+id: Date.now(), type, empId: currentUser.empId, name: currentUser.name,
+time: now.toLocaleTimeString('zh-TW', { hour12: false }),
+date: now.toLocaleDateString('zh-TW').replace(/\//g, '-'), timestamp: now.toISOString(),
+lat: gpsLat, lng: gpsLng
+};
+records.unshift(record);
+saveRecords();
+renderAllList();
+syncToSheet(record);
+showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
+}
 function submitLeave() {
-  const id = Date.now();
-  const record = {
-    id, clientId: String(id), type: '請假', subType: document.getElementById('leaveType').value,
-    empId: currentUser.empId, name: currentUser.name,
-    date: document.getElementById('leaveStart').value, startTime: document.getElementById('leaveStartTime').value,
-    endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
-    reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
-  };
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
-  syncToSheet(record);
-  addNotif('pending', `請假申請已送出（${record.subType}），等待主管審核`);
-  showToast('📝 請假申請已送出');
+const id = Date.now();
+const record = {
+id, clientId: String(id), type: '請假', subType: document.getElementById('leaveType').value,
+empId: currentUser.empId, name: currentUser.name,
+date: document.getElementById('leaveStart').value, startTime: document.getElementById('leaveStartTime').value,
+endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
+reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
+};
+records.unshift(record);
+saveRecords();
+renderAllList();
+syncToSheet(record);
+showToast('📝 請假申請已送出');
+// 非同步更新本機額度
+setTimeout(checkApprovalUpdates, 2000);
 }
-
 function submitOvertime() {
-  const id = Date.now();
-  const record = {
-    id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
-    date: document.getElementById('otDate').value, startTime: document.getElementById('otStart').value,
-    endTime: document.getElementById('otEnd').value, reason: document.getElementById('otReason').value,
-    status: '待審', timestamp: new Date().toISOString()
-  };
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
-  syncToSheet(record);
-  addNotif('pending', `加班申請已送出，等待主管審核`);
-  showToast('🌙 加班申請已送出');
+const id = Date.now();
+const record = {
+id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
+date: document.getElementById('otDate').value, startTime: document.getElementById('otStartTime').value,
+endTime: document.getElementById('otEndTime').value, reason: document.getElementById('otReason').value,
+status: '待審', timestamp: new Date().toISOString()
+};
+records.unshift(record);
+saveRecords();
+renderAllList();
+syncToSheet(record);
+showToast('🌙 加班申請已送出');
+setTimeout(checkApprovalUpdates, 2000);
 }
-
 function submitSupp() {
-  const id = Date.now();
-  const record = {
-    id, clientId: String(id), type: '補打卡', subType: document.getElementById('suppType').value,
-    empId: currentUser.empId, name: currentUser.name,
-    date: document.getElementById('suppDate').value, time: document.getElementById('suppTime').value,
-    reason: document.getElementById('suppReason').value, status: '待審', timestamp: new Date().toISOString()
-  };
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
-  syncToSheet(record);
-  addNotif('pending', `補打卡申請已送出，等待主管審核`);
-  showToast('🔄 補打卡申請已送出');
+const id = Date.now();
+const record = {
+id, clientId: String(id), type: '補打卡', subType: document.getElementById('suppType').value,
+empId: currentUser.empId, name: currentUser.name,
+date: document.getElementById('suppDate').value, time: document.getElementById('suppTime').value,
+reason: document.getElementById('suppReason').value, status: '待審', timestamp: new Date().toISOString()
+};
+records.unshift(record);
+saveRecords();
+renderAllList();
+syncToSheet(record);
+showToast('🔄 補打卡申請已送出');
+setTimeout(checkApprovalUpdates, 2000);
 }
-
+function quickLeave() {
+const id = Date.now();
+const record = {
+id, clientId: String(id), type: '請假', subType: document.getElementById('modalLeaveType').value,
+empId: currentUser.empId, name: currentUser.name, date: document.getElementById('modalLeaveDate').value,
+status: '待審', timestamp: new Date().toISOString()
+};
+records.unshift(record);
+saveRecords();
+renderAllList();
+syncToSheet(record);
+closeModal('leave');
+showToast('📝 請假申請已送出');
+setTimeout(checkApprovalUpdates, 2000);
+}
+function quickOvertime() {
+const id = Date.now();
+const record = {
+id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
+hours: document.getElementById('modalOTHours').value, reason: document.getElementById('modalOTReason').value,
+date: todayStr, status: '待審', timestamp: new Date().toISOString()
+};
+records.unshift(record);
+saveRecords();
+renderAllList();
+syncToSheet(record);
+closeModal('overtime');
+showToast('🌙 加班申請已送出');
+setTimeout(checkApprovalUpdates, 2000);
+}
+// ── Poll approval status ──
+async function checkApprovalUpdates() {
+if (!currentUser) return;
+try {
+const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
+if (data.status === 'ok') {
+if (data.updates) {
+data.updates.forEach(u => {
+const existing = records.find(r => r.id === u.id || (r.clientId && String(r.clientId) === String(u.clientId)));
+if (existing && existing.status !== u.status) {
+existing.status = u.status;
+if (u.type === '請假' || u.type === '加班' || u.type === '補打卡') {
+showToast(`您的${u.type}申請（${u.date}）已被主管【${u.status}】`);
+}
+}
+});
+saveRecords();
+renderAllList();
+}
+if (data.quota) {
+currentUser.quota = data.quota;
+sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+if (document.getElementById('page-profile').classList.contains('active')) {
+renderProfile();
+}
+}
+}
+} catch (e) {
+console.error("異步輪詢出錯: ", e);
+}
+}
+// ── Render lists ──
 function filterRecords(type, chip) {
-  currentFilter = type;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  renderAllList();
+currentFilter = type;
+document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+chip.classList.add('active');
+renderAllList();
 }
-
-/* ── V36 專屬：雙軌自適應表格渲染 (Table for PC, Cards for Phone) ── */
 function renderAllList() {
-  let mine = records.filter(r => r.empId === currentUser?.empId);
-  if (currentFilter === '打卡') {
-    mine = mine.filter(r => r.type === '上班' || r.type === '下班');
-  } else if (currentFilter !== 'all') {
-    mine = mine.filter(r => r.type === currentFilter);
-  }
-  const el = document.getElementById('allRecordsList');
-  if (!el) return;
-
-  if (window.innerWidth >= 600) {
-    // 🟢 電腦版：呈現高質感表格 (HTML Table)
-    let tableRowsHTML = mine.map(r => {
-      let typeBadge = '';
-      if (r.type === '上班') typeBadge = '<span class="badge badge-green">上班</span>';
-      else if (r.type === '下班') typeBadge = '<span class="badge badge-red">下班</span>';
-      else if (r.type === '請假') typeBadge = `<span class="badge badge-orange">${r.subType || '請假'}</span>`;
-      else if (r.type === '加班') typeBadge = '<span class="badge badge-purple">加班</span>';
-      else if (r.type === '補打卡') typeBadge = `<span class="badge badge-blue">補打卡${r.subType ? '·'+r.subType : ''}</span>`;
-
-      let statusBadge = '—';
-      if (r.status === '待審') statusBadge = '<span class="badge badge-gray">待審</span>';
-      else if (r.status === '同意') statusBadge = '<span class="badge badge-green">✓ 同意</span>';
-      else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red">✗ 拒絕</span>';
-
-      const timeStr = r.startTime && r.endTime ? `${r.startTime}~${r.endTime}` : (r.time || '—');
-      const hoursStr = r.hours ? `${r.hours} 小時` : '—';
-      const locStr = r.lat ? `📍${r.lat},${r.lng}` : '—';
-      const remarkStr = r.remark ? `<span style="color: var(--accent-orange); font-weight:600;">${r.remark}</span>` : '—';
-      const reasonStr = r.reason || '—';
-      const commentStr = r.approveComment ? `<span style="font-style:italic; color:var(--accent-orange);">${r.approveComment}</span>` : '—';
-
-      return `
-        <tr style="border-bottom: 1px solid var(--card-border);">
-          <td style="padding: 12px 8px; font-size: 14px; text-align: left;">${r.date || ''}</td>
-          <td style="padding: 12px 8px; font-size: 14px; text-align: center;">${typeBadge}</td>
-          <td style="padding: 12px 8px; font-size: 14px; text-align: center;">${timeStr}</td>
-          <td style="padding: 12px 8px; font-size: 14px; text-align: center;">${hoursStr}</td>
-          <td style="padding: 12px 8px; font-size: 14px; text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${reasonStr}">${reasonStr}</td>
-          <td style="padding: 12px 8px; font-size: 14px; text-align: center;">${statusBadge}</td>
-          <td style="padding: 12px 8px; font-size: 14px; text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${commentStr}">${commentStr}</td>
-          <td style="padding: 12px 8px; font-size: 12px; color: var(--text-muted); text-align: left;">${locStr}</td>
-          <td style="padding: 12px 8px; font-size: 13px; color: var(--text-secondary); text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${remarkStr}">${remarkStr}</td>
-        </tr>
-      `;
-    }).join('');
-
-    el.innerHTML = mine.length ? `
-      <div style="width: 100%; overflow-x: auto; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 8px; box-shadow: var(--shadow-md);">
-        <table style="width: 100%; border-collapse: collapse; color: var(--text-primary);">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--blue-border); color: var(--text-secondary); font-size: 13px; background: var(--card-bg-soft);">
-              <th style="padding: 10px 8px; text-align: left; font-weight: 600;">日期</th>
-              <th style="padding: 10px 8px; text-align: center; font-weight: 600;">項目</th>
-              <th style="padding: 10px 8px; text-align: center; font-weight: 600;">起訖時間</th>
-              <th style="padding: 10px 8px; text-align: center; font-weight: 600;">時數</th>
-              <th style="padding: 10px 8px; text-align: left; font-weight: 600;">申請原因</th>
-              <th style="padding: 10px 8px; text-align: center; font-weight: 600;">狀態</th>
-              <th style="padding: 10px 8px; text-align: left; font-weight: 600;">簽核意見</th>
-              <th style="padding: 10px 8px; text-align: left; font-weight: 600;">GPS定位</th>
-              <th style="padding: 10px 8px; text-align: left; font-weight: 600;">打卡備註</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRowsHTML}
-          </tbody>
-        </table>
-      </div>
-    ` : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
-  } else {
-    // 🟢 手機版：呈現美觀的卡片串流
-    el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
-  }
+let mine = records.filter(r => r.empId === currentUser?.empId);
+if (currentFilter === '打卡') {
+mine = mine.filter(r => r.type === '上班' || r.type === '下班');
+} else if (currentFilter !== 'all') {
+mine = mine.filter(r => r.type === currentFilter);
 }
-window.addEventListener('resize', renderAllList);
-
+const el = document.getElementById('allRecordsList');
+el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無紀錄</div></div>';
+}
 function recordHTML(r, showName = false, showApprove = false) {
-  let dotClass = 'dot-green', badge = '';
-  if (r.type === '上班') {
-    dotClass = 'dot-green';
-    badge = '<span class="badge badge-green">上班</span>';
-  } else if (r.type === '下班') {
-    dotClass = 'dot-red';
-    badge = '<span class="badge badge-red">下班</span>';
-  } else if (r.type === '請假') {
-    dotClass = 'dot-orange';
-    badge = `<span class="badge badge-orange">${r.subType||'請假'}</span>`;
-  } else if (r.type === '加班') {
-    dotClass = 'dot-purple';
-    badge = '<span class="badge badge-purple">加班</span>';
-  } else if (r.type === '補打卡') {
-    dotClass = 'dot-blue';
-    badge = `<span class="badge badge-blue">補打卡${r.subType ? '·'+r.subType : ''}</span>`;
-  }
-  
-  let statusBadge = '';
-  if (r.status === '待審') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
-  else if (r.status === '同意') statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
-  else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
-  
-  const meta = [
-    r.date || '',
-    r.startTime && r.endTime ? r.startTime + '～' + r.endTime : (r.time || ''),
-    r.lat ? `📍${r.lat},${r.lng}` : '',
-    r.hours ? r.hours + ' 小時' : '',
-    r.reason || '',
-    r.remark ? `打卡備註：${r.remark}` : '',
-    r.approveComment ? `💬 簽核意見：${r.approveComment}` : ''
-  ].filter(Boolean).join(' · ');
-  
-  const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
-  const approveRow = showApprove && r.status === '待審' ? `
-    <div class="approve-row" id="approveBtns-${r.id}">
-      <button class="approve-btn ok" onclick="toggleApproveComment(${r.id},'同意')">✓ 核准</button>
-      <button class="approve-btn reject" onclick="toggleApproveComment(${r.id},'拒絕')">✗ 拒絕</button>
-    </div>
-    <div class="approve-comment-area" id="approveArea-${r.id}">
-      <textarea class="approve-comment-input" id="approveComment-${r.id}" placeholder="簽核意見（選填）"></textarea>
-      <div class="approve-confirm-row">
-        <button class="approve-btn ok" id="approveConfirmBtn-${r.id}" onclick="confirmApprove(${r.id})">確認送出</button>
-        <button class="approve-btn reject" onclick="cancelApproveComment(${r.id})">取消</button>
-      </div>
-    </div>` : '';
-
-  return `<div class="record-item">
-    <div class="record-row">
-      <div class="record-dot ${dotClass}"></div>
-      <div class="record-info">
-        <div class="record-type">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
-        <div class="record-meta" style="font-size: 13px;">${meta}</div>
-      </div>
-      <div class="record-time">${r.time || ''}</div>
-    </div>
-    ${approveRow}
-  </div>`;
+let dotClass = 'dot-green', badge = '';
+if (r.type === '上班') {
+dotClass = 'dot-green';
+badge = '<span class="badge badge-green">上班</span>';
+} else if (r.type === '下班') {
+dotClass = 'dot-red';
+badge = '<span class="badge badge-red">下班</span>';
+} else if (r.type === '請假') {
+dotClass = 'dot-orange';
+badge = `<span class="badge badge-orange">${r.subType||'請假'}</span>`;
+} else if (r.type === '加班') {
+dotClass = 'dot-purple';
+badge = '<span class="badge badge-purple">加班</span>';
+} else if (r.type === '補打卡') {
+dotClass = 'dot-blue';
+badge = `<span class="badge badge-blue">補打卡${r.subType ? '·'+r.subType : ''}</span>`;
 }
-
-/* ── 🛡️ V36 專屬：遲到早退合理請假豁免精算器 ── */
-function isTimeCoveredByLeave(date, checkTime, isLateCheck) {
-  const dayLeaves = records.filter(r => r.empId === currentUser?.empId && r.type === '請假' && r.status === '同意' && r.date === date);
-  if (!dayLeaves.length) return false;
-  
-  const checkMinutes = timeToMinutes(checkTime);
-  if (isLateCheck) {
-    const startTarget = 540; // 09:00 (上班基準)
-    const endTarget = checkMinutes;
-    return checkCoverage(dayLeaves, startTarget, endTarget);
-  } else {
-    const startTarget = checkMinutes;
-    const endTarget = 1080; // 18:00 (下班基準)
-    return checkCoverage(dayLeaves, startTarget, endTarget);
-  }
+let statusBadge = '';
+if (r.status === '待審') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
+else if (r.status === '同意') statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
+else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
+else if (r.status === '已撤回') statusBadge = '<span class="badge badge-gray" style="margin-left:4px; opacity:0.6;">已撤回</span>';
+const meta = [
+r.date || '',
+r.startTime && r.endTime ? r.startTime + '～' + r.endTime : (r.time || ''),
+r.lat ? `📍${r.lat},${r.lng}` : '',
+r.hours ? `${r.hours}小時` : '',
+r.reason || ''
+].filter(Boolean).join(' · ');
+const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
+// 撤回按鈕 (僅在本人且「待審」狀態下顯示)
+const isSelf = currentUser && r.empId === currentUser.empId;
+const isPending = r.status === '待審';
+const canCancel = isSelf && isPending && (r.type === '請假' || r.type === '加班' || r.type === '補打卡');
+const cancelBtn = canCancel ? `<button class="approve-btn reject" style="margin-left:auto; padding: 4px 10px; font-size:12px;" onclick="cancelMyPending('${r.type}', '${r.clientId || r.id}')">撤回</button>` : '';
+const approveRow = showApprove && r.status === '待審' ? `
+<div class="approve-row" id="approveBtns-${r.id}">
+<button class="approve-btn ok" onclick="toggleApproveComment(${r.id},'同意')">✓ 核准</button>
+<button class="approve-btn reject" onclick="toggleApproveComment(${r.id},'拒絕')">✗ 拒絕</button>
+</div>
+<div class="approve-comment-area" id="approveArea-${r.id}">
+<textarea class="approve-comment-input" id="approveComment-${r.id}" placeholder="簽核意見（選填）"></textarea>
+<div class="approve-confirm-row">
+<button class="approve-btn ok" id="approveConfirmBtn-${r.id}" onclick="confirmApprove(${r.id})">確認送出</button>
+<button class="approve-btn reject" onclick="cancelApproveComment(${r.id})">取消</button>
+</div>
+</div>` : '';
+return `<div class="record-item">
+<div class="record-row" style="align-items: center;">
+<div class="record-dot ${dotClass}"></div>
+<div class="record-info">
+<div class="record-type" style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
+<div class="record-meta" style="margin-top:4px;">${meta}</div>
+</div>
+<div class="record-time" style="display:flex; align-items:center; gap:8px;">
+<span>${r.time || ''}</span>
+${cancelBtn}
+</div>
+</div>
+${approveRow}
+</div>`;
 }
-
-function timeToMinutes(t) {
-  if (!t) return 0;
-  const p = String(t).split(':');
-  return parseInt(p[0] || 0) * 60 + parseInt(p[1] || 0);
+async function cancelMyPending(type, clientId) {
+if (!confirm(`確定要撤回此筆【${type}】申請嗎？`)) return;
+showToast('正在撤回…');
+try {
+const res = await callGAS({ action: 'cancel', type: type, clientId: clientId, empId: currentUser.empId });
+if (res.status === 'ok' && res.found) {
+showToast('✅ 申請已成功撤回！');
+// 更新本機紀錄
+const local = records.find(r => r.clientId === clientId);
+if (local) local.status = '已撤回';
+saveRecords();
+renderAllList();
+if (res.quota) {
+currentUser.quota = res.quota;
+sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
 }
-
-function checkCoverage(leaves, targetStart, targetEnd) {
-  const intervals = leaves.map(l => {
-    return {
-      start: timeToMinutes(l.startTime || '09:00'),
-      end: timeToMinutes(l.endTime || '18:00')
-    };
-  });
-  intervals.sort((a, b) => a.start - b.start);
-  
-  const merged = [];
-  intervals.forEach(curr => {
-    if (!merged.length) {
-      merged.push(curr);
-    } else {
-      const prev = merged[merged.length - 1];
-      if (curr.start <= prev.end) {
-        prev.end = Math.max(prev.end, curr.end);
-      } else {
-        merged.push(curr);
-      }
-    }
-  });
-  return merged.some(interval => interval.start <= targetStart && interval.end >= targetEnd);
+} else {
+showToast('⚠️ 撤回失敗：' + (res.message || '找不到該申請或已被簽核'));
 }
-
-/* ── 👤 個人資料分頁 (🧩 智慧分流與無頭貼) ── */
-function renderProfile() {
-  if (!currentUser) return;
-  const name = currentUser.name || '—';
-  const empId = currentUser.empId || '—';
-  
-  if (document.getElementById('profileNameVal')) document.getElementById('profileNameVal').textContent = name;
-  if (document.getElementById('profileEmpIdVal')) document.getElementById('profileEmpIdVal').textContent = empId;
-  if (document.getElementById('profileJoinDate')) document.getElementById('profileJoinDate').textContent = currentUser.joinDate || '—';
-  
-  calcAttendance();
-  renderFormulaCards();
-  
-  // 🧩 請假紀錄分流顯示
-  const leaves = records.filter(r => r.empId === currentUser.empId && r.type === '請假');
-  const leaveEl = document.getElementById('profileLeaveList');
-  if (!leaveEl) return;
-  
-  if (!leaves.length) {
-    leaveEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>';
-  } else {
-    leaveEl.innerHTML = leaves.map(r => {
-      const isCompact = (r.subType === '特休' || r.subType === '補休' || r.subType === '加班補休');
-      if (isCompact) {
-        // 🟢 特休、補休：極簡一列
-        const badgeColor = r.subType === '特休' ? 'badge-orange' : 'badge-purple';
-        const statusText = r.status === '同意' ? '✓ 同意' : r.status === '拒絕' ? '✗ 拒絕' : '待審';
-        const statusClass = r.status === '同意' ? 'badge-green' : r.status === '拒絕' ? 'badge-red' : 'badge-gray';
-        return `
-          <div class="record-item" style="padding: 10px 14px; margin-bottom: 8px;">
-            <div class="record-row" style="justify-content: space-between; align-items: center; width: 100%;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="badge ${badgeColor}">${r.subType}</span>
-                <span class="badge ${statusClass}">${statusText}</span>
-                <span style="font-size: 14px; color: var(--text-primary); font-weight: 500;">${r.date || ''}</span>
-              </div>
-              <span style="font-size: 14px; font-weight: bold; color: var(--text-secondary);">${r.hours || '8'}h</span>
-            </div>
-          </div>
-        `;
-      } else {
-        // 🔵 其他假別：詳細原因與簽核大卡片
-        const statusText = r.status === '同意' ? '✓ 同意' : r.status === '拒絕' ? '✗ 拒絕' : '待審';
-        const statusClass = r.status === '同意' ? 'badge-green' : r.status === '拒絕' ? 'badge-red' : 'badge-gray';
-        const metaTime = `${r.date || ''} ${r.startTime || ''} ～ ${r.endDate || r.date || ''} ${r.endTime || ''}`;
-        return `
-          <div class="record-item" style="border-left: 4px solid var(--blue-main); padding: 14px; margin-bottom: 12px; background: var(--card-bg-soft); display: flex; flex-direction: column; gap: 6px;">
-            <div class="record-row" style="justify-content: space-between; align-items: center; width: 100%;">
-              <span class="badge badge-blue" style="font-size: 13px;">${r.subType || '請假'}</span>
-              <span class="badge ${statusClass}">${statusText}</span>
-            </div>
-            <div style="font-size: 13px; color: var(--text-secondary);">📅 時間：${metaTime}</div>
-            <div style="font-size: 13px; color: var(--text-secondary);">⏳ 時數：<strong>${r.hours || '—'} 小時</strong></div>
-            <div style="font-size: 13px; color: var(--text-primary); border-top: 1px dashed var(--card-border); padding-top: 6px; margin-top: 4px;">
-              ✍️ 原因：<span style="color: var(--text-primary); font-weight: 600;">${r.reason || '無填寫'}</span>
-            </div>
-            ${r.approveComment ? `
-              <div style="font-size: 13px; color: var(--accent-orange); font-style: italic; background: rgba(251,191,36,0.08); padding: 6px 10px; border-radius: 4px; border-left: 3px solid var(--accent-orange); margin-top: 4px;">
-                💬 簽核意見：${r.approveComment}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }
-    }).join('');
-  }
+} catch (e) {
+showToast('⚠️ 網路異常，撤回失敗');
 }
-
-function calcAttendance() {
-  const now = new Date();
-  const thisYear = now.getFullYear();
-  const thisMonth = now.getMonth() + 1;
-  const myRecords = records.filter(r => {
-    if (r.empId !== currentUser?.empId) return false;
-    const d = r.date || r.timestamp;
-    if (!d) return false;
-    const dt = new Date(d);
-    return dt.getFullYear() === thisYear && (dt.getMonth() + 1) === thisMonth;
-  });
-
-  const checkinDays = new Set(myRecords.filter(r => r.type === '上班').map(r => r.date)).size;
-  const missedCount = myRecords.filter(r => r.type === '補打卡').length;
-  
-  // 🟢 遲到（上班時間 > 09:00 且 沒被請假覆蓋）
-  const lateCount = myRecords.filter(r => {
-    if (r.type !== '上班' || !r.time) return false;
-    const parts = r.time.split(':');
-    const h = parseInt(parts[0]), m = parseInt(parts[1] || 0);
-    const isLate = h > 9 || (h === 9 && m > 0);
-    if (!isLate) return false;
-    // 智慧合理豁免判定
-    return !isTimeCoveredByLeave(r.date, r.time, true);
-  }).length;
-
-  const leaveCount = myRecords.filter(r => r.type === '請假').length;
-
-  document.getElementById('attTotal').textContent = checkinDays;
-  document.getElementById('attMissed').textContent = missedCount;
-  document.getElementById('attLate').textContent = lateCount;
-  document.getElementById('attLeave').textContent = leaveCount;
 }
-
-/* ── 🟢 智慧加減對帳看板 (特休/補休) ── */
-function renderFormulaCards() {
-  const formulaArea = document.getElementById('formulaCardArea');
-  const formulaTitle = document.getElementById('formulaTitle');
-  if (!formulaArea || !formulaTitle) return;
-
-  // 計算特休/補休
-  const approvedLeaves = records.filter(r => r.empId === currentUser?.empId && r.type === '請假' && r.status === '同意');
-  const totalSpecialUsed = approvedLeaves.filter(r => r.subType === '特休').reduce((sum, r) => sum + parseFloat(r.hours || 0), 0);
-  const totalCompUsed = approvedLeaves.filter(r => r.subType === '加班補休' || r.subType === '補休').reduce((sum, r) => sum + parseFloat(r.hours || 0), 0);
-  
-  // 預設總額
-  let specialQuota = 24.0;
-  if (currentUser?.joinDate) {
-    // 依年資大略推算
-    const years = (new Date() - new Date(currentUser.joinDate)) / (1000 * 60 * 60 * 24 * 365);
-    if (years >= 1) specialQuota = 56.0;
-    else if (years >= 0.5) specialQuota = 24.0;
-  }
-  let compQuota = 35.0; // 假設定案額度
-
-  formulaTitle.style.display = 'block';
-  formulaArea.style.display = 'grid';
-  formulaArea.style.gap = '10px';
-  formulaArea.innerHTML = `
-    <div style="background:var(--card-bg-soft); border:1px solid var(--card-border); border-radius:var(--radius); padding:14px; border-top:3px solid var(--accent-orange);">
-      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">🟢 特休賸餘時數</div>
-      <div style="font-size:18px; font-weight:bold; color:var(--accent-orange);">${(specialQuota - totalSpecialUsed).toFixed(1)} 小時</div>
-      <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">(總額 ${specialQuota.toFixed(1)} - 已休 ${totalSpecialUsed.toFixed(1)})</div>
-    </div>
-    <div style="background:var(--card-bg-soft); border:1px solid var(--card-border); border-radius:var(--radius); padding:14px; border-top:3px solid var(--accent-purple);">
-      <div style="font-size:12px; color:var(--text-secondary); margin-bottom:4px;">🔵 補休賸餘時數</div>
-      <div style="font-size:18px; font-weight:bold; color:var(--accent-purple);">${(compQuota - totalCompUsed).toFixed(1)} 小時</div>
-      <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">(總額 ${compQuota.toFixed(1)} - 已休 ${totalCompUsed.toFixed(1)})</div>
-    </div>
-  `;
-}
-
-function togglePwChange() {
-  const area = document.getElementById('pwChangeArea');
-  area.classList.toggle('open');
-  if (area.classList.contains('open')) {
-    document.getElementById('pwOld').focus();
-  } else {
-    ['pwOld','pwNew','pwConfirm'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-  }
-}
-
-async function changePassword() {
-  const oldPw = document.getElementById('pwOld').value;
-  const newPw = document.getElementById('pwNew').value;
-  const confirm = document.getElementById('pwConfirm').value;
-  if (!oldPw || !newPw || !confirm) { showToast('⚠️ 請填寫所有密碼欄位'); return; }
-  if (newPw !== confirm) { showToast('⚠️ 新密碼與確認密碼不一致'); return; }
-  if (newPw.length < 4) { showToast('⚠️ 新密碼至少需要 4 個字元'); return; }
-  try {
-    const res = await callGAS({
-      action: 'changePassword',
-      empId: currentUser.empId,
-      oldPassword: oldPw,
-      newPassword: newPw
-    });
-    if (res.status === 'ok') {
-      showToast('✅ 密碼已成功修改');
-      togglePwChange();
-    } else {
-      showToast('⚠️ ' + (res.message || '舊密碼不正確'));
-    }
-  } catch (e) {
-    showToast('⚠️ 連線失敗，請確認網路後再試');
-  }
-}
-
-/* ── 主管管理專區 (帶有員工穿透多維度查詢) ── */
+// ── 主管功能模組 ─────────────────────────────────────────────
 async function loadAdminData() {
-  if (!currentUser || currentUser.role !== 'admin') return;
-  document.getElementById('pendingLoading').textContent = '載入中…';
-  const pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
-  document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡') && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
-  
-  try {
-    const data = await callGAS({ action: 'getAll' });
-    document.getElementById('pendingLoading').textContent = '';
-    if (data.data && data.data.length > 1) {
-      const allRows = data.data.slice(1).reverse();
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const oneWeekAgo = new Date(today);
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      
-      const rows = allRows.filter(r => {
-        const d = parseSheetDate(r[0]);
-        return d && d >= oneWeekAgo;
-      });
-      const todayStr = today.toLocaleDateString('zh-TW');
-      document.getElementById('statCheckin').innerHTML = rows.filter(r => r[3] === '上班' && fmtDate(r[0]) === todayStr).length + '<span>人</span>';
-      document.getElementById('statCheckout').innerHTML = rows.filter(r => r[3] === '下班' && fmtDate(r[0]) === todayStr).length + '<span>人</span>';
-      
-      document.getElementById('adminRecords').innerHTML = rows.length ? rows.map(r => `
-        <div class="record-item">
-          <div class="record-row">
-            <div class="record-dot ${r[3]==='上班'?'dot-green':'dot-red'}"></div>
-            <div class="record-info">
-              <div class="record-type">
-                <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
-                ${r[2]||''}（${r[1]}）
-              </div>
-              <div class="record-meta">${fmtDate(r[0])}${r[6]?' 📍'+r[6]+','+r[7]:''}${r[8]?' · 備註：'+r[8]:''}</div>
-            </div>
-            <div class="record-time">${fmtTime(r[5])}</div>
-          </div>
-        </div>`).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
-    }
-  } catch (e) {
-    document.getElementById('pendingLoading').textContent = '（離線）';
-  }
+if (!currentUser || currentUser.role !== 'admin') return;
+document.getElementById('pendingLoading').textContent = '載入中…';
+const pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
+document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡') && r.status === '待審').length + '<span>筆</span>';
+document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">沒有待審項目</div></div>';
+try {
+const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
+document.getElementById('pendingLoading').textContent = '';
+// 載入穿透查詢的名單
+if (data.quota && currentUser) {
+// 同步主管端自定義下拉選單
+const selectEl = document.getElementById('adminEmpSelect');
+const savedVal = selectEl.value;
+selectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
+currentUser.employeeList.forEach(emp => {
+const opt = document.createElement('option');
+opt.value = emp.empId;
+opt.textContent = `${emp.empId} - ${emp.name} (${emp.role === 'admin' ? '主管' : '員工'})`;
+selectEl.appendChild(opt);
+});
+if (savedVal) selectEl.value = savedVal;
 }
-
-// 🟢 主管多維度員工穿透查詢
-async function queryEmployeeStats(empId) {
-  const resultArea = document.getElementById('userQueryResults');
-  if (!empId) {
-    resultArea.style.display = 'none';
-    return;
-  }
-  resultArea.style.display = 'block';
-  resultArea.innerHTML = '<span class="spinner"></span> 穿透查詢數據中...';
-  
-  try {
-    const data = await callGAS({ action: 'getMyStatus', empId: empId });
-    if (data.status === 'ok' && data.updates) {
-      const empRecords = data.updates;
-      
-      // 計算特休/補休剩餘
-      const approvedLeaves = empRecords.filter(r => r.type === '請假' && r.status === '同意');
-      const specialUsed = approvedLeaves.filter(r => r.subType === '特休').reduce((sum, r) => sum + parseFloat(r.hours || 0), 0);
-      const compUsed = approvedLeaves.filter(r => r.subType === '補休' || r.subType === '加班補休').reduce((sum, r) => sum + parseFloat(r.hours || 0), 0);
-      
-      const specialQuota = 24.0;
-      const compQuota = 35.0;
-
-      // 各月請假、加班統計
-      const monthlySummary = {};
-      empRecords.forEach(r => {
-        if (!r.date) return;
-        const monthKey = r.date.slice(0, 7); // YYYY-MM
-        if (!monthlySummary[monthKey]) {
-          monthlySummary[monthKey] = { leave: 0, ot: 0, supp: 0 };
-        }
-        if (r.type === '請假' && r.status === '同意') monthlySummary[monthKey].leave += parseFloat(r.hours || 8);
-        if (r.type === '加班' && r.status === '同意') monthlySummary[monthKey].ot += parseFloat(r.hours || 2);
-        if (r.type === '補打卡' && r.status === '同意') monthlySummary[monthKey].supp += 1;
-      });
-
-      let summaryHTML = '';
-      Object.keys(monthlySummary).sort().reverse().forEach(m => {
-        summaryHTML += `
-          <div style="font-size:13px; color:var(--text-secondary); margin-bottom:4px; display:flex; justify-content:space-between;">
-            <span>📅 ${m}</span>
-            <span>請假：${monthlySummary[m].leave}h | 加班：${monthlySummary[m].ot}h | 補卡：${monthlySummary[m].supp}次</span>
-          </div>`;
-      });
-
-      // 詳細請假歷程
-      const leaveListHTML = approvedLeaves.map(r => `
-        <div style="font-size:12px; border-left:3px solid var(--accent-orange); padding-left:8px; margin-bottom:6px;">
-          <strong>[同意] ${r.date} ${r.subType} (${r.hours || 8}h)</strong> · ${r.reason || '無'}
-        </div>
-      `).join('') || '<div style="font-size:12px; color:var(--text-muted);">無請假紀錄</div>';
-
-      resultArea.innerHTML = `
-        <div style="font-size:13px; margin-bottom:10px; color:var(--text-primary);">
-          <strong>年資與考勤多維度數據看板：</strong>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-          <div style="background:rgba(251,191,36,0.1); border:1px solid var(--accent-orange); padding:8px; border-radius:6px;">
-            <div style="font-size:11px; color:var(--text-secondary);">特休賸餘</div>
-            <div style="font-size:14px; font-weight:bold; color:var(--accent-orange);">${(specialQuota - specialUsed).toFixed(1)}h (已休 ${specialUsed})</div>
-          </div>
-          <div style="background:rgba(167,139,250,0.1); border:1px solid var(--accent-purple); padding:8px; border-radius:6px;">
-            <div style="font-size:11px; color:var(--text-secondary);">補休賸餘</div>
-            <div style="font-size:14px; font-weight:bold; color:var(--accent-purple);">${(compQuota - compUsed).toFixed(1)}h (已休 ${compUsed})</div>
-          </div>
-        </div>
-        <div style="margin-bottom:12px;">
-          <div style="font-size:12px; font-weight:bold; color:var(--blue-light); margin-bottom:4px;">📊 該同仁：月度出缺勤歷史</div>
-          ${summaryHTML || '<div style="font-size:12px; color:var(--text-muted);">無歷史月度統計</div>'}
-        </div>
-        <div>
-          <div style="font-size:12px; font-weight:bold; color:var(--blue-light); margin-bottom:4px;">📋 該同仁：詳細請假紀錄</div>
-          ${leaveListHTML}
-        </div>
-      `;
-    }
-  } catch (err) {
-    resultArea.innerHTML = '<span style="color:var(--accent-red);">⚠️ 無法取得該員工資料，請檢查網路連線。</span>';
-  }
+} catch (e) {
+document.getElementById('pendingLoading').textContent = '（離線）';
 }
-
-function parseSheetDate(val) {
-  if (!val) return null;
-  const d = new Date(val);
-  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return null;
-  return d;
 }
-function fmtDate(val) {
-  const d = parseSheetDate(val);
-  if (!d) return '—';
-  return d.toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-');
+// 穿透查詢多維度交互模組 (V33 精準公式化呈現)
+function handleAdminEmpChange() {
+const empId = document.getElementById('adminEmpSelect').value;
+const area = document.getElementById('adminEmpDetailArea');
+if (!empId) {
+area.style.display = 'none';
+return;
 }
-function fmtTime(val) {
-  if (!val) return '—';
-  if (typeof val === 'string' && val.match(/^\d{2}:\d{2}/)) return val.slice(0,5);
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return String(val).slice(0,5) || '—';
-  if (d.getFullYear() < 2000) {
-    const h = String(d.getUTCHours()).padStart(2,'0');
-    const m = String(d.getUTCMinutes()).padStart(2,'0');
-    return `${h}:${m}`;
-  }
-  return d.toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit', hour12:false });
+const emp = currentUser.employeeList.find(e => String(e.empId) === String(empId));
+if (!emp) return;
+document.getElementById('detailName').textContent = emp.name;
+document.getElementById('detailJoinDate').textContent = emp.joinDate || '—';
+document.getElementById('detailSeniority').textContent = emp.seniorityText || '0 年 0 個月';
+document.getElementById('detailCountdown').textContent = emp.countdownDays !== '—' ? `${emp.countdownDays} 天` : '—';
+// 呈現特休 (V33 精確公式化)
+document.getElementById('detailSpecialRemaining').textContent = `${emp.specialLeaveRemainingHours.toFixed(1)} h`;
+document.getElementById('detailSpecialFormula').innerHTML = `特休當前賸餘 (總額 ${emp.specialLeaveTotalHours.toFixed(1)} - 已請 ${emp.specialLeaveUsedHours.toFixed(1)})`;
+// 呈現補休 (V33 精確公式化)
+document.getElementById('detailCompRemaining').textContent = `${emp.compLeaveRemainingHours.toFixed(1)} h`;
+document.getElementById('detailCompFormula').innerHTML = `補休當前賸餘 (加班賺取 ${emp.totalOtHoursAcc.toFixed(1)} - 補休已休 ${emp.compLeaveUsedHours.toFixed(1)})`;
+// 歷史統計表格
+const tableArea = document.getElementById('detailMonthlyTableArea');
+tableArea.innerHTML = `
+<table style="width:100%; border-collapse:collapse; text-align:center; font-size:12px; color:var(--text-primary); background:var(--card-bg-soft); border:1px solid var(--card-border);">
+<thead>
+<tr style="background:#1f2937;">
+<th style="padding:6px; border:1px solid var(--card-border);">年資</th>
+<th style="padding:6px; border:1px solid var(--card-border);">下一週年倒數</th>
+<th style="padding:6px; border:1px solid var(--card-border);">特休總額</th>
+<th style="padding:6px; border:1px solid var(--card-border);">特休已休</th>
+<th style="padding:6px; border:1px solid var(--card-border);">特休剩餘</th>
+<th style="padding:6px; border:1px solid var(--card-border);">補休剩餘</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:6px; border:1px solid var(--card-border);">${emp.seniorityText}</td>
+<td style="padding:6px; border:1px solid var(--card-border); color:var(--accent-orange); font-weight:700;">${emp.countdownDays} 天</td>
+<td style="padding:6px; border:1px solid var(--card-border);">${emp.specialLeaveTotalHours.toFixed(1)} h</td>
+<td style="padding:6px; border:1px solid var(--card-border);">${emp.specialLeaveUsedHours.toFixed(1)} h</td>
+<td style="padding:6px; border:1px solid var(--card-border); color:var(--green-light); font-weight:700;">${emp.specialLeaveRemainingHours.toFixed(1)} h</td>
+<td style="padding:6px; border:1px solid var(--card-border); color:var(--blue-light); font-weight:700;">${emp.compLeaveRemainingHours.toFixed(1)} h</td>
+</tr>
+</tbody>
+</table>`;
+// 篩選該員工的歷史請假明細
+const empLeaves = records.filter(r => String(r.empId) === String(empId) && r.type === '請假');
+const listEl = document.getElementById('detailLeaveList');
+listEl.innerHTML = empLeaves.length 
+? empLeaves.map(r => recordHTML(r)).join('') 
+: '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">該同仁尚無請假紀錄</div></div>';
+area.style.display = 'block';
 }
-
+// ── Helpers ─────────────────────────────────────────────────────
 function saveRecords() {
-  localStorage.setItem('tjcpm_records', JSON.stringify(records));
+localStorage.setItem('tjcpm_records', JSON.stringify(records));
 }
-
 function switchTab(tab) {
-  if (tab === 'admin' && (!currentUser || currentUser.role !== 'admin')) return;
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + tab).classList.add('active');
-  if (tab === 'records') renderAllList();
-  if (tab === 'admin') loadAdminData();
-  if (tab === 'profile') renderProfile();
+if (tab === 'admin' && (!currentUser || currentUser.role !== 'admin')) return;
+document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+document.getElementById('page-' + tab).classList.add('active');
+if (tab === 'records') renderAllList();
+if (tab === 'admin') loadAdminData();
+if (tab === 'profile') renderProfile();
 }
-
+function openModal(type) {
+document.getElementById('modal-' + type).classList.add('open');
+}
+function closeModal(type) {
+document.getElementById('modal-' + type).classList.remove('open');
+}
 let toastTimer;
 function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+const el = document.getElementById('toast');
+el.textContent = msg;
+el.classList.add('show');
+clearTimeout(toastTimer);
+toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
-
-// ── 時間選單初始化 ──
+document.querySelectorAll('.modal-overlay').forEach(o => {
+o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+// ── 時間下拉選單：只允許 :00 和 :30 ────────────────────────────
 (function initTimeSelects() {
-  const ids = ['leaveStartTime', 'leaveEndTime', 'otStart', 'otEnd', 'suppTime'];
-  const options = [];
-  for (let h = 0; h < 24; h++) {
-    const hh = String(h).padStart(2, '0');
-    options.push('<option value="' + hh + ':00">' + hh + ':00</option>');
-    options.push('<option value="' + hh + ':30">' + hh + ':30</option>');
-  }
-  const html = options.join('');
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-  });
-  ['leaveStartTime','otStart'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '08:00';
-  });
-  ['leaveEndTime','otEnd'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '17:00';
-  });
+const ids = ['leaveStartTime', 'leaveEndTime', 'otStartTime', 'otEndTime', 'suppTime'];
+const options = [];
+for (let h = 0; h < 24; h++) {
+const hh = String(h).padStart(2, '0');
+options.push('<option value="' + hh + ':00">' + hh + ':00</option>');
+options.push('<option value="' + hh + ':30">' + hh + ':30</option>');
+}
+const html = options.join('');
+ids.forEach(id => {
+const el = document.getElementById(id);
+if (el) el.innerHTML = html;
+});
+['leaveStartTime','otStartTime'].forEach(id => {
+const el = document.getElementById(id);
+if (el) el.value = '08:00';
+});
+['leaveEndTime','otEndTime'].forEach(id => {
+const el = document.getElementById(id);
+if (el) el.value = '17:00';
+});
+const suppEl = document.getElementById('suppTime');
+if (suppEl) suppEl.value = '08:00';
 })();
-
-// ── 主管審核展開意見欄 ──
+// ── 主管簽核 ──
 let pendingApproveDecision = {};
 function toggleApproveComment(id, decision) {
-  document.querySelectorAll('.approve-comment-area.open').forEach(el => {
-    const rid = el.id.replace('approveArea-','');
-    if (String(rid) !== String(id)) {
-      el.classList.remove('open');
-      const btns = document.getElementById('approveBtns-' + rid);
-      if (btns) btns.style.display = 'flex';
-    }
-  });
-  const area = document.getElementById('approveArea-' + id);
-  const btns = document.getElementById('approveBtns-' + id);
-  if (!area) { approveRecord(id, decision); return; }
-  pendingApproveDecision[id] = decision;
-  area.classList.add('open');
-  if (btns) btns.style.display = 'none';
-  const confirmBtn = document.getElementById('approveConfirmBtn-' + id);
-  if (confirmBtn) {
-    confirmBtn.textContent = decision === '同意' ? '✓ 確認核准' : '✗ 確認拒絕';
-    confirmBtn.className = 'approve-btn ' + (decision === '同意' ? 'ok' : 'reject');
-  }
+document.querySelectorAll('.approve-comment-area.open').forEach(el => {
+const rid = el.id.replace('approveArea-','');
+if (String(rid) !== String(id)) {
+el.classList.remove('open');
+const btns = document.getElementById('approveBtns-' + rid);
+if (btns) btns.style.display = 'flex';
+}
+});
+const area = document.getElementById('approveArea-' + id);
+const btns = document.getElementById('approveBtns-' + id);
+if (area && btns) {
+pendingApproveDecision[id] = decision;
+area.classList.add('open');
+btns.style.display = 'none';
+const confirmBtn = document.getElementById('approveConfirmBtn-' + id);
+if (confirmBtn) {
+confirmBtn.textContent = decision === '同意' ? '✓ 確認核准' : '✗ 確認拒絕';
+confirmBtn.className = 'approve-btn ' + (decision === '同意' ? 'ok' : 'reject');
+}
+const ta = document.getElementById('approveComment-' + id);
+if (ta) setTimeout(() => ta.focus(), 100);
+}
 }
 function cancelApproveComment(id) {
-  const area = document.getElementById('approveArea-' + id);
-  if (area) area.classList.remove('open');
-  const btns = document.getElementById('approveBtns-' + id);
-  if (btns) btns.style.display = 'flex';
-  delete pendingApproveDecision[id];
+const area = document.getElementById('approveArea-' + id);
+if (area) area.classList.remove('open');
+const btns = document.getElementById('approveBtns-' + id);
+if (btns) btns.style.display = 'flex';
+delete pendingApproveDecision[id];
 }
 function confirmApprove(id) {
-  const decision = pendingApproveDecision[id];
-  if (!decision) return;
-  const commentEl = document.getElementById('approveComment-' + id);
-  const comment = commentEl ? commentEl.value.trim() : '';
-  approveRecord(id, decision, comment);
-  delete pendingApproveDecision[id];
+const decision = pendingApproveDecision[id];
+if (!decision) return;
+const commentEl = document.getElementById('approveComment-' + id);
+const comment = commentEl ? commentEl.value.trim() : '';
+approveRecord(id, decision, comment);
+delete pendingApproveDecision[id];
 }
-
 async function approveRecord(id, decision, comment) {
-  if (!currentUser || currentUser.role !== 'admin') {
-    showToast('⚠️ 您沒有審核權限');
-    return;
-  }
-  const rec = records.find(r => r.id === id);
-  if (!rec) return;
-  rec.status = decision;
-  if (comment) rec.approveComment = comment;
-  saveRecords();
-  
-  try {
-    const res = await callGAS({
-      action: 'approve', clientId: rec.clientId || String(rec.id),
-      empId: rec.empId, type: rec.type, date: rec.date, decision,
-      approverName: currentUser.name, approverId: currentUser.empId,
-      comment: comment || ''
-    });
-    const synced = res.status === 'ok' && res.found !== false;
-    showToast(decision === '同意'
-      ? (synced ? '✅ 已核准並同步' : '✅ 已核准（Sheet 未找到對應列）')
-      : (synced ? '❌ 已拒絕並同步' : '❌ 已拒絕（Sheet 未找到對應列）'));
-  } catch (e) {
-    showToast(decision === '同意' ? '✅ 已核准（離線）' : '❌ 已拒絕（離線）');
-  }
-  loadAdminData();
+if (!currentUser || currentUser.role !== 'admin') {
+showToast('⚠️ 您沒有審核權限');
+return;
 }
-
-function updateNotifBadge() {
-  const unread = notifications.filter(n => !n.read).length;
-  let hasPending = false;
-  if (currentUser && currentUser.role === 'admin') {
-    hasPending = records.some(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
-  }
-  const badge = document.getElementById('notifCount');
-  const showBadge = unread > 0 || hasPending;
-  if (badge) {
-    if (showBadge) {
-      badge.textContent = '!';
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
-    }
-  }
+const rec = records.find(r => r.id === id);
+if (!rec) return;
+rec.status = decision;
+if (comment) rec.approveComment = comment;
+saveRecords();
+const msg = `已${decision}：${rec.name}（${rec.empId}）的${rec.type}申請（${rec.date}）${comment ? '，意見：' + comment : ''}`;
+addNotif(decision === '同意' ? 'approve' : 'reject', msg);
+sendPush('TJCPM 審批', msg);
+try {
+const res = await callGAS({
+action: 'approve', clientId: rec.clientId || String(rec.id),
+empId: rec.empId, type: rec.type, date: rec.date, decision,
+approverName: currentUser.name, approverId: currentUser.empId,
+comment: comment || ''
+});
+if (res.status === 'ok' && res.quota) {
+// 異步同步更新前端下拉清單數據，維持對帳
+const empInList = adminEmployeeList.find(x => x.empId === rec.empId);
+if (empId && empInList) {
+Object.assign(emp, res.quota);
+if (document.getElementById('adminEmpSelect').value === empId) {
+handleAdminEmpChange(); // 即時刷屏
 }
-
-async function checkApprovalUpdates() {
-  try {
-    const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-    if (data.status === 'ok' && data.updates) {
-      data.updates.forEach(u => {
-        const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
-        if (existing && existing.status !== u.status) {
-          existing.status = u.status;
-          saveRecords();
-          renderAllList();
-        }
-      });
-    }
-  } catch (e) {}
+}
+}
+showToast(decision === '同意' ? '✅ 已核准' : '❌ 已拒絕');
+} catch (e) {
+showToast(decision === '同意' ? '✅ 已核准（離線）' : '❌ 已拒絕（離線）');
+}
+loadAdminData();
+}
+// ── 個人資料頁 (V33 方案 A中心化與詳細額度對帳公式) ──
+function renderProfile() {
+if (!currentUser) return;
+const name = currentUser.name || '—';
+const empId = currentUser.empId || '—';
+document.getElementById('profileName').textContent = name;
+document.getElementById('profileEmpId').textContent = '員編：' + empId;
+document.getElementById('profileNameVal').textContent = name;
+document.getElementById('profileEmpIdVal').textContent = empId;
+document.getElementById('profileJoinDate').textContent = currentUser.joinDate || '—';
+// 呈現特休剩餘 (V33 精確對帳公式)
+const q = currentUser.quota;
+if (q) {
+document.getElementById('profileSpecialRemaining').textContent = `${q.specialLeaveRemainingHours.toFixed(1)} h`;
+document.getElementById('profileSpecialFormula').innerHTML = `特休當前賸餘 (總額 ${q.specialLeaveTotalHours.toFixed(1)} - 已請 ${q.specialLeaveUsedHours.toFixed(1)})`;
+document.getElementById('profileCompRemaining').textContent = `${q.compLeaveRemainingHours.toFixed(1)} h`;
+document.getElementById('profileCompFormula').innerHTML = `補休當前賸餘 (加班賺取 ${q.totalOtHoursAcc.toFixed(1)} - 補休已休 ${q.compLeaveUsedHours.toFixed(1)})`;
+}
+calcAttendance();
+// 請假紀錄
+const leaves = records.filter(r => r.empId === currentUser.empId && r.type === '請假');
+const leaveEl = document.getElementById('profileLeaveList');
+leaveEl.innerHTML = leaves.length
+? leaves.map(r => recordHTML(r)).join('')
+: '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>';
+}
+function calcAttendance() {
+const now = new Date();
+const thisYear = now.getFullYear();
+const thisMonth = now.getMonth() + 1;
+const myRecords = records.filter(r => {
+if (r.empId !== currentUser?.empId) return false;
+const d = r.date || r.timestamp;
+if (!d) return false;
+const dt = new Date(d);
+return dt.getFullYear() === thisYear && (dt.getMonth() + 1) === thisMonth;
+});
+const checkinDays = new Set(myRecords.filter(r => r.type === '上班').map(r => r.date)).size;
+const missedCount = myRecords.filter(r => r.type === '補打卡').length;
+const lateCount = myRecords.filter(r => {
+if (r.type !== '上班' || !r.time) return false;
+const parts = r.time.split(':');
+const h = parseInt(parts[0]), m = parseInt(parts[1] || 0);
+return h > 9 || (h === 9 && m > 0);
+}).length;
+const leaveCount = myRecords.filter(r => r.type === '請假').length;
+document.getElementById('attTotal').textContent = checkinDays;
+document.getElementById('attMissed').textContent = missedCount;
+document.getElementById('attLate').textContent = lateCount;
+document.getElementById('attLeave').textContent = leaveCount;
+}
+function togglePwChange() {
+const area = document.getElementById('pwChangeArea');
+area.classList.toggle('open');
+if (area.classList.contains('open')) {
+document.getElementById('pwOld').focus();
+} else {
+['pwOld','pwNew','pwConfirm'].forEach(id => { document.getElementById(id).value = ''; });
+}
+}
+async function changePassword() {
+const oldPw = document.getElementById('pwOld').value;
+const newPw = document.getElementById('pwNew').value;
+const confirm = document.getElementById('pwConfirm').value;
+if (!oldPw || !newPw || !confirm) { showToast('⚠️ 請填寫所有密碼欄位'); return; }
+if (newPw !== confirm) { showToast('⚠️ 新密碼與確認密碼不一致'); return; }
+if (newPw.length < 4) { showToast('⚠️ 新密碼至少需要 4 個字元'); return; }
+try {
+const res = await callGAS({
+action: 'changePassword',
+empId: currentUser.empId,
+oldPassword: oldPw,
+newPassword: newPw
+});
+if (res.status === 'ok') {
+showToast('✅ 密碼已成功修改');
+togglePwChange();
+} else {
+showToast('⚠️ ' + (res.message || '舊密碼不正確'));
+}
+} catch (e) {
+showToast('⚠️ 連線失敗，請確認網路後再試');
+}
 }
 </script>
 </body>
