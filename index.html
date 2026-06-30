@@ -14,44 +14,44 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
-/* ── 頁面底：淺綠色 ── */
---bg-page:#eaf5f0;
---bg-page-alt:#ddeaf8;
-/* ── 卡片：深藍灰（高對比） ── */
---card-bg:#111827;
---card-bg-soft:#1a2333;
---card-bg-hover:#1f2a3d;
---card-border:#2a3650;
-/* ── 藍色系（強調色） ── */
---blue-main:#3b82f6;
---blue-light:#60a5fa;
---blue-pale:#1e293b;
---blue-border:#3b5375;
---blue-text-on-pale:#93c5fd;
-/* ── 綠色系（強調色） ── */
---green-main:#22c58a;
---green-light:#34d399;
---green-pale:#10241c;
---green-border:#1f5c44;
---accent-red:#f87171;
---accent-red-pale:#2a1518;
---accent-orange:#fbbf24;
---accent-orange-pale:#2a2010;
---accent-purple:#a78bfa;
---accent-purple-pale:#211a36;
-/* ── 文字（卡片內，深底用白字） ── */
---text-primary:#f3f6fa;
---text-secondary:#aab4c5;
---text-muted:#6b7488;
-/* ── 頁面底色上的文字（淺色區塊） ── */
---page-text-primary:#1a2e22;
---page-text-secondary:#4a6858;
---border:#2a3650;
---border-bright:#3b475f;
---shadow:0 2px 10px rgba(17,24,39,0.18);
---shadow-md:0 6px 22px rgba(17,24,39,0.28);
---radius:10px;
---radius-lg:16px;
+/* ── 頁面底：乾淨淺灰色 ── */
+--bg-page:#f8fafc;
+--bg-page-alt:#cbd5e1;
+/* ── 卡片：高雅純白色與柔和邊框 ── */
+--card-bg:#ffffff;
+--card-bg-soft:#f1f5f9;
+--card-bg-hover:#f8fafc;
+--card-border:#e2e8f0;
+/* ── 藍色系 ── */
+--blue-main:#1e40af; /* 深皇家藍 */
+--blue-light:#3b82f6; /* 亮藍 */
+--blue-pale:#eff6ff; /* 超淺藍 */
+--blue-border:#bfdbfe;
+--blue-text-on-pale:#1e3a8a;
+/* ── 綠色系 ── */
+--green-main:#15803d; /* 翠綠 */
+--green-light:#10b981; /* 亮綠 */
+--green-pale:#f0fdf4; /* 超淺綠 */
+--green-border:#bbf7d0;
+--accent-red:#ef4444; /* 亮紅 */
+--accent-red-pale:#fef2f2; /* 超淺紅 */
+--accent-orange:#f59e0b; /* 橙黃 */
+--accent-orange-pale:#fffbeb; /* 超淺橙 */
+--accent-purple:#8b5cf6; /* 紫色 */
+--accent-purple-pale:#f5f3ff; /* 超淺紫 */
+/* ── 文字 ── */
+--text-primary:#0f172a; /* 深灰藍/接近黑 */
+--text-secondary:#475569; /* 中灰藍 */
+--text-muted:#64748b; /* 淺灰藍/靜音 */
+/* ── 頁面底色上的文字 ── */
+--page-text-primary:#0f172a;
+--page-text-secondary:#475569;
+--border:#e2e8f0;
+--border-bright:#cbd5e1;
+--shadow:0 4px 12px rgba(15, 23, 42, 0.05); /* 微影柔和陰影 */
+--shadow-md:0 8px 30px rgba(15, 23, 42, 0.08);
+--radius:12px;
+--radius-lg:18px;
 /* ── 字級 ── */
 --fs-body:16px;
 --fs-label:14px;
@@ -145,7 +145,7 @@ font-size:var(--fs-label);
 color:var(--accent-red);
 cursor:pointer;
 background:none;
-border:1px solid #5c2a2e;
+border:1px solid #fca5a5;
 font-family:inherit;
 padding:6px 12px;
 border-radius:6px;
@@ -252,7 +252,7 @@ margin-bottom:20px;
 }
 .info-box .info-icon { font-size:19px; flex-shrink:0; margin-top:1px; }
 .info-box .info-text { font-size:var(--fs-body); color:var(--blue-text-on-pale); line-height:1.65; }
-.info-box .info-text strong { color:#fff; }
+.info-box .info-text strong { color:var(--blue-text-on-pale); font-weight: 700; }
 /* ── Action buttons ── */
 .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
 .action-btn {
@@ -393,9 +393,9 @@ box-shadow:var(--shadow);
 .submit-btn:hover { opacity:0.92; box-shadow:var(--shadow-md); }
 .submit-btn:active { transform:scale(0.98); }
 .submit-btn.blue { background:var(--blue-main); color:#fff; }
-.submit-btn.green { background:var(--green-main); color:#06241a; }
-.submit-btn.orange { background:var(--accent-orange); color:#2b1f02; }
-.submit-btn.purple { background:var(--accent-purple); color:#1c1334; }
+.submit-btn.green { background:var(--green-light); color:#fff; }
+.submit-btn.orange { background:var(--accent-orange); color:#fff; }
+.submit-btn.purple { background:var(--accent-purple); color:#fff; }
 /* ── Toast ── */
 .toast {
 position:fixed;
@@ -448,10 +448,10 @@ font-family:inherit;
 font-weight:600;
 transition:opacity 0.15s;
 }
-.approve-btn.ok { background:var(--green-pale); color:var(--green-light); border:1px solid var(--green-border); }
-.approve-btn.ok:hover { background:var(--green-border); }
-.approve-btn.reject { background:var(--accent-red-pale); color:var(--accent-red); border:1px solid #5c2a2e; }
-.approve-btn.reject:hover { background:#5c2a2e; }
+.approve-btn.ok { background:var(--green-light); color:#fff; border:none; }
+.approve-btn.ok:hover { opacity:0.85; }
+.approve-btn.reject { background:var(--accent-red); color:#fff; border:none; }
+.approve-btn.reject:hover { opacity:0.85; }
 /* ── Notif ── */
 .notif-panel {
 background:var(--card-bg);
@@ -604,6 +604,16 @@ box-shadow:var(--shadow);
 .page{ padding:28px 24px; }
 .clock-time{ font-size:64px; }
 }
+
+.record-item {
+  position: relative;
+}
+/* 待審項目特別高亮邊框 */
+.record-item:has(.badge-gray) {
+  border-left: 5px solid var(--accent-orange) !important;
+  background-color: var(--card-bg) !important;
+}
+
 </style>
 </head>
 <body>
@@ -881,10 +891,7 @@ box-shadow:var(--shadow);
 
 <div id="profileQuotaTable"></div>
 
-<p class="section-title">請假紀錄</p>
-<div class="record-list" id="profileLeaveList">
-<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>
-</div>
+
 </div>
 <!-- 主管 -->
 <div class="page" id="page-admin">
@@ -2313,14 +2320,7 @@ const rowsA = [
   `;
   }
 
-  // ── 請假紀錄列表 (個人歷史明細) ──
-  const leaves = records.filter(r => r.empId === currentUser.empId && r.type === '請假');
-  const leaveEl = document.getElementById('profileLeaveList');
-  if (leaveEl) {
-    leaveEl.innerHTML = leaves.length
-      ? leaves.map(r => recordHTML(r)).join('')
-      : '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">尚無請假紀錄</div></div>';
-  }
+
 }
 
 function calcAttendance() {
