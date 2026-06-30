@@ -1,21 +1,21 @@
-const CACHE_NAME = 'tjcpm-cache-v35';
+const CACHE_NAME = 'tjcpm-cache-v36'; // 🟢 V36 獨立快取金鑰
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './APP logo.png',
-  './logo.png'
+  'https://tjcpm109.github.io/tjcpm/APP%20logo.png',
+  'https://tjcpm109.github.io/tjcpm/logo.png'
 ];
 
 self.addEventListener('install', e => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS).catch(err => {
-        console.error("SW install caching failed: ", err);
-      });
+      return cache.addAll(ASSETS);
+    }).catch(err => {
+      console.error('Service Worker install cache failed:', err);
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
@@ -28,29 +28,32 @@ self.addEventListener('activate', e => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET' || e.request.url.includes('google') || e.request.url.includes('exec') || e.request.url.includes('macros')) {
-    return;
+  const url = new URL(e.request.url);
+  // 排除 Google Script API 與 JSONP 請求，僅對靜態 PWA 資源快取
+  if (url.hostname.includes('script.google.com') || url.search.includes('callback=')) {
+    return fetch(e.request);
   }
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+    caches.match(e.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(e.request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(e.request, responseToCache);
+          });
         }
-        const toCache = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(e.request, toCache);
-        });
-        return response;
+        return networkResponse;
       }).catch(() => {
-        // network error fallback
+        // 離線回退
+        return caches.match('./index.html');
       });
     })
   );
