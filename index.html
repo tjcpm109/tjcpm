@@ -1085,7 +1085,9 @@ function getPersonalYearRange(joinDateStr) {
   return {
     start: cycleStart,
     end: cycleEnd,
-    label: `${fmt(cycleStart)} ～ 
+    label: `${fmt(cycleStart)} ～ ${fmt(cycleEnd)}`
+  };
+}
 
 // ── 是否為當月 ──────────────────────────────────────────
 function isCurrentMonth(dateStr) {
@@ -1167,9 +1169,6 @@ function calcYearlyAttendance() {
     lateCount: `${lateCount} / ${earlyLeaveCount}`,
     leaveDays: totalLeaveDays % 1 === 0 ? totalLeaveDays : totalLeaveDays.toFixed(1),
     label: range.label
-  };
-}
-${fmt(cycleEnd)}`
   };
 }
 
