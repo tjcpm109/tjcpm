@@ -1327,8 +1327,7 @@ if (banner) {
 banner.classList.toggle('show', !canPunch);
 if (!canPunch) {
 banner.textContent = !isOnline
-? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試'
-: '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
+? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試';
 }
 }
 if (checkinSub) checkinSub.textContent = canPunch ? '打卡上班' : reason;
