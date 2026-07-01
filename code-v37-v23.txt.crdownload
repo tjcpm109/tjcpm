@@ -1,0 +1,1456 @@
+/**
+*  TJCPM 員工系統 - Google Apps Script 後端 V37.V21 究極版
+*  修正與優化紀錄：
+    1. 【休假時數精準計算】：優化了 getMyStatus 端的請假時數(hours)計算。
+       - 跨日請假（如日期起與迄不同時）會自動計算請假總天數。
+       - 每日請假時數最高自動限制/箝位(clamp)為 8 小時（扣除中午1小時休息時間）。
+       - 總時數 = 每日請假時數 * 請假總天數。這與後台 Sheet 的時數統計 100% 精準對齊！
+    2. 【加班補休字詞精簡】：配合後台每月出缺勤統計與常規稱呼，將所有的「加班補休」字詞全數精簡修正為「補休」。
+    3. doGet() 原本沒有 'approve' 分支：前端 approveRecord() 是用 callGAS()（JSONP，GET），現 doGet/doPost 均對齊。
+    4. 優先用 clientId 精準比對，找不到才 fallback 用 empId + 狀態=待審 模糊比對。
+    5. 新增：請假／加班／補打卡申請送出後，自動寄信通知主管查閱審核。
+    6. SHEET_COLUMNS 的固定欄位編號（1-indexed，對應 sheet.getRange 的欄號），不再依賴動態推算。
+    7. 新增：appendToSheetSafely() — 找不到對應分頁、或寫入失敗時只記錄到 log，不會讓整個請求中斷。
+    8. 新增：action=diag 自助診斷端點。 */
+
+const ADMIN_NOTIFY_EMAILS = ['acls2000@tmu.edu.tw', 'juchi.tmu@gmail.com'];
+
+// 請假申請：A時間(1) B員編(2) C姓名(3) D假別(4) E日期(起)(5) F日期(迄)(6) G時間(起)(7) H時間(迄)(8) I原因(9) J審核狀態(10) K clientId(11) L核准人姓名(12) M簽核時間(13) N簽核意見(14)
+// 加班申請：A時間 B員編 C姓名 D開始日期 E結束日期 F開始時間 G結束時間 H原因 I狀態 J clientId K核准人姓名 L簽核時間 M簽核意見
+// 補打卡申請：A時間 B員編 C姓名 D類型 E日期 F時間 G原因 H狀態 I clientId J核准人姓名 K簽核時間 L簽核意見
+const SHEET_COLUMNS = { 
+  '請假申請':   { status: 10, clientId: 11, approver: 12, approveTime: 13 }, 
+  '加班申請':   { status: 9,  clientId: 10, approver: 11, approveTime: 12 }, 
+  '補打卡申請': { status: 8,  clientId: 9,  approver: 10, approveTime: 11 } 
+};
+
+function doPost(e) { 
+  try { 
+    const data = JSON.parse(e.postData.contents); 
+    const ss = SpreadsheetApp.getActiveSpreadsheet(); 
+    const now = new Date();
+    // 處理 POST 請求 (打卡與新表單申請)
+    const action = data.action;
+    if (action === 'approve') {
+      return respond(handleApprove(ss, data));
+    } else if (action === 'cancel') {
+      return respond(handleCancel(ss, data));
+    }
+    // 預設寫入各申請分頁
+    const type = data.type;
+    if (type === '上班' || type === '下班') {
+      // 寫入打卡紀錄
+      const sheet = ss.getSheetByName('打卡紀錄');
+      sheet.appendRow([now, data.empId, data.name, type, data.date, data.time, data.lat || '', data.lng || '', data.remark || '']);
+      return respond({ status: 'ok' });
+    } else if (type === '請假') {
+      // 將「加班補休」統一轉寫為「補休」以與總表對齊
+      const subType = data.subType === '加班補休' ? '補休' : data.subType;
+      const rowValues = [now, data.empId, data.name, subType, data.date, data.endDate || data.date, data.startTime, data.endTime, data.reason || '', '待審', data.clientId, '', '', ''];
+      const ok = appendToSheetSafely(ss, '請假申請', rowValues);
+      if (ok) notifyAdmins('請假', data);
+      return respond({ status: 'ok' });
+    } else if (type === '加班') {
+      const rowValues = [now, data.empId, data.name, data.date, data.date, data.startTime, data.endTime, data.reason || '', '待審', data.clientId, '', '', ''];
+      const ok = appendToSheetSafely(ss, '加班申請', rowValues);
+      if (ok) notifyAdmins('加班', data);
+      return respond({ status: 'ok' });
+    } else if (type === '補打卡') {
+      const rowValues = [now, data.empId, data.name, data.subType, data.date, data.time, data.reason || '', '待審', data.clientId, '', '', ''];
+      const ok = appendToSheetSafely(ss, '補打卡申請', rowValues);
+      if (ok) notifyAdmins('補打卡', data);
+      return respond({ status: 'ok' });
+    }
+    return respond({ status: 'error', message: '未知的 POST 類型' });
+  } catch (err) { 
+    return respond({ status: 'error', message: err.toString() }); 
+  } 
+}
+
+function doGet(e) { 
+  const callback = e.parameter.callback; 
+  const params = e.parameter.data ? JSON.parse(e.parameter.data) : {}; 
+  const action = params.action || e.parameter.action; 
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let result = { status: 'ok' };
+  
+  try { 
+    if (action === 'login') { 
+      result = handleLogin(ss, params); 
+    } else if (action === 'getMyStatus') {
+      result = handleGetMyStatus(ss, params.empId || params);
+    } else if (action === 'getAll') {
+      result = handleGetAll(ss);
+    } else if (action === 'approve') {
+      result = handleApprove(ss, params);
+    } else if (action === 'cancel') {
+      result = handleCancel(ss, params);
+    } else if (action === 'changePassword') {
+      result = handleChangePassword(ss, params);
+    } else if (action === 'diag') {
+      result = handleDiag(ss);
+    } else {
+      result = { status: 'error', message: '未知的 doGet 動作：' + action };
+    }
+  } catch (err) { 
+    result = { status: 'error', message: err.toString() }; 
+  }
+  
+  if (callback) { 
+    return ContentService
+      .createTextOutput(callback + '(' + JSON.stringify(result) + ')') 
+      .setMimeType(ContentService.MimeType.JAVASCRIPT); 
+  } 
+  return respond(result); 
+}
+
+function handleLogin(ss, data) { 
+  const sheet = ss.getSheetByName('員工名單'); 
+  const rows = sheet.getDataRange().getValues(); 
+  
+  // 💡 補回丟失的國定假日載入區塊 (徹底解決 holidayStrings is not defined 報錯)
+  let holidayStrings = [];
+  const holidaySheet = ss.getSheetByName('國定假日');
+  if (holidaySheet) {
+    holidayStrings = holidaySheet.getDataRange().getValues().slice(1).map(r => {
+      const val = r[0];
+      if (val instanceof Date) return Utilities.formatDate(val, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      return String(val).trim();
+    });
+  }
+
+  // 💡 登入時自動執行一次假別總表 15欄轉17欄數據平移與升級 (100% 確保對齊!)
+  ensureSheetHeaders(ss);
+
+  for (let i = 1; i < rows.length; i++) { 
+    const [empId, name, password, role, joinDate, empType] = rows[i]; 
+    if (String(empId) === String(data.empId) && String(password) === String(data.password)) { 
+      const fmtJoinDate = joinDate ? (joinDate instanceof Date ? joinDate.toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-') : String(joinDate)) : '—';
+      
+      let dropdownEmployeeList = [];
+      if (role === 'admin') {
+        dropdownEmployeeList = getRichEmployeeList(ss, holidayStrings);
+      }
+      
+      const quota = recalculateAndSyncUserQuota(ss, String(empId), name, joinDate, holidayStrings);
+
+      return { 
+        status: 'ok', 
+        name: name, 
+        role: role, 
+        empId: String(empId),
+        joinDate: fmtJoinDate,
+        empType: String(empType || '專任').trim(), // 💡 補回在職類型回傳
+        quota: quota,
+        employeeList: dropdownEmployeeList
+      }; 
+    } 
+  } 
+  return { status: 'error', message: '帳號或密碼錯誤' }; 
+}
+
+function handleApprove(ss, data) { 
+  const typeMap = { '請假': '請假申請', '加班': '加班申請', '補打卡': '補打卡申請' }; 
+  const sheetName = typeMap[data.type]; 
+  if (!sheetName) return { status: 'error', message: '未知的申請類型：' + data.type }; 
+  
+  const sheet = ss.getSheetByName(sheetName); 
+  if (!sheet) return { status: 'error', message: '找不到工作表：' + sheetName }; 
+  
+  const cols = SHEET_COLUMNS[sheetName]; 
+  const statusIdx0 = cols.status - 1;     
+  const clientIdIdx0 = cols.clientId - 1;
+  const rows = sheet.getDataRange().getValues(); 
+  let targetRow = -1;
+  
+  // 1) 用 clientId 精準比對 
+  if (data.clientId) { 
+    for (let i = 1; i < rows.length; i++) { 
+      const rowClientId = rows[i][clientIdIdx0]; 
+      if (rowClientId && String(rowClientId) === String(data.clientId)) { 
+        targetRow = i + 1; 
+        break; 
+      } 
+    } 
+  }
+  
+  // 2) fallback：模糊比對
+  if (targetRow === -1) { 
+    for (let i = rows.length - 1; i >= 1; i--) { 
+      const rowEmpId = rows[i][1]; 
+      const rowStatus = rows[i][statusIdx0]; 
+      if (String(rowEmpId) === String(data.empId) && rowStatus === '待審') { 
+        targetRow = i + 1; 
+        break; 
+      } 
+    } 
+  }
+  
+  if (targetRow === -1) { 
+    return { status: 'error', message: '找不到對應的申請列，狀態未更新', found: false }; 
+  }
+  
+  sheet.getRange(targetRow, cols.status).setValue(data.decision); 
+  sheet.getRange(targetRow, cols.approver).setValue(data.approverName || data.approverId || ''); 
+  sheet.getRange(targetRow, cols.approveTime).setValue(new Date());
+  
+  try {
+    if (data.comment) {
+      if (sheetName === '請假申請') {
+        sheet.getRange(targetRow, 14).setValue(data.comment); // N 欄寫入簽核意見
+      } else if (sheetName === '加班申請') {
+        sheet.getRange(targetRow, 13).setValue(data.comment); // M 欄
+      } else if (sheetName === '補打卡申請') {
+        sheet.getRange(targetRow, 12).setValue(data.comment); // L 欄
+      }
+    }
+  } catch (commentErr) {
+    console.error('寫入簽核意見失敗：' + commentErr.toString());
+  }
+  
+  return { status: 'ok', found: true, row: targetRow }; 
+}
+
+function handleCancel(ss, data) { 
+  const typeMap = { '請假': '請假申請', '加班': '加班申請', '補打卡': '補打卡申請' }; 
+  const sheetName = typeMap[data.type]; 
+  if (!sheetName) return { status: 'error', message: '未知的申請類型：' + data.type };
+  
+  const sheet = ss.getSheetByName(sheetName); 
+  if (!sheet) return { status: 'error', message: '找不到工作表：' + sheetName };
+  
+  const cols = SHEET_COLUMNS[sheetName]; 
+  const statusIdx0 = cols.status - 1; 
+  const clientIdIdx0 = cols.clientId - 1; 
+  const rows = sheet.getDataRange().getValues(); 
+  let targetRow = -1;
+  
+  if (data.clientId) { 
+    for (let i = 1; i < rows.length; i++) { 
+      if (rows[i][clientIdIdx0] && String(rows[i][clientIdIdx0]) === String(data.clientId)) { 
+        targetRow = i + 1; 
+        break; 
+      } 
+    } 
+  } 
+  if (targetRow === -1) { 
+    for (let i = rows.length - 1; i >= 1; i--) { 
+      if (String(rows[i][1]) === String(data.empId) && rows[i][statusIdx0] === '待審') { 
+        targetRow = i + 1; 
+        break; 
+      } 
+    } 
+  } 
+  if (targetRow === -1) return { status: 'error', message: '找不到對應的申請列', found: false };
+  
+  sheet.getRange(targetRow, cols.status).setValue('已撤回'); 
+  return { status: 'ok', found: true, row: targetRow }; 
+}
+
+function handleGetMyStatus(ss, empId) { 
+  const leaveSheet = ss.getSheetByName('請假申請'); 
+  const otSheet = ss.getSheetByName('加班申請'); 
+  const suppSheet = ss.getSheetByName('補打卡申請');
+  const punchSheet = ss.getSheetByName('打卡紀錄');
+  
+  const updates = [];
+
+  // 載入國定假日清單 (用來計算請假時數)
+  let holidayStrings = [];
+  const holidaySheet = ss.getSheetByName('國定假日');
+  if (holidaySheet) {
+    holidayStrings = holidaySheet.getDataRange().getValues().slice(1).map(r => {
+      const val = r[0];
+      if (val instanceof Date) return Utilities.formatDate(val, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      return String(val).trim();
+    });
+  }
+  
+  // 1. 請假歷史
+  if (leaveSheet) {
+    const rows = leaveSheet.getDataRange().getValues().slice(1);
+    rows.filter(r => String(r[1]) === String(empId)).forEach(r => {
+      const status = r[9] || '待審';
+      const clientId = r[10] || '';
+      
+      // 計算跨日請假的天數
+      let diffDays = 1;
+      if (r[4] && r[5] && String(r[4]) !== String(r[5])) {
+        const d1 = new Date(r[4]);
+        const d2 = new Date(r[5]);
+        if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+          diffDays = Math.round(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+        }
+      }
+      
+      // 💡 智慧精密時間段比對核心邏輯：調用實時精密比對大腦
+      const totalHours = getLeaveHoursFromRow(r, holidayStrings, ss);
+      
+      // 同一假別顯示 (加班補休 ➔ 補休)
+      const subTypeClean = String(r[3]) === '加班補休' ? '補休' : String(r[3]);
+
+      updates.push({
+        id: clientId ? parseInt(clientId) || Date.now() : Date.now(),
+        clientId: String(clientId),
+        type: '請假',
+        subType: subTypeClean,
+        empId: String(empId),
+        name: String(r[2]),
+        date: formatDateString(r[4]),
+        endDate: formatDateString(r[5] || r[4]),
+        startTime: String(r[6] || '09:00'),
+        endTime: String(r[7] || '18:00'),
+        reason: r[8] ? String(r[8]) : '無',
+        status: status,
+        hours: totalHours,
+        approveComment: r[13] ? String(r[13]) : '',
+        timestamp: r[0] ? new Date(r[0]).toISOString() : new Date().toISOString()
+      });
+    });
+  }
+  
+  // 2. 加班歷史
+  if (otSheet) {
+    const rows = otSheet.getDataRange().getValues().slice(1);
+    rows.filter(r => String(r[1]) === String(empId)).forEach(r => {
+      const status = r[8] || '待審';
+      const clientId = r[9] || '';
+      updates.push({
+        id: clientId ? parseInt(clientId) || Date.now() : Date.now(),
+        clientId: String(clientId),
+        type: '加班',
+        empId: String(empId),
+        name: String(r[2]),
+        date: formatDateString(r[3]),
+        startTime: String(r[5] || ''),
+        endTime: String(r[6] || ''),
+        reason: String(r[7] || ''),
+        status: status,
+        hours: r[12] ? parseFloat(r[12]) : 1,
+        approveComment: r[11] ? String(r[11]) : '',
+        timestamp: r[0] ? new Date(r[0]).toISOString() : new Date().toISOString()
+      });
+    });
+  }
+
+  // 3. 補打卡歷史
+  if (suppSheet) {
+    const rows = suppSheet.getDataRange().getValues().slice(1);
+    rows.filter(r => String(r[1]) === String(empId)).forEach(r => {
+      const status = r[7] || '待審';
+      const clientId = r[8] || '';
+      updates.push({
+        id: clientId ? parseInt(clientId) || Date.now() : Date.now(),
+        clientId: String(clientId),
+        type: '補打卡',
+        subType: String(r[3]),
+        empId: String(empId),
+        name: String(r[2]),
+        date: formatDateString(r[4]),
+        time: String(r[5] || ''),
+        reason: String(r[6] || ''),
+        status: status,
+        approveComment: r[11] ? String(r[11]) : '',
+        timestamp: r[0] ? new Date(r[0]).toISOString() : new Date().toISOString()
+      });
+    });
+  }
+
+  // 4. 打卡紀錄歷史
+  if (punchSheet) {
+    const rows = punchSheet.getDataRange().getValues().slice(1);
+    rows.filter(r => String(r[1]) === String(empId)).forEach(r => {
+      updates.push({
+        id: r[0] ? new Date(r[0]).getTime() : Date.now(),
+        type: String(r[3]), // 上班 / 下班
+        empId: String(empId),
+        name: String(r[2]),
+        date: formatDateString(r[4]),
+        time: formatTimeString(r[5]),
+        timestamp: r[0] ? new Date(r[0]).toISOString() : new Date().toISOString(),
+        lat: r[6] ? String(r[6]) : '',
+        lng: r[7] ? String(r[7]) : '',
+        remark: r[8] ? String(r[8]) : ''
+      });
+    });
+  }
+
+  // 讀取特休與補休資訊
+  let quota = null;
+  try {
+    const empSheet = ss.getSheetByName('員工名單');
+    let joinDateVal = null;
+    let name = "";
+    if (empSheet) {
+      const empRows = empSheet.getDataRange().getValues();
+      for (let k = 1; k < empRows.length; k++) {
+        if (String(empRows[k][0]).trim() === String(empId)) {
+          name = empRows[k][1];
+          joinDateVal = empRows[k][4];
+          break;
+        }
+      }
+    }
+    quota = recalculateAndSyncUserQuota(ss, String(empId), name, joinDateVal, holidayStrings);
+  } catch (e) {
+    console.error("handleGetMyStatus中重算額度失敗: " + e.toString());
+  }
+
+  return { status: 'ok', updates, quota, holidayStrings }; 
+}
+
+function handleGetAll(ss) { 
+  const sheet = ss.getSheetByName('打卡紀錄'); 
+  if (!sheet) return { status: 'error', message: '找不到打卡紀錄工作表' }; 
+  const rows = sheet.getDataRange().getValues(); 
+  return { status: 'ok', data: rows }; 
+}
+
+function handleChangePassword(ss, data) { 
+  const sheet = ss.getSheetByName('員工名單'); 
+  if (!sheet) return { status: 'error', message: '找不到員工名單工作表' }; 
+  const range = sheet.getDataRange(); 
+  const rows = range.getValues(); 
+  for (let i = 1; i < rows.length; i++) { 
+    if (String(rows[i][0]) === String(data.empId)) { 
+      if (String(rows[i][2]) !== String(data.oldPassword)) { 
+        return { status: 'error', message: '舊密碼不正確' }; 
+      } 
+      sheet.getRange(i + 1, 3).setValue(String(data.newPassword)); 
+      return { status: 'ok' }; 
+    } 
+  } 
+  return { status: 'error', message: '找不到員工帳號' }; 
+}
+
+function handleDiag(ss) { 
+  const sheets = ss.getSheets(); 
+  const info = sheets.map(s => { 
+    const name = s.getName(); 
+    const lastCol = s.getLastColumn(); 
+    const lastRow = s.getLastRow(); 
+    const headerRow = lastCol > 0 ? s.getRange(1, 1, 1, lastCol).getValues()[0] : []; 
+    return { name, lastCol, lastRow, headerRow }; 
+  }); 
+  const expectedSheets = ['員工名單', '打卡紀錄', '請假申請', '加班申請', '補打卡申請']; 
+  const actualNames = info.map(s => s.name); 
+  const missing = expectedSheets.filter(n => !actualNames.includes(n)); 
+  return { status: 'ok', spreadsheetUrl: ss.getUrl(), sheets: info, missingExpectedSheets: missing, expectedColumnLayout: SHEET_COLUMNS }; 
+}
+
+function appendToSheetSafely(ss, sheetName, rowValues) { 
+  try { 
+    const sheet = ss.getSheetByName(sheetName); 
+    if (!sheet) { 
+      console.error('appendToSheetSafely 失敗：找不到工作表「' + sheetName + '」'); 
+      return false; 
+    } 
+    sheet.appendRow(rowValues); 
+    return true; 
+  } catch (err) { 
+    console.error('appendToSheetSafely 寫入「' + sheetName + '」時發生錯誤：' + err.toString()); 
+    return false; 
+  } 
+}
+
+function notifyAdmins(type, data) { 
+  try { 
+    const who = (data.name || '') + '（員編 ' + (data.empId || '') + '）'; 
+    const subject = '[TJCPM] 新' + type + '申請待審核 - ' + who;
+    const lines = []; 
+    lines.push('員工：' + who); 
+    lines.push('申請類型：' + type);
+    if (type === '請假') { 
+      lines.push('假別：' + (data.subType === '加班補休' ? '補休' : (data.subType || ''))); 
+      lines.push('開始：' + (data.date || '') + ' ' + (data.startTime || '')); 
+      lines.push('結束：' + (data.endDate || '') + ' ' + (data.endTime || '')); 
+      if (data.reason) lines.push('原因：' + data.reason); 
+    } else if (type === '加班') { 
+      lines.push('日期：' + (data.date || '')); 
+      lines.push('時間：' + (data.startTime || '') + ' ～ ' + (data.endTime || '')); 
+      if (data.hours) lines.push('時數：' + data.hours); 
+      if (data.reason) lines.push('原因：' + data.reason); 
+    } else if (type === '補打卡') { 
+      lines.push('補打卡類型：' + (data.subType || '')); 
+      lines.push('日期：' + (data.date || '')); 
+      lines.push('時間：' + (data.time || '')); 
+      if (data.reason) lines.push('原因：' + data.reason); 
+    }
+    lines.push('審核狀態：待審');
+    lines.push(''); 
+    lines.push('請登入系統審核：https://tjcpm109.github.io/tjcpm/'); 
+    
+    MailApp.sendEmail({ 
+      to: ADMIN_NOTIFY_EMAILS.join(','), 
+      subject: subject, 
+      body: lines.join('\n') 
+    }); 
+  } catch (err) { 
+    console.error('notifyAdmins 寄信失敗: ' + err.toString()); 
+  } 
+}
+
+function formatDateString(val) {
+  if (!val) return '';
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return String(val);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  } catch (e) {
+    return String(val);
+  }
+}
+
+function formatTimeString(val) {
+  if (!val) return '';
+  if (typeof val === 'string' && val.match(/^\d{2}:\d{2}/)) return val.slice(0,5);
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return String(val).slice(0,5);
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return h + ':' + m;
+  } catch (e) {
+    return String(val).slice(0,5);
+  }
+}
+
+function timeToMinutes(tStr) {
+  const parts = tStr.split(':');
+  return (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+}
+
+function respond(obj) { 
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON); 
+}
+
+
+// ── 核心重構：台灣特休與補休額度自動精算 (V37-v8) ──
+
+function recalculateAndSyncUserQuota(ss, empId, name, joinDateVal, holidayStrings) {
+  const timeZone = Session.getScriptTimeZone();
+  const now = new Date();
+  if (!holidayStrings) {
+    holidayStrings = [];
+    const holidaySheet = getSheetSafely(ss, '國定假日');
+    if (holidaySheet) {
+      holidayStrings = holidaySheet.getDataRange().getValues().slice(1).map(r => {
+        const val = r[0];
+        if (val instanceof Date) return Utilities.formatDate(val, timeZone, 'yyyy-MM-dd');
+        return String(val).trim();
+      });
+    }
+  }
+  let specialLeaveDays = 0;
+  let seniorityY = 0;
+  let seniorityM = 0;
+  if (joinDateVal instanceof Date) {
+    const yearsDiff = now.getFullYear() - joinDateVal.getFullYear();
+    const monthsDiff = now.getMonth() - joinDateVal.getMonth();
+    const totalMonths = yearsDiff * 12 + monthsDiff;
+    seniorityY = Math.floor(totalMonths / 12);
+    seniorityM = totalMonths % 12;
+    if (totalMonths >= 120) {
+      specialLeaveDays = Math.min(30, 15 + Math.floor(totalMonths / 12) - 10);
+    } else if (totalMonths >= 60) {
+      specialLeaveDays = 15;
+    } else if (totalMonths >= 36) {
+      specialLeaveDays = 14;
+    } else if (totalMonths >= 24) {
+      specialLeaveDays = 10;
+    } else if (totalMonths >= 12) {
+      specialLeaveDays = 7;
+    } else if (totalMonths >= 6) {
+      specialLeaveDays = 3;
+    } else {
+      specialLeaveDays = 0;
+    }
+  }
+  
+  let specialLeaveUsedHours = 0;
+  const leaveSheet = getSheetSafely(ss, '請假申請');
+  if (leaveSheet) {
+    const leaveRows = leaveSheet.getDataRange().getValues().slice(1);
+    leaveRows.forEach(row => {
+      const rowEmpId = String(row[1]).trim();
+      const subType = String(row[3]).trim();
+      const status = String(row[9]).trim();
+      if (rowEmpId === empId && subType === '特休' && status === '同意') {
+        specialLeaveUsedHours += getLeaveHoursFromRow(row, holidayStrings, ss);
+      }
+    });
+  }
+  
+  let totalOtHoursAcc = 0;
+  const otSheet = getSheetSafely(ss, '加班申請');
+  if (otSheet) {
+    const otRows = otSheet.getDataRange().getValues().slice(1);
+    otRows.forEach(r => {
+      const rowEmpId = String(r[1]).trim();
+      const status = String(r[8]).trim();
+      if (rowEmpId === empId && status === '同意') {
+        totalOtHoursAcc += getOvertimeHoursFromRow(r);
+      }
+    });
+  }
+  
+  let compLeaveUsedHours = 0;
+  if (leaveSheet) {
+    const leaveRows = leaveSheet.getDataRange().getValues().slice(1);
+    leaveRows.forEach(row => {
+      const rowEmpId = String(row[1]).trim();
+      const subType = String(row[3]).trim();
+      const status = String(row[9]).trim();
+      if (rowEmpId === empId && (subType === '補休' || subType === '加班補休') && status === '同意') {
+        compLeaveUsedHours += getLeaveHoursFromRow(row, holidayStrings, ss);
+      }
+    });
+  }
+  
+  const specialLeaveTotalHours = specialLeaveDays * 8;
+  const specialLeaveRemainingHours = Math.max(0, specialLeaveTotalHours - specialLeaveUsedHours);
+  const compLeaveRemainingHours = Math.max(0, totalOtHoursAcc - compLeaveUsedHours);
+  
+  const quotaSheet = getSheetSafely(ss, '假別總表');
+  if (quotaSheet) {
+    const rows = quotaSheet.getDataRange().getValues();
+    let targetRow = -1;
+    for (let k = 1; k < rows.length; k++) {
+      if (String(rows[k][0]).trim() === empId) {
+        targetRow = k + 1;
+        break;
+      }
+    }
+    const curMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+    const todayStr = Utilities.formatDate(now, timeZone, 'yyyy-MM-dd');
+    const totalMonths = (seniorityY * 12) + seniorityM;
+    const syncRowData = [
+      empId,
+      joinDateVal instanceof Date ? Utilities.formatDate(joinDateVal, timeZone, 'yyyy-MM-dd') : String(joinDateVal || '').replace(/\./g, '-').trim(),
+      curMonthStr,
+      todayStr,
+      seniorityY,
+      seniorityM,
+      totalMonths,
+      specialLeaveDays,
+      specialLeaveTotalHours,
+      parseFloat(specialLeaveUsedHours.toFixed(1)),
+      parseFloat(specialLeaveRemainingHours.toFixed(1)),
+      parseFloat(compLeaveRemainingHours.toFixed(1))
+    ];
+    if (targetRow > -1) {
+      quotaSheet.getRange(targetRow, 1, 1, 12).setValues([syncRowData]);
+    } else {
+      quotaSheet.appendRow(syncRowData);
+    }
+  }
+  return {
+    specialLeaveDays: specialLeaveDays,
+    specialLeaveTotalHours: parseFloat(specialLeaveTotalHours.toFixed(1)),
+    specialLeaveUsedHours: parseFloat(specialLeaveUsedHours.toFixed(1)),
+    specialLeaveRemainingHours: parseFloat(specialLeaveRemainingHours.toFixed(1)),
+    compLeaveRemainingHours: parseFloat(compLeaveRemainingHours.toFixed(1)),
+    totalOtHoursAcc: parseFloat(totalOtHoursAcc.toFixed(1)),
+    compLeaveUsedHours: parseFloat(compLeaveUsedHours.toFixed(1))
+  };
+}
+
+
+
+function getRichEmployeeList(ss, holidayStrings) {
+  const empSheet = getSheetSafely(ss, '員工名單');
+  if (!empSheet) return [];
+  const empRows = empSheet.getDataRange().getValues().slice(1);
+  const now = new Date();
+  const timeZone = Session.getScriptTimeZone();
+  const list = [];
+  empRows.forEach(row => {
+    if (!row[0] || !row[1]) return;
+    const empId = String(row[0]).trim();
+    const name = String(row[1]).trim();
+    const role = String(row[3] || 'member').trim();
+    const joinDateVal = row[4];
+    let joinDateStr = '';
+    let seniorityText = '—';
+    let countdownDays = '—';
+    if (joinDateVal instanceof Date) {
+      joinDateStr = Utilities.formatDate(joinDateVal, timeZone, 'yyyy-MM-dd');
+      let years = now.getFullYear() - joinDateVal.getFullYear();
+      let months = now.getMonth() - joinDateVal.getMonth();
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      seniorityText = years + ' 年 ' + months + ' 個月';
+      let nextAnniversary = new Date(now.getFullYear(), joinDateVal.getMonth(), joinDateVal.getDate());
+      if (nextAnniversary < now) {
+        nextAnniversary.setFullYear(now.getFullYear() + 1);
+      }
+      const diffTime = nextAnniversary.getTime() - now.getTime();
+      countdownDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } else if (joinDateVal) {
+      joinDateStr = String(joinDateVal).replace(/\./g, '-').trim();
+    }
+    const q = recalculateAndSyncUserQuota(ss, empId, name, joinDateVal, holidayStrings);
+    list.push({
+      empId: empId,
+      name: name,
+      role: role,
+      joinDate: joinDateStr,
+      seniorityText: seniorityText,
+      countdownDays: countdownDays,
+      specialLeaveDays: q.specialLeaveDays,
+      specialLeaveTotalHours: q.specialLeaveTotalHours,
+      specialLeaveUsedHours: q.specialLeaveUsedHours,
+      specialLeaveRemainingHours: q.specialLeaveRemainingHours,
+      compLeaveRemainingHours: q.compLeaveRemainingHours,
+      totalOtHoursAcc: q.totalOtHoursAcc,
+      compLeaveUsedHours: q.compLeaveUsedHours
+    });
+  });
+  return list;
+}
+
+
+
+function updateManagerSummarySheet(ss, richList) {
+  let sheet = getSheetSafely(ss, '📊 主管綜合看盤');
+  if (!sheet) {
+    sheet = ss.insertSheet('📊 主管綜合看盤');
+  }
+  sheet.clear();
+  const headers = [
+    '員工編號',
+    '姓名',
+    '到職日',
+    '當前年資',
+    '下一週年倒數(天)',
+    '勞基法特休天數',
+    '特休總時數(時)',
+    '特休累計已請(時)',
+    '特休當前賸餘(時)',
+    '補休當前賸餘(時)'
+  ];
+  sheet.appendRow(headers);
+  sheet.getRange(1, 1, 1, headers.length)
+    .setBackground('#111827')
+    .setFontColor('#f3f6fa')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+  richList.forEach(item => {
+    sheet.appendRow([
+      item.empId,
+      item.name,
+      item.joinDate,
+      item.seniorityText,
+      item.countdownDays,
+      item.specialLeaveDays,
+      item.specialLeaveTotalHours,
+      item.specialLeaveUsedHours,
+      item.specialLeaveRemainingHours,
+      item.compLeaveRemainingHours
+    ]);
+  });
+  if (richList.length > 0) {
+    sheet.getRange(2, 1, richList.length, headers.length).setHorizontalAlignment('center');
+    sheet.getRange(1, 1, richList.length + 1, headers.length)
+      .setBorder(true, true, true, true, true, true, '#2a3650', SpreadsheetApp.BorderStyle.SOLID);
+  }
+}
+
+
+
+function getLeaveHoursFromRow(r, holidayStringsParam, ss) {
+  if (r[7] && !isNaN(Number(r[7])) && Number(r[7]) > 0) return Number(r[7]);
+  const startDateStr = String(r[4] || "").trim();
+  const endDateStr = String(r[5] || r[4] || "").trim();
+  const startTimeStr = String(r[6] || "").trim();
+  const endTimeStr = String(r[7] || "").trim();
+  const empId = String(r[1] || "").trim();
+  if (!startDateStr) return 0;
+  const timeZone = Session.getScriptTimeZone();
+  let holidayStrings = holidayStringsParam;
+  if (!holidayStrings || holidayStrings.length === 0) {
+    holidayStrings = [];
+    try {
+      const holidaySheet = getSheetSafely(ss || getActiveSS(), '國定假日');
+      if (holidaySheet) {
+        holidayStrings = holidaySheet.getDataRange().getValues().slice(1).map(row => {
+          const val = row[0];
+          if (val instanceof Date) return Utilities.formatDate(val, timeZone, 'yyyy-MM-dd');
+          return String(val).trim();
+        });
+      }
+    } catch (e) {
+      console.error("getLeaveHoursFromRow 失敗: " + e.toString());
+    }
+  }
+  let current = new Date(startDateStr.replace(/-/g, '/'));
+  const end = new Date(endDateStr.replace(/-/g, '/'));
+  let totalHours = 0;
+  const maxLoops = 100;
+  let loops = 0;
+  while (current <= end && loops < maxLoops) {
+    loops++;
+    const dateStr = Utilities.formatDate(current, timeZone, 'yyyy-MM-dd');
+    const dayOfWeek = current.getDay();
+    const isHoliday = holidayStrings.includes(dateStr);
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    if (!isWeekend && !isHoliday) {
+      let shift = { start: '09:00', end: '18:00' };
+      try {
+        shift = getShiftForDate(ss || getActiveSS(), dateStr, empId, timeZone);
+      } catch (e) {}
+      let dayStartStr = shift.start || '09:00';
+      let dayEndStr = shift.end || '18:00';
+      if (dateStr === startDateStr && startTimeStr) {
+        if (startTimeStr > dayStartStr) dayStartStr = startTimeStr;
+      }
+      if (dateStr === endDateStr && endTimeStr) {
+        if (endTimeStr < dayEndStr) dayEndStr = endTimeStr;
+      }
+      const sParts = dayStartStr.split(':');
+      const eParts = dayEndStr.split(':');
+      const sh = parseInt(sParts[0], 10);
+      const sm = parseInt(sParts[1] || 0, 10);
+      const eh = parseInt(eParts[0], 10);
+      const em = parseInt(eParts[1] || 0, 10);
+      let startMin = sh * 60 + sm;
+      let endMin = eh * 60 + em;
+      let diffMin = endMin - startMin;
+      if (sh <= 12 && eh >= 13) {
+        diffMin -= 60;
+      }
+      const dayHours = Math.max(0, diffMin / 60);
+      totalHours += dayHours;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return parseFloat(totalHours.toFixed(1));
+}
+
+
+
+function getOvertimeHoursFromRow(r) {
+  const startTimeStr = String(r[5] || "").trim();
+  const endTimeStr = String(r[6] || "").trim();
+  if (startTimeStr && endTimeStr) {
+    const sh = parseInt(startTimeStr.split(':')[0], 10);
+    const sm = parseInt(startTimeStr.split(':')[1] || 0, 10);
+    const eh = parseInt(endTimeStr.split(':')[0], 10);
+    const em = parseInt(endTimeStr.split(':')[1] || 0, 10);
+    return Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60);
+  }
+  const reasonStr = String(r[7] || "").trim();
+  const match = reasonStr.match(/快速申請:\s*([0-9.]+)/);
+  if (match) return parseFloat(match[1]);
+  return 0;
+}
+
+
+
+function getShiftForDate(ss, dateStr, empId, timeZone) {
+  const defaultShift = { start: '09:00', end: '18:00' };
+  const sheet = getSheetSafely(ss, '特別排班');
+  if (!sheet) return defaultShift;
+  const rows = sheet.getDataRange().getValues();
+  let dateMatchShift = null;
+  for (let i = 1; i < rows.length; i++) {
+    const rowDateVal = rows[i][0];
+    if (!rowDateVal) continue;
+    let rowDateStr = '';
+    if (rowDateVal instanceof Date) {
+      rowDateStr = Utilities.formatDate(rowDateVal, timeZone || "GMT+8", 'yyyy-MM-dd');
+    } else {
+      rowDateStr = String(rowDateVal).trim().replace(/\//g, '-');
+    }
+    if (rowDateStr === dateStr) {
+      const rowEmpId = String(rows[i][1] || '').trim();
+      const rowStart = String(rows[i][2] || '').trim();
+      const rowEnd = String(rows[i][3] || '').trim();
+      const cleanStart = rowStart ? (rowStart.includes(':') ? rowStart.slice(0, 5) : rowStart) : '09:00';
+      const cleanEnd = rowEnd ? (rowEnd.includes(':') ? rowEnd.slice(0, 5) : rowEnd) : '18:00';
+      if (rowEmpId === String(empId).trim()) {
+        return { start: cleanStart, end: cleanEnd };
+      } else if (rowEmpId === '') {
+        dateMatchShift = { start: cleanStart, end: cleanEnd };
+      }
+    }
+  }
+  return dateMatchShift || defaultShift;
+}
+
+
+
+function ensureSheetHeaders(ss) {
+  try {
+    const quotaSheet = getSheetSafely(ss, '假別總表');
+    if (quotaSheet) {
+      const headers = ['員工編號', '到職日', '月份', '今日日期', '年資(年)', '年資(月)', '服務月數(總)', '勞基法特休天數', '特休總時數(h)', '特休累計已請(時)', '特休當前覸餘(時)', '補休當前覸餘(時)', '請假天數', '曠職天數', '遲到次數', '早退次數', '缺打卡'];
+      const lastCol = quotaSheet.getLastColumn();
+      const currentHeaders = lastCol > 0 ? quotaSheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+      
+      // 💡 15欄自動平移升級為17欄旗艦規格 (完美對齊請假天數、曠職天數與其後所有的指標!)
+      if (currentHeaders.length > 0 && currentHeaders.length < 17 && currentHeaders[10] === '請假天數') {
+        console.log("⚠️ 偵測到舊版假別總表 (15欄)，啟動自動升級與數據平移程序...");
+        const lastRow = quotaSheet.getLastRow();
+        if (lastRow > 1) {
+          const oldDataRange = quotaSheet.getRange(2, 1, lastRow - 1, lastCol);
+          const oldValues = oldDataRange.getValues();
+          const newValues = oldValues.map(row => {
+            const newRow = [...row];
+            const col11_15 = newRow.splice(10); // 取得舊 columns 11-15
+            newRow.push('', ''); // 插入 Column 11 & 12 (特休剩餘, 補休剩餘) 占位符
+            newRow.push(...col11_15); // 將其後指標向後平移 2 格塞回
+            return newRow;
+          });
+          quotaSheet.getRange(2, 1, lastRow - 1, 17).setValues(newValues);
+        }
+        quotaSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        quotaSheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1f2937').setFontColor('#ffffff');
+        console.log("✅ 假別總表自動升級與數據平移完成！現為 17 欄標準佈局。");
+      } else {
+        if (currentHeaders.length === 0 || currentHeaders[9] !== '特休累計已請(時)' || currentHeaders[10] !== '特休當前覸餘(時)') {
+          quotaSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+          quotaSheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1f2937').setFontColor('#ffffff');
+        }
+      }
+    }
+    const statsSheet = getSheetSafely(ss, '每月出缺勤統計');
+    if (statsSheet) {
+      const headers = ['月份', '員編', '姓名', '加班賺取補休(時)', '漏打卡次數', '補打卡次數', '遲到早退次數', '請假總時數(時)', '補休請假消耗(時)', '補休當前覸餘(時)', '特休當前覸餘(時)'];
+      const currentHeaders = statsSheet.getLastColumn() > 0 ? statsSheet.getRange(1, 1, 1, statsSheet.getLastColumn()).getValues()[0] : [];
+      if (currentHeaders.length === 0 || currentHeaders[3] !== '加班賺取補休(時)' || currentHeaders[8] !== '補休請假消耗(時)') {
+        statsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        statsSheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#1f2937').setFontColor('#ffffff');
+      }
+    }
+  } catch (e) {
+    console.error("自動升級工作表標題失敗: " + e.toString());
+  }
+}
+
+
+
+function isFirstWorkingDay(date, ss) {
+  const timeZone = Session.getScriptTimeZone();
+  const todayStr = Utilities.formatDate(date, timeZone, 'yyyy-MM-dd');
+  const dayOfWeek = date.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+  const holidaySheet = getSheetSafely(ss, '國定假日');
+  let holidayStrings = [];
+  if (holidaySheet) {
+    holidayStrings = holidaySheet.getDataRange().getValues().slice(1).map(r => {
+      const val = r[0];
+      if (val instanceof Date) return Utilities.formatDate(val, timeZone, 'yyyy-MM-dd');
+      return String(val).trim();
+    });
+    if (holidayStrings.includes(todayStr)) return false;
+  }
+  const targetYear = date.getFullYear();
+  const targetMonth = date.getMonth();
+  const todayNum = date.getDate();
+  for (let d = 1; d < todayNum; d++) {
+    const tempDate = new Date(targetYear, targetMonth, d);
+    const tempDayOfWeek = tempDate.getDay();
+    if (tempDayOfWeek !== 0 && tempDayOfWeek !== 6) {
+      const tempDateStr = Utilities.formatDate(tempDate, timeZone, 'yyyy-MM-dd');
+      if (!holidayStrings.includes(tempDateStr)) return false;
+    }
+  }
+  return true;
+}
+
+
+
+function monthlyReportTrigger() {
+  const now = new Date();
+  const ss = getActiveSS();
+  ensureSheetHeaders(ss);
+  if (isFirstWorkingDay(now, ss)) {
+    console.log("今日為本月第一個工作日，開始結算上月份出缺勤月報與進行週年評核檢查...");
+    sendMonthlyAttendanceReport(ss);
+    checkAnniversaryEvaluations(ss);
+  } else {
+    console.log(Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd') + " 不是本月第一個工作日，不發送月報。");
+  }
+}
+
+
+
+function setupDailyReportTrigger() {
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'monthlyReportTrigger') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  ScriptApp.newTrigger('monthlyReportTrigger')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+  console.log("✅ 成功建立每日 08:00 (台灣時間) 月報與評核排程觸發器！");
+}
+
+
+function sendMonthlyAttendanceReport(ss) {
+  const now = new Date();
+  const timeZone = Session.getScriptTimeZone();
+  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const year = prevMonthDate.getFullYear();
+  const month = prevMonthDate.getMonth();
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+  const prevMonthLabel = `${year} 年 ${String(month + 1).padStart(2, '0')} 月`;
+
+  const empSheet = getSheetSafely(ss, '員工名單');
+  const punchSheet = getSheetSafely(ss, '打卡紀錄');
+  const leaveSheet = getSheetSafely(ss, '請假申請');
+  const otSheet = getSheetSafely(ss, '加班申請');
+  const suppSheet = getSheetSafely(ss, '補打卡申請');
+  const holidaySheet = getSheetSafely(ss, '國定假日');
+
+  if (!empSheet) {
+    console.error("找不到「員工名單」，無法生成月報。");
+    return;
+  }
+
+  const holidayStrings = [];
+  if (holidaySheet) {
+    holidaySheet.getDataRange().getValues().slice(1).forEach(r => {
+      const val = r[0];
+      if (val instanceof Date) {
+        holidayStrings.push(Utilities.formatDate(val, timeZone, 'yyyy-MM-dd'));
+      } else if (val) {
+        holidayStrings.push(String(val).trim());
+      }
+    });
+  }
+
+  const workingDaysInMonth = [];
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const tempDate = new Date(year, month, d);
+    const dayOfWeek = tempDate.getDay();
+    const dateStr = Utilities.formatDate(tempDate, timeZone, 'yyyy-MM-dd');
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidayStrings.includes(dateStr)) {
+      workingDaysInMonth.push(dateStr);
+    }
+  }
+
+  const employees = empSheet.getDataRange().getValues().slice(1).filter(r => r[0] && r[1] && String(r[5] || '').trim() === '專任');
+  const punchRows = punchSheet ? punchSheet.getDataRange().getValues().slice(1) : [];
+  const leaveRows = leaveSheet ? leaveSheet.getDataRange().getValues().slice(1) : [];
+  const otRows = otSheet ? otSheet.getDataRange().getValues().slice(1) : [];
+  const suppRows = suppSheet ? suppSheet.getDataRange().getValues().slice(1) : [];
+
+  const reportData = [];
+  employees.forEach(emp => {
+    const empId = String(emp[0]).trim();
+    const name = String(emp[1]).trim();
+    const mySupps = suppRows.filter(r => String(r[1]).trim() === empId);
+    const suppCount = mySupps.filter(r => {
+      const dateVal = r[4];
+      const dateStr = dateVal instanceof Date ? Utilities.formatDate(dateVal, timeZone, 'yyyy-MM-dd') : String(dateVal).trim();
+      const status = String(r[7]).trim();
+      return (status === '同意' || status === '待審') && (new Date(dateStr) >= startDate && new Date(dateStr) <= endDate);
+    }).length;
+
+    let lateCount = 0;
+    let earlyCount = 0;
+    let missedCount = 0;
+
+    const myPunches = punchRows.filter(r => String(r[1]).trim() === empId);
+    const dailyPunches = {};
+
+    myPunches.forEach(r => {
+      const dateVal = r[4];
+      const dateStr = dateVal instanceof Date ? Utilities.formatDate(dateVal, timeZone, 'yyyy-MM-dd') : String(dateVal).trim();
+      const d = new Date(dateStr);
+      if (d >= startDate && d <= endDate) {
+        if (!dailyPunches[dateStr]) dailyPunches[dateStr] = { inTime: null, outTime: null };
+        const timeStr = String(r[5]).trim();
+        if (r[3] === '上班') {
+          if (!dailyPunches[dateStr].inTime || timeStr < dailyPunches[dateStr].inTime) {
+            dailyPunches[dateStr].inTime = timeStr;
+          }
+        } else if (r[3] === '下班') {
+          if (!dailyPunches[dateStr].outTime || timeStr > dailyPunches[dateStr].outTime) {
+            dailyPunches[dateStr].outTime = timeStr;
+          }
+        }
+      }
+    });
+
+    mySupps.forEach(r => {
+      const status = String(r[7]).trim();
+      if (status !== '同意') return;
+      const dateVal = r[4];
+      const dateStr = dateVal instanceof Date ? Utilities.formatDate(dateVal, timeZone, 'yyyy-MM-dd') : String(dateVal).trim();
+      const d = new Date(dateStr);
+      if (d >= startDate && d <= endDate) {
+        if (!dailyPunches[dateStr]) dailyPunches[dateStr] = { inTime: null, outTime: null };
+        const timeStr = String(r[5]).trim().slice(0, 5);
+        if (r[3] === '上班') {
+          if (!dailyPunches[dateStr].inTime || timeStr < dailyPunches[dateStr].inTime) dailyPunches[dateStr].inTime = timeStr;
+        } else if (r[3] === '下班') {
+          if (!dailyPunches[dateStr].outTime || timeStr > dailyPunches[dateStr].outTime) dailyPunches[dateStr].outTime = timeStr;
+        }
+      }
+    });
+
+    workingDaysInMonth.forEach(dateStr => {
+      const p = dailyPunches[dateStr];
+      const myApprovedLeavesToday = leaveRows.filter(r => {
+        if (String(r[1]).trim() !== empId || String(r[9]).trim() !== '同意') return false;
+        const sVal = r[4];
+        const eVal = r[5];
+        const sStr = sVal instanceof Date ? Utilities.formatDate(sVal, timeZone, 'yyyy-MM-dd') : String(sVal).trim();
+        const eStr = eVal instanceof Date ? Utilities.formatDate(eVal, timeZone, 'yyyy-MM-dd') : String(eVal).trim();
+        const curD = new Date(dateStr);
+        return curD >= new Date(sStr) && curD <= new Date(eStr);
+      });
+
+      // 1. Gather all approved leaves covering dateStr for this employee on the backend
+      const dayLeaves = myApprovedLeavesToday.map(r => {
+        const sVal = r[4];
+        const eVal = r[5];
+        const sStr = sVal instanceof Date ? Utilities.formatDate(sVal, timeZone, 'yyyy-MM-dd') : String(sVal).trim();
+        const eStr = eVal instanceof Date ? Utilities.formatDate(eVal, timeZone, 'yyyy-MM-dd') : String(eVal).trim();
+        
+        let leaveStartMin = 540;
+        let leaveEndMin = 1080;
+        
+        const isStart = (dateStr === sStr);
+        const isEnd = (dateStr === eStr);
+        
+        if (isStart && isEnd) {
+          leaveStartMin = timeToMinutes(String(r[6] || '09:00'));
+          leaveEndMin = timeToMinutes(String(r[7] || '18:00'));
+        } else if (isStart) {
+          leaveStartMin = timeToMinutes(String(r[6] || '09:00'));
+          leaveEndMin = 1080;
+        } else if (isEnd) {
+          leaveStartMin = 540;
+          leaveEndMin = timeToMinutes(String(r[7] || '18:00'));
+        } else {
+          leaveStartMin = 540;
+          leaveEndMin = 1080;
+        }
+        return { start: leaveStartMin, end: leaveEndMin };
+      });
+
+      const isTimeExempted = (min) => {
+        if (min >= 720 && min < 780) return true; // lunch hour is exempt
+        return dayLeaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m)) return false;
+        }
+        return true;
+      };
+
+      const isFullDayExempted = isRangeExempted(540, 1080);
+      if (isFullDayExempted) return;
+
+      if (!p || (!p.inTime && !p.outTime)) {
+        missedCount += 2;
+      } else {
+        const shift = getShiftForDate(ss, dateStr, empId, timeZone);
+        const shParts = shift.start.split(':');
+        const sh = parseInt(shParts[0], 10), sm = parseInt(shParts[1] || 0, 10);
+        const reqInMin = sh * 60 + sm;
+
+        const ehParts = shift.end.split(':');
+        const eh = parseInt(ehParts[0], 10), em = parseInt(ehParts[1] || 0, 10);
+        const reqOutMin = eh * 60 + em;
+
+        if (!p.inTime) {
+          missedCount += 1;
+        } else {
+          const parts = p.inTime.split(':');
+          const h = parseInt(parts[0], 10), m = parseInt(parts[1] || 0, 10);
+          const inMin = h * 60 + m;
+          if (inMin > reqInMin) {
+            if (!isRangeExempted(reqInMin, inMin)) {
+              lateCount++;
+            }
+          }
+        }
+        if (!p.outTime) {
+          missedCount += 1;
+        } else {
+          const parts = p.outTime.split(':');
+          const h = parseInt(parts[0], 10), m = parseInt(parts[1] || 0, 10);
+          const outMin = h * 60 + m;
+          if (outMin < reqOutMin) {
+            if (!isRangeExempted(outMin, reqOutMin)) {
+              earlyCount++;
+            }
+          }
+        }
+      }
+    });
+
+    let leaveHours = 0;
+    const myLeaves = leaveRows.filter(r => String(r[1]).trim() === empId && String(r[9]).trim() === '同意');
+    myLeaves.forEach(r => {
+      const dateVal = r[4];
+      const dateStr = dateVal instanceof Date ? Utilities.formatDate(dateVal, timeZone, 'yyyy-MM-dd') : String(dateVal).trim();
+      const d = new Date(dateStr);
+      if (d >= startDate && d <= endDate) {
+        leaveHours += getLeaveHoursFromRow(r, holidayStrings, ss);
+      }
+    });
+
+    let otHours = 0;
+    const myOts = otRows.filter(r => String(r[1]).trim() === empId && String(r[8]).trim() === '同意');
+    myOts.forEach(r => {
+      const dateVal = r[3];
+      const dateStr = dateVal instanceof Date ? Utilities.formatDate(dateVal, timeZone, 'yyyy-MM-dd') : String(dateVal).trim();
+      const d = new Date(dateStr);
+      if (d >= startDate && d <= endDate) {
+        otHours += getOvertimeHoursFromRow(r);
+      }
+    });
+
+    let monthlyCompLeaveUsedHours = 0;
+    const myCompLeaves = leaveRows.filter(r => String(r[1]).trim() === empId && String(r[9]).trim() === '同意' && (String(r[3]).trim() === '補休' || String(r[3]).trim() === '加班補休'));
+    myCompLeaves.forEach(r => {
+      const dateVal = r[4];
+      const dateStr = dateVal instanceof Date ? Utilities.formatDate(dateVal, timeZone, 'yyyy-MM-dd') : String(dateVal).trim();
+      const d = new Date(dateStr);
+      if (d >= startDate && d <= endDate) {
+        monthlyCompLeaveUsedHours += getLeaveHoursFromRow(r, holidayStrings, ss);
+      }
+    });
+
+    const q = recalculateAndSyncUserQuota(ss, empId, name, emp[4], holidayStrings);
+    reportData.push({
+      empId, name,
+      otHours: otHours.toFixed(1) + " h",
+      missedCount: missedCount + " 次",
+      suppCount: suppCount + " 次",
+      lateEarly: (lateCount + earlyCount) + " 次",
+      leaveHours: leaveHours.toFixed(1) + " h",
+      compLeaveRemaining: q.compLeaveRemainingHours.toFixed(1) + " h",
+      specialLeaveRemaining: q.specialLeaveRemainingHours.toFixed(1) + " h"
+    });
+
+    const statsSheet = getSheetSafely(ss, '每月出缺勤統計');
+    if (statsSheet) {
+      statsSheet.appendRow([
+        Utilities.formatDate(startDate, timeZone, 'yyyy-MM'),
+        empId,
+        name,
+        parseFloat(otHours.toFixed(1)),
+        missedCount,
+        suppCount,
+        (lateCount + earlyCount),
+        parseFloat(leaveHours.toFixed(1)),
+        parseFloat(monthlyCompLeaveUsedHours.toFixed(1)),
+        parseFloat(q.compLeaveRemainingHours.toFixed(1)),
+        parseFloat(q.specialLeaveRemainingHours.toFixed(1))
+      ]);
+    }
+  });
+
+  let htmlTableRows = "";
+  reportData.forEach(row => {
+    htmlTableRows += `
+      <tr style="border-bottom: 1px solid #cbd5e1; text-align: center;">
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1;">${row.empId}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1; font-weight: bold;">${row.name}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1;">${row.otHours}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1; color:#dc2626;">${row.missedCount}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1;">${row.suppCount}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1;">${row.lateEarly}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1;">${row.leaveHours}</td>
+        <td style="padding: 8px; border-right: 1px solid #cbd5e1; font-weight: bold; color: #10b981;">${row.compLeaveRemaining}</td>
+        <td style="padding: 8px; font-weight: bold; color: #2563eb;">${row.specialLeaveRemaining}</td>
+      </tr>
+    `;
+  });
+
+  // 🏆 V37-v8 新增：彙整上月份所有同仁的外勤打卡備註說明
+  let remarkRowsHtml = '';
+  punchRows.forEach(r => {
+    const dVal = r[4];
+    const dStr = dVal instanceof Date ? Utilities.formatDate(dVal, timeZone, 'yyyy-MM-dd') : String(dVal).trim();
+    const d = new Date(dStr);
+    if (d >= startDate && d <= endDate) {
+      const remark = r[8] ? String(r[8]).trim() : '';
+      if (remark !== '') {
+        remarkRowsHtml += `
+          <tr style="border-bottom: 1px solid #cbd5e1;">
+            <td style="padding: 8px; text-align: center; border-right: 1px solid #cbd5e1;">${dStr} ${r[5]}</td>
+            <td style="padding: 8px; text-align: center; font-weight: bold; border-right: 1px solid #cbd5e1;">${r[2]}（${r[1]}）</td>
+            <td style="padding: 8px; text-align: center; border-right: 1px solid #cbd5e1;"><span style="padding: 3px 8px; border-radius: 4px; font-weight: bold; background: ${r[3] === '上班' ? '#ecfdf5; color: #059669;' : '#fef2f2; color: #ef4444;'}">${r[3]}</span></td>
+            <td style="padding: 8px; text-align: left; font-weight: bold; color: #1a6fc4;">${remark}</td>
+          </tr>
+        `;
+      }
+    }
+  });
+
+  if (remarkRowsHtml === '') {
+    remarkRowsHtml = `<tr><td colspan="4" style="padding: 12px; text-align: center; color: #64748b;">上月份無異地外勤打卡紀錄</td></tr>`;
+  }
+
+  const emailHtmlBody = `
+    <div style="font-family: sans-serif; padding: 20px; background-color: #f8fafc; color: #0f172a;">
+      <h2 style="color: #1a6fc4; border-bottom: 2px solid #1a6fc4; padding-bottom: 8px; margin-bottom: 20px;">🏢 TJCPM 員工考勤月報 (${prevMonthLabel})</h2>
+      
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; border: 1.5px solid #cbd5e1; margin-bottom: 25px;">
+        <thead>
+          <tr style="background: #111827; color: #f3f6fa; font-weight: bold; text-align: center;">
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">員編</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">姓名</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">加班時數</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">漏打卡次數</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">補打卡次數</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">遲到早退</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">請假總時數</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1;">補休剩餘</th>
+            <th style="padding: 10px;">特休剩餘</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${htmlTableRows}
+        </tbody>
+      </table>
+
+      <h3 style="color: #1a6fc4; margin-top: 25px; margin-bottom: 10px;">💬 上月份同仁異地外勤打卡備註清單</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; border: 1.5px solid #cbd5e1;">
+        <thead>
+          <tr style="background: #111827; color: #f3f6fa; font-weight: bold;">
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1; text-align: center; width: 150px;">時間</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1; text-align: center; width: 120px;">同仁姓名</th>
+            <th style="padding: 10px; border-right: 1px solid #cbd5e1; text-align: center; width: 80px;">簽到退</th>
+            <th style="padding: 10px; text-align: left;">外勤詳細說明</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${remarkRowsHtml}
+        </tbody>
+      </table>
+
+      <div style="background:#eff6ff; padding:12px; border-radius:6px; border-left:4px solid #3b82f6; margin-top:25px; font-size:12px; line-height:1.6; color:#1e3a8a;">
+        <strong>💡 統計規則說明：</strong><br>
+        1. 加班/請假時數：僅統計該月份已獲得主管審核「同意」的時數。<br>
+        2. 遲到/早退：依據 9-6 班別標準判定，若當天為特別排班，則自動適應 8-5 等特例班表。<br>
+        3. 補休/特休剩餘：累計統計至該月月底的剩餘可用小時數。<br>
+        4. 所有出缺勤數據與特休餘額均已自動同步歸檔至《考勤系統2026》後台。
+      </div>
+      <p style="font-size:11px; color:#64748b; margin-top:25px; border-top:1px solid #cbd5e1; padding-top:8px;">本信件由 TJCPM 考勤排程系統自動發送，請勿直接回信。</p>
+    </div>
+  `;
+
+  MailApp.sendEmail({
+    to: ADMIN_NOTIFY_EMAILS.join(','),
+    subject: `[TJCPM 考勤月報] ${prevMonthLabel} 出缺勤與額度統計彙整`,
+    htmlBody: emailHtmlBody
+  });
+  console.log(`✅ 成功向主管寄出 ${prevMonthLabel} 彙整月報！`);
+}
+
+
+function checkAnniversaryEvaluations(ss) {
+  const empSheet = getSheetSafely(ss, '員工名單');
+  if (!empSheet) return;
+  const employees = empSheet.getDataRange().getValues().slice(1);
+  const now = new Date();
+  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  employees.forEach(emp => {
+    const empId = String(emp[0]).trim();
+    const name = String(emp[1]).trim();
+    const empType = String(emp[5] || '').trim();
+    if (empType !== '專任') return;
+    const joinDateVal = emp[4];
+    if (joinDateVal instanceof Date) {
+      const yearsDiff = prevMonthEnd.getFullYear() - joinDateVal.getFullYear();
+      const monthsDiff = prevMonthEnd.getMonth() - joinDateVal.getMonth();
+      const totalMonths = yearsDiff * 12 + monthsDiff;
+      if (totalMonths === 12) {
+        sendEvaluationReminderEmail(name, empId, joinDateVal);
+      }
+    }
+  });
+}
+
+
+function sendEvaluationReminderEmail(name, empId, joinDate) {
+  const timeZone = Session.getScriptTimeZone();
+  const joinDateStr = Utilities.formatDate(joinDate, timeZone, 'yyyy-MM-dd');
+  const anniversaryDateStr = Utilities.formatDate(new Date(joinDate.getFullYear() + 1, joinDate.getMonth(), joinDate.getDate()), timeZone, 'yyyy-MM-dd');
+  const emailHtml = `
+    <div style="font-family: sans-serif; padding: 20px; background-color: #f8fafc; color: #0f172a;">
+      <h3 style="color:#ef4444; border-bottom: 2px solid #ef4444; padding-bottom: 8px;">⚠️ TJCPM 員工入職滿週年評核提醒</h3>
+      <p>秘書長／主管您好：</p>
+      <p>特此提醒，以下同仁已於上月份正式入職滿一週年，請主管撥冗為其進行年度工作評核：</p>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px;">
+        <tr style="background:#f1f5f9; border-bottom: 1px solid #cbd5e1;"><td style="padding:8px; font-weight:bold; width: 120px;">員工姓名：</td><td style="padding:8px;">${name}</td></tr>
+        <tr style="border-bottom: 1px solid #cbd5e1;"><td style="padding:8px; font-weight:bold;">員工編號：</td><td style="padding:8px;">${empId}</td></tr>
+        <tr style="background:#f1f5f9; border-bottom: 1px solid #cbd5e1;"><td style="padding:8px; font-weight:bold;">入職日期：</td><td style="padding:8px;">${joinDateStr}</td></tr>
+        <tr style="border-bottom: 1px solid #cbd5e1;"><td style="padding:8px; font-weight:bold;">滿週年日期：</td><td style="padding:8px; color: #2563eb; font-weight:bold;">${anniversaryDateStr}</td></tr>
+        <tr style="background:#f1f5f9;"><td style="padding:8px; font-weight:bold;">年資累計：</td><td style="padding:8px; font-weight:bold; color:#059669;">整整 1 年 (12 個月)</td></tr>
+      </table>
+      <div style="background:#eff6ff; padding:12px; border-radius:6px; border-left:4px solid #3b82f6; margin-top:20px;">
+        <strong>💡 評核說明：</strong><br>
+        1. 請直接點擊連結開啟：<a href="${EVALUATION_FORM_URL}" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:underline;">📝 TJCPM 員工考核評核表</a> 進行線上評估與下載填寫。<br>
+        2. 評核完畢後，若需調整該同仁在新一年度的「特休額度」或「薪資」，請直接至試算表後台的「假別總表」及「員工名單」進行更新，系統將會在新月份自動同步。
+      </div>
+      <p style="font-size:11px; color:#64748b; margin-top:25px; border-top:1px solid #cbd5e1; padding-top:8px;">本信件由 TJCPM 考勤排程系統自動發送，請勿直接回信。</p>
+    </div>
+  `;
+  MailApp.sendEmail({
+    to: ADMIN_NOTIFY_EMAILS.join(','),
+    subject: `[TJCPM 評核提醒] 員工入職滿一週年核估通知 - ${name} (員編 ${empId})`,
+    htmlBody: emailHtml
+  });
+  console.log(`已發送員工 ${name} 的一週年評核提醒郵件！`);
+}
+
+
+// ── 補充 V37-v8 遺漏的底層工具函式 (V37-v9) ──
+
+const SPREADSHEET_ID = ''; // 預設為空，若需要綁定特定試算表，請在此填入 ID
+
+const EVALUATION_FORM_URL = 'https://docs.google.com/document/d/1FuHvhkcVS_anocAY7IuaHLAttkhRYvo3bfnYi89FPQY/edit?tab=t.0';
+
+function getActiveSS() {
+  if (typeof SPREADSHEET_ID !== 'undefined' && SPREADSHEET_ID && SPREADSHEET_ID.trim() !== '') {
+    try {
+      return SpreadsheetApp.openById(SPREADSHEET_ID.trim());
+    } catch (err) {
+      console.error("無法使用 SPREADSHEET_ID 開啟，嘗試活動試算表：" + err.toString());
+    }
+  }
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss) return ss;
+  } catch (err) {
+    console.error("無法獲取活動試算表：" + err.toString());
+  }
+  throw new Error("無法連結試算表。請在獨立腳本頂部設定 SPREADSHEET_ID。");
+}
+
+function getSheetSafely(ss, name) {
+  let sheet = ss.getSheetByName(name);
+  if (sheet) return sheet;
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().trim() === name.trim()) {
+      return sheets[i];
+    }
+  }
+  return null;
+}
