@@ -2191,7 +2191,7 @@ function getShiftMinutesForDate(dateStr, empId, shiftsList) {
   }
   return match || { start: 540, end: 1080 }; // 預設 09:00 - 18:00
 }
-\nfunction formatLocalDateStr(str) {
+function formatLocalDateStr(str) {
   if (!str) return '';
   const d = safeNewDate(str);
   if (isNaN(d.getTime())) return String(str);
