@@ -66,5 +66,8 @@ self.addEventListener('fetch', e => {
 });
 
 function offlineFallback() {
-  return new Response('<div style=\"padding:20px;text-align:center;font-family:sans-serif;\"><h3>⚠️ 離線狀態且無此快取頁面</h3><p>請確認網路連線後再試。</p></div>', {\n    headers: { 'Content-Type': 'text/html; charset=utf-8' }\n  });
+  return new Response(
+    '<div style="padding:20px;text-align:center;font-family:sans-serif;"><h3>⚠️ 離線狀態且無此快取頁面</h3><p>請確認網路連線後再試。</p></div>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
 }
