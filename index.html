@@ -3296,8 +3296,10 @@ function calcAttendance() {
     
     // We can check if it's weekend
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    const holidayDateStr = `${thisYear}-${String(thisMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isHoliday = (currentUser.holidayStrings || []).includes(holidayDateStr);
     
-    if (!isWeekend) {
+    if (!isWeekend && !isHoliday) {
       const punch = dailyPunches[dateStr];
       
       // 1. Gather all approved leaves covering dateObj for this employee
@@ -3466,8 +3468,12 @@ function calcAttendance() {
         const dateObj = new Date(cursor);
         const dayOfWeek = dateObj.getDay();
         if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-
+        
+        
         const cY = dateObj.getFullYear(), cM = dateObj.getMonth() + 1, cD = dateObj.getDate();
+        const holidayDateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
+        if ((currentUser.holidayStrings || []).includes(holidayDateStr)) continue;
+      
         const dateStr = `${cY}/${cM}/${cD}`;
         const punch = yearDailyPunches[dateStr];
 
