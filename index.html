@@ -3435,103 +3435,30 @@ function calcAttendance() {
   }
 
   // === 年度彙整：問題日期清單（到職週期起點/歷史校正日 ~ 上個月底，本月不計） ===
-  let yearIssues = [];
-  if (currentUser.empType !== '兼任' && currentUser.joinDate) {
-    const yearStart = currentUser.correctionStartDate
-      ? new Date(currentUser.correctionStartDate)
-      : getYearRangeStartDate(currentUser.joinDate);
-    const prevMonthEnd = new Date(thisYear, thisMonth - 1, 0);
+let yearIssues = [];
+if (currentUser.empType !== '兼任' && currentUser.joinDate) {
+  const yearStart = currentUser.correctionStartDate
+    ? new Date(currentUser.correctionStartDate)
+    : getYearRangeStartDate(currentUser.joinDate);
+  const prevMonthEnd = new Date(thisYear, thisMonth - 1, 0);
 
-    if (yearStart && yearStart <= prevMonthEnd) {
-      const yearRecords = records.filter(r => matchEmpId(r.empId, currentUser?.empId));
+  const problemRows = records.filter(r =>
+    matchEmpId(r.empId, currentUser?.empId) &&
+    (r.type === '上班' || r.type === '下班') &&
+    r.problem &&
+    safeNewDate(r.date) >= yearStart && safeNewDate(r.date) <= prevMonthEnd
+  );
 
-      const yearDailyPunches = {};
-      yearRecords.forEach(r => {
-        if (r.type === '上班' || r.type === '下班') {
-          const normD = normalizeDate(r.date);
-          if (!yearDailyPunches[normD]) yearDailyPunches[normD] = { in: null, out: null };
-          if (r.type === '上班') {
-            if (!yearDailyPunches[normD].in || r.time < yearDailyPunches[normD].in) yearDailyPunches[normD].in = r.time;
-          } else {
-            if (!yearDailyPunches[normD].out || r.time > yearDailyPunches[normD].out) yearDailyPunches[normD].out = r.time;
-          }
-        }
-      });
-      yearRecords.filter(r => r.type === '補打卡' && r.status === '同意').forEach(r => {
-        const normD = normalizeDate(r.date);
-        if (!yearDailyPunches[normD]) yearDailyPunches[normD] = { in: null, out: null };
-        if (r.subType === '上班') yearDailyPunches[normD].in = r.time;
-        if (r.subType === '下班') yearDailyPunches[normD].out = r.time;
-      });
-
-      for (let cursor = new Date(yearStart); cursor <= prevMonthEnd; cursor.setDate(cursor.getDate() + 1)) {
-        const dateObj = new Date(cursor);
-        const dayOfWeek = dateObj.getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-        
-        
-        const cY = dateObj.getFullYear(), cM = dateObj.getMonth() + 1, cD = dateObj.getDate();
-        const holidayDateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
-        if ((currentUser.holidayStrings || []).includes(holidayDateStr)) continue;
-      
-        const dateStr = `${cY}/${cM}/${cD}`;
-        const punch = yearDailyPunches[dateStr];
-
-        const dayLeaves = yearRecords.filter(r => {
-          if (r.type !== '請假' || r.status !== '同意') return false;
-          const startD = safeNewDate(r.date);
-          const endD = safeNewDate(r.endDate || r.date);
-          return dateObj >= startD && dateObj <= endD;
-        }).map(r => {
-          const startD = safeNewDate(r.date);
-          const endD = safeNewDate(r.endDate || r.date);
-          let leaveStartMin = 540, leaveEndMin = 1080;
-          const isStart = dateObj.getFullYear() === startD.getFullYear() && dateObj.getMonth() === startD.getMonth() && dateObj.getDate() === startD.getDate();
-          const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
-          if (isStart && isEnd) { leaveStartMin = timeToMin(r.startTime || '09:00'); leaveEndMin = timeToMin(r.endTime || '18:00'); }
-          else if (isStart) { leaveStartMin = timeToMin(r.startTime || '09:00'); leaveEndMin = 1080; }
-          else if (isEnd) { leaveStartMin = 540; leaveEndMin = timeToMin(r.endTime || '18:00'); }
-          return { start: leaveStartMin, end: leaveEndMin };
-        });
-
-        const isTimeExempted = (min, leaves) => {
-          if (min >= 720 && min < 780) return true;
-          return leaves.some(l => min >= l.start && min < l.end);
-        };
-        const isRangeExempted = (s, e, leaves) => {
-          for (let m = s; m < e; m++) { if (!isTimeExempted(m, leaves)) return false; }
-          return true;
-        };
-
-        const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
-        if (isRangeExempted(shift.start, shift.end, dayLeaves)) continue;
-
-        const dispDate = `${cY}-${String(cM).padStart(2,'0')}-${String(cD).padStart(2,'0')}`;
-
-        if (!punch || (!punch.in && !punch.out)) {
-          yearIssues.push({ date: dispDate, in: '—', out: '—', inFlag: '未打卡', outFlag: '未打卡' });
-          continue;
-        }
-        let inFlag = '', outFlag = '';
-        if (!punch.in) {
-          inFlag = '未打卡';
-        } else {
-          const punchInMin = timeToMin(punch.in);
-          if (punchInMin > shift.start && !isRangeExempted(shift.start, punchInMin, dayLeaves)) inFlag = '遲到';
-        }
-        if (!punch.out) {
-          outFlag = '未打卡';
-        } else {
-          const punchOutMin = timeToMin(punch.out);
-          if (punchOutMin < shift.end && !isRangeExempted(punchOutMin, shift.end, dayLeaves)) outFlag = '早退';
-        }
-        if (inFlag || outFlag) {
-          yearIssues.push({ date: dispDate, in: punch.in || '—', out: punch.out || '—', inFlag, outFlag });
-        }
-      }
-    }
-  }
-  renderYearIssueList(yearIssues);
+  const byDate = {};
+  problemRows.forEach(r => {
+    const d = normalizeDate(r.date);
+    if (!byDate[d]) byDate[d] = { date: d, in: '—', out: '—', inFlag: '', outFlag: '' };
+    if (r.type === '上班') { byDate[d].in = r.time || '—'; byDate[d].inFlag = r.problem === '已補正' ? '' : r.problem; }
+    if (r.type === '下班') { byDate[d].out = r.time || '—'; byDate[d].outFlag = r.problem === '已補正' ? '' : r.problem; }
+  });
+  yearIssues = Object.values(byDate).filter(x => x.inFlag || x.outFlag);
+}
+renderYearIssueList(yearIssues);
 }
   
 function renderYearIssueList(issues) {
