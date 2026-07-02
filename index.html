@@ -2557,7 +2557,7 @@ function formatDateTimeRange(r) {
       return `${dateStr} ${startT}～${endDateStr} ${endT}${hoursText}`;
     }
   } else if (r.type === '補打卡') {
-    return `${dateStr} ${formatLocalTimeStr(r.time || '')}`;
+    return `${getConciseDateText(r.date)} ${formatLocalTimeStr(r.time || '')}`;
   } else if (r.type === '班別調整') {
     return `${dateStr} ${r.subType || ''}`;
   } else {
