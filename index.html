@@ -983,8 +983,10 @@ display: inline-block;
 <div class="input-group" style="margin-bottom:20px;">
 <label class="input-label" style="display:flex; justify-content:space-between; align-items:center;">
   <span>證明文件（病假/公假等需提供）</span>
-  <a href="https://drive.google.com/drive/folders/1XR_EUQoaJlkDCoxvJZcsPKXN53Xze1xE?usp=drive_link" target="_blank" class="pw-toggle-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-color:var(--accent-orange); color:var(--accent-orange);">📎 前往雲端上傳證明</a>
+  <button type="button" class="pw-toggle-btn" style="border-color:var(--accent-orange); color:var(--accent-orange);" onclick="document.getElementById('leaveProofFile').click()">📎 選擇證明文件</button>
 </label>
+<input type="file" id="leaveProofFile" accept="image/*,.pdf" style="display:none" onchange="document.getElementById('leaveProofFileName').textContent = this.files[0] ? '已選擇：' + this.files[0].name : ''">
+<div id="leaveProofFileName" style="font-size:12px; color:var(--text-muted); margin-top:4px;"></div>
 </div>
 <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
 </div>
@@ -1900,7 +1902,7 @@ addNotif('system', `${type}打卡成功 ${record.time} 📍`);
 showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
 }
 
-function submitLeave() {
+async function submitLeave() {
 const id = Date.now();
 const record = {
 id, clientId: String(id), type: '請假', subType: document.getElementById('leaveType').value,
@@ -1909,10 +1911,28 @@ date: document.getElementById('leaveStart').value, startTime: document.getElemen
 endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
 reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
 };
-records.unshift(record);
+
+let uploadPayload = null;
+const fileInput = document.getElementById('leaveProofFile');
+if (fileInput.files && fileInput.files[0]) {
+  const file = fileInput.files[0];
+  if (file.size > 8 * 1024 * 1024) { showToast('⚠️ 證明文件不可超過 8MB'); return; }
+  showToast('📤 附件處理中…');
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  uploadPayload = { proofFileName: file.name, proofMimeType: file.type, proofFileData: base64 };
+}
+
+records.unshift(record);       // 本機只存輕量版,不含 base64,避免塞爆 localStorage
 saveRecords();
 renderAllList();
-syncToSheet(record);
+syncToSheet(uploadPayload ? { ...record, ...uploadPayload } : record); // 送到後端才帶檔案內容
+fileInput.value = '';
+document.getElementById('leaveProofFileName').textContent = '';
 addNotif('pending', `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
 showToast('📝 請假申請已送出');
 }
