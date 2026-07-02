@@ -914,6 +914,7 @@ display: inline-block;
             </tr>
           </tbody>
         </table>
+        <div class="record-list" id="yearIssueList" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -3428,7 +3429,21 @@ function calcAttendance() {
     if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ' 次';
   }
 }
-
+function renderYearIssueList(issues) {
+  const el = document.getElementById('yearIssueList');
+  if (!el) return;
+  el.innerHTML = issues.length
+    ? issues.map(r => `
+      <div class="record-item">
+        <div class="record-row">
+          <div class="record-info">
+            <div class="record-type">⚠️ ${r.attFlag}　${r.date}</div>
+            <div class="record-meta">上班：${r.in || '—'}　下班：${r.out || '—'}</div>
+          </div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度無異常</div></div>';
+}
 function togglePwChange() {
 const area = document.getElementById('pwChangeArea');
 area.classList.toggle('open');
