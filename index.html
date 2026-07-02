@@ -1595,7 +1595,7 @@ function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
   
-  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'admin1' || currentUser.role === 'admin2';
+  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'admin1' || currentUser.role === 'admin2' || currentUser.isActiveProxy;
   
   // 動態過濾頁籤實體顯示 (主管只看 admin、profile；員工看除了 admin 以外的 6 個頁籤)
   document.querySelectorAll('.nav-tab').forEach(tab => {
