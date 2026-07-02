@@ -1593,7 +1593,7 @@ document.getElementById('loginScreen').style.display = 'flex';
 document.getElementById('mainApp').style.display = 'none';
 }
 
-function showApp() {
+async function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
   
@@ -1683,11 +1683,21 @@ function showApp() {
     }
   }
   
-  if (currentUser.role !== 'admin') {
+if (currentUser.role !== 'admin') {
     setInterval(checkApprovalUpdates, 60000);
   }
   checkConnectivity();
   setInterval(checkConnectivity, 30000);
+
+  // 💡 開啟畫面先用本機快取(上面的 renderAllList)秒開，
+  // 緊接著向後端拉最新資料回來後再重繪一次，避免看到舊快取
+  try {
+    await syncProfileAndAccumulatedLeaves();
+    renderAllList();
+    updateNotifBadge();
+  } catch (e) {
+    console.error('初始資料刷新失敗:', e);
+  }
 }
 
 // ── Login / Logout ─────────────────────────────────────────────
@@ -3142,18 +3152,9 @@ async function syncProfileAndAccumulatedLeaves() {
 }
 
 
-// 💡 日期格式標準化輔助函式 (YYYY/M/D)
+// 💡 日期格式標準化輔助函式 (統一改為 YYYY-MM-DD，與 formatLocalDateStr / 後端 formatDateString 一致)
 function normalizeDate(str) {
-  if (!str) return '';
-  const clean = str.replace(/-/g, '/');
-  const parts = clean.split('/');
-  if (parts.length === 3) {
-    const y = parseInt(parts[0], 10);
-    const m = parseInt(parts[1], 10);
-    const d = parseInt(parts[2], 10);
-    return `${y}/${m}/${d}`;
-  }
-  return clean;
+  return formatLocalDateStr(str);
 }
 
 
@@ -3312,7 +3313,7 @@ function calcAttendance() {
     for (let d = 1; d <= endDayCheck; d++) {
     const dateObj = new Date(thisYear, thisMonth - 1, d);
     const dayOfWeek = dateObj.getDay();
-    const dateStr = `${thisYear}/${thisMonth}/${d}`; // 💡 使用無補零之標準 M/D 格式對齊
+    const dateStr = `${thisYear}-${String(thisMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`; // 💡 統一為補零 YYYY-MM-DD，與 normalizeDate() 對齊
     
     // We can check if it's weekend
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
