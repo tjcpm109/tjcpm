@@ -3509,24 +3509,24 @@ function calcAttendance() {
         const dispDate = `${cY}-${String(cM).padStart(2,'0')}-${String(cD).padStart(2,'0')}`;
 
         if (!punch || (!punch.in && !punch.out)) {
-          yearIssues.push({ date: dispDate, in: '—', out: '—', attFlag: '未打卡' });
+          yearIssues.push({ date: dispDate, in: '—', out: '—', inFlag: '未打卡', outFlag: '未打卡' });
           continue;
         }
-        let tags = [];
+        let inFlag = '', outFlag = '';
         if (!punch.in) {
-          tags.push('未打卡(上班)');
+          inFlag = '未打卡';
         } else {
           const punchInMin = timeToMin(punch.in);
-          if (punchInMin > shift.start && !isRangeExempted(shift.start, punchInMin, dayLeaves)) tags.push('遲到');
+          if (punchInMin > shift.start && !isRangeExempted(shift.start, punchInMin, dayLeaves)) inFlag = '遲到';
         }
         if (!punch.out) {
-          tags.push('未打卡(下班)');
+          outFlag = '未打卡';
         } else {
           const punchOutMin = timeToMin(punch.out);
-          if (punchOutMin < shift.end && !isRangeExempted(punchOutMin, shift.end, dayLeaves)) tags.push('早退');
+          if (punchOutMin < shift.end && !isRangeExempted(punchOutMin, shift.end, dayLeaves)) outFlag = '早退';
         }
-        if (tags.length) {
-          yearIssues.push({ date: dispDate, in: punch.in || '—', out: punch.out || '—', attFlag: tags.join('+') });
+        if (inFlag || outFlag) {
+          yearIssues.push({ date: dispDate, in: punch.in || '—', out: punch.out || '—', inFlag, outFlag });
         }
       }
     }
@@ -3537,17 +3537,47 @@ function calcAttendance() {
 function renderYearIssueList(issues) {
   const el = document.getElementById('yearIssueList');
   if (!el) return;
-  el.innerHTML = issues.length
-    ? issues.map(r => `
-      <div class="record-item">
-        <div class="record-row">
-          <div class="record-info">
-            <div class="record-type">⚠️ ${r.attFlag}　${r.date}</div>
-            <div class="record-meta">上班：${r.in || '—'}　下班：${r.out || '—'}</div>
-          </div>
-        </div>
-      </div>`).join('')
-    : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度無異常</div></div>';
+
+  if (!issues.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度無異常</div></div>';
+    return;
+  }
+
+  let html = `
+    <div class="calendar-table-container">
+      <table class="calendar-table">
+        <thead>
+          <tr>
+            <th>📅 日期</th>
+            <th>🟢 上班簽到</th>
+            <th>🏁 下班簽退</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  issues.forEach(r => {
+    const inCell = r.inFlag
+      ? `<span style="color:#ef4444;font-weight:bold;">${r.in} ⚠️${r.inFlag}</span>`
+      : r.in;
+    const outCell = r.outFlag
+      ? `<span style="color:#ef4444;font-weight:bold;">${r.out} ⚠️${r.outFlag}</span>`
+      : r.out;
+    html += `
+      <tr>
+        <td>${r.date}</td>
+        <td>${inCell}</td>
+        <td>${outCell}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  el.innerHTML = html;
 }
 
 function getYearRangeStartDate(joinDateStr) {
