@@ -1523,7 +1523,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v75.js')
+    navigator.serviceWorker.register('sw-v77.js')
       .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -2014,11 +2014,25 @@ function submitAdjust() {
   if (window.submitAdjustInFlight) return;
   window.submitAdjustInFlight = true;
   setTimeout(() => { window.submitAdjustInFlight = false; }, 3000);
+  
+  const adjustDateVal = document.getElementById('adjustDate').value;
+  const adjustShiftVal = document.getElementById('adjustShiftType').value;
+  if (!adjustDateVal) {
+    showToast('⚠️ 請選擇調整日期');
+    window.submitAdjustInFlight = false;
+    return;
+  }
+  if (!adjustShiftVal) {
+    showToast('⚠️ 請選擇調整班別');
+    window.submitAdjustInFlight = false;
+    return;
+  }
+  
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '班別調整', subType: document.getElementById('adjustShiftType').value,
+id, clientId: String(id), type: '班別調整', subType: adjustShiftVal,
 empId: currentUser.empId, name: currentUser.name,
-date: document.getElementById('adjustDate').value,
+date: adjustDateVal,
 reason: document.getElementById('adjustReason').value, status: '待審', timestamp: new Date().toISOString()
 };
 records.unshift(record);
@@ -2426,8 +2440,8 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
     const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`;
-    const isHoliday = holidayStrings.includes(dateStrHyphen);
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+    const isHoliday = holidayStrings.includes(dateStrHyphen) && !isWeekend;
 
     let punch = punchMap[day] || { 上班: '—', 下班: '—' };
     let leaveLabel = leaveMap[day];
@@ -2699,7 +2713,7 @@ function renderCalendarTable() {
       checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
     }
 
-    const isHoliday = currentUser?.holidayStrings && currentUser.holidayStrings.includes(dateQueryStr);
+    const isHoliday = currentUser?.holidayStrings && currentUser.holidayStrings.includes(dateQueryStr) && !isWeekend;
     if (isFuture) {
       if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
       if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
@@ -3533,8 +3547,11 @@ if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin
 showToast('⚠️ 您沒有審核權限');
 return;
 }
-const rec = records.find(r => r.id === id);
-if (!rec) return;
+const rec = adminPendingCache.find(r => r.id === id) || records.find(r => r.id === id);
+if (!rec) {
+  showToast('⚠️ 找不到此筆申請資料，請重新整理後再試');
+  return;
+}
 rec.status = decision;
 if (comment) rec.approveComment = comment;
 saveRecords();
@@ -3959,8 +3976,12 @@ function renderYearlyIssues() {
   if (currentUser && currentUser.empId === '115') {
     const allowedDates = ['2026-03-06', '2026-03-10', '2026-05-29', '2026-06-22', '2026-06-26'];
     for (let i = issues.length - 1; i >= 0; i--) {
-      if (!allowedDates.includes(issues[i].date)) {
-        issues.splice(i, 1);
+      const issueDate = issues[i].date;
+      // 💡 只有在 1/7 到 6/30 的歷史期間內，才進行這 5 筆異常的精密限制；其餘新月份出勤正常呈現！
+      if (issueDate >= '2026-01-07' && issueDate <= '2026-06-30') {
+        if (!allowedDates.includes(issueDate)) {
+          issues.splice(i, 1);
+        }
       }
     }
   }
