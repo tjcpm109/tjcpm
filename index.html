@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2695,11 +2695,12 @@ async function loadAdminData() {
   document.getElementById('pendingLoading').textContent = '載入中…';
   
   // 💡 V37-v28: 本地快取降級顯示
-  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'|| r.type === '班別調整'));
-  document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
-  
+  let pending = (window.pendingRecordsCache && window.pendingRecordsCache.length)
+  ? window.pendingRecordsCache
+  : records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'|| r.type === '班別調整'));
+document.getElementById('statLeave').innerHTML = pending.filter(r => r.type === '請假').length + '<span>筆</span>';
+document.getElementById('statOT').innerHTML = pending.filter(r => r.type === '加班' || r.type === '補打卡' || r.type === '班別調整').length + '<span>筆</span>';
+document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
   try {
     const data = await callGAS({ action: 'getAll' });
     document.getElementById('pendingLoading').textContent = '';
@@ -2807,7 +2808,11 @@ async function loadAdminData() {
         </div>`).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
     }
   } catch (e) {
-    document.getElementById('pendingLoading').textContent = '（離線）';
+    document.getElementById('pendingLoading').textContent = '（離線，顯示上次資料）';
+    // 補上：離線/逾時時，用上次成功取得的快取撐住待審清單，不要讓畫面停在空白
+  if (window.pendingRecordsCache && window.pendingRecordsCache.length) {
+    document.getElementById('pendingList').innerHTML = window.pendingRecordsCache.map(r => recordHTML(r, true, true)).join('');
+  }
     const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const recentRecords = records.filter(r => safeNewDate(r.timestamp) >= oneWeekAgo);
     document.getElementById('adminRecords').innerHTML = recentRecords.map(r => recordHTML(r, true)).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
