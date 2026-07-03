@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統69</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1526,7 +1526,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v69.js')
+    navigator.serviceWorker.register('sw-v70.js')
       .then(reg => console.log('SW-v62 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -3057,6 +3057,7 @@ async function loadAdminData() {
   
   // 💡 V37-v28: 本地快取降級顯示
   let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+  adminPendingCache = pending;
   document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
@@ -3075,6 +3076,7 @@ async function loadAdminData() {
     // 💡 V37-v28: 若後台有傳回實時所有員工的待審核清單，直接用後台數據更新
     if (data && data.pending) {
       const pendingList = data.pending;
+      adminPendingCache = pendingList;
       const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
       const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
       
@@ -3436,6 +3438,7 @@ if (suppEl) suppEl.value = '08:00';
 })();
 
 // ── 主管簽核 ──
+let adminPendingCache = [];
 let pendingApproveDecision = {};
 function toggleApproveComment(id, decision) {
 document.querySelectorAll('.approve-comment-area.open').forEach(el => {
@@ -3483,8 +3486,11 @@ if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin
 showToast('⚠️ 您沒有審核權限');
 return;
 }
-const rec = records.find(r => r.id === id);
-if (!rec) return;
+const rec = adminPendingCache.find(r => r.id === id) || records.find(r => r.id === id);
+if (!rec) {
+  showToast('⚠️ 找不到此筆申請資料，請重新整理後再試');
+  return;
+}
 rec.status = decision;
 if (comment) rec.approveComment = comment;
 saveRecords();
