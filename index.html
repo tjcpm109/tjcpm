@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2391,17 +2391,7 @@ function renderCalendarTable() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true;
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
-
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
 
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, 1080, dayLeaves);
@@ -2690,7 +2680,12 @@ async function loadAdminData() {
   let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
   document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+  // 🐞 V59修復: 若主管正在填寫某筆的簽核意見(comment box 已展開)，跳過本次重繪，
+  // 避免 innerHTML 整批替換把該筆按鈕換成新的DOM節點，導致點擊「確認送出」時
+  // pendingApproveDecision[id] 對應不到（該筆的核准/拒絕狀態是綁在舊節點上的id），造成「沒反應」
+  if (!isApproveCommentBoxOpen()) {
+    document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+  }
   
   try {
     const data = await callGAS({ action: 'getAll' });
@@ -2711,9 +2706,12 @@ async function loadAdminData() {
       
       document.getElementById('statLeave').innerHTML = leavePendingCount + '<span>筆</span>';
       document.getElementById('statOT').innerHTML = otPendingCount + '<span>筆</span>';
-      document.getElementById('pendingList').innerHTML = pendingList.length 
-        ? pendingList.map(r => recordHTML(r, true, true)).join('') 
-        : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+      // 🐞 V59修復: 同上，正在填寫簽核意見時跳過重繪
+      if (!isApproveCommentBoxOpen()) {
+        document.getElementById('pendingList').innerHTML = pendingList.length 
+          ? pendingList.map(r => recordHTML(r, true, true)).join('') 
+          : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+      }
     }
     document.getElementById('pendingLoading').textContent = '';
     if (data.data && data.data.length > 1) {
@@ -3042,6 +3040,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
     const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
     const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`; // 🐞 V59修復: 補回遺漏的 formattedDate 定義，此前每次執行到此都會拋出 ReferenceError，導致主管穿透查詢整組畫面(含年度統計數字)被 catch 區塊覆蓋成「⚠️ 錯誤」，且每日對帳日曆完全無法渲染
     const isHoliday = holidayStrings.includes(dateStrHyphen);
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
@@ -3088,17 +3087,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true;
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
-
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
 
       const shift = getShiftMinutesForDate(dateStr, empId, specialShifts);
       const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
@@ -3334,6 +3323,10 @@ if (suppEl) suppEl.value = '08:00';
 
 // ── 主管簽核 ──
 let pendingApproveDecision = {};
+// 🐞 V59新增: 判斷目前是否有任何一筆「簽核意見框」正在展開中，供 loadAdminData() 重繪待審清單前檢查
+function isApproveCommentBoxOpen() {
+  return document.querySelectorAll('.approve-comment-area.open').length > 0;
+}
 function toggleApproveComment(id, decision) {
 document.querySelectorAll('.approve-comment-area.open').forEach(el => {
 const rid = el.id.replace('approveArea-','');
@@ -3367,8 +3360,19 @@ delete pendingApproveDecision[id];
 }
 
 function confirmApprove(id) {
-const decision = pendingApproveDecision[id];
-if (!decision) return;
+let decision = pendingApproveDecision[id];
+if (!decision) {
+  // 🐞 V59修復: 過去這裡直接 return，畫面上完全沒有任何提示，使用者會覺得「按了沒反應」。
+  // 改為從按鈕當下顯示的文字反推決定（確認核准/確認拒絕），並提示使用者重新操作，避免靜默失敗。
+  const btn = document.getElementById('approveConfirmBtn-' + id);
+  const btnText = btn ? btn.textContent : '';
+  if (btnText.includes('核准')) decision = '同意';
+  else if (btnText.includes('拒絕')) decision = '拒絕';
+  if (!decision) {
+    showToast('⚠️ 此筆申請畫面已過期，請重新點擊核准/拒絕');
+    return;
+  }
+}
 const commentEl = document.getElementById('approveComment-' + id);
 const comment = commentEl ? commentEl.value.trim() : '';
 approveRecord(id, decision, comment);
@@ -3544,6 +3548,29 @@ function timeToMin(timeStr) {
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || 0, 10);
 }
 
+// 🐞 V59優化: 統一共用的請假豁免判定函式。
+// 原本 calcAttendance()／renderYearlyIssues()／renderAdminQueryCalendarTable()／renderCalendarTable()
+// 這 4 處各自重複定義同一套邏輯，且 isRangeExempted 是「逐分鐘」跑迴圈(最多重算 540 次/次呼叫)。
+// 改成集中一份、用區間排序掃描一次判斷覆蓋，同一段時間不會被反覆逐分鐘重算，結果與原邏輯完全一致。
+function isTimeExempted(min, leaves) {
+  if (min >= 720 && min < 780) return true; // 午休固定豁免
+  return leaves.some(l => min >= l.start && min < l.end);
+}
+function isRangeExempted(s, e, leaves) {
+  if (s >= e) return true;
+  const intervals = leaves.concat([{ start: 720, end: 780 }])
+    .filter(l => l.end > s && l.start < e)
+    .sort((a, b) => a.start - b.start);
+  let cursor = s;
+  for (let i = 0; i < intervals.length; i++) {
+    const iv = intervals[i];
+    if (iv.start > cursor) return false;
+    if (iv.end > cursor) cursor = iv.end;
+    if (cursor >= e) return true;
+  }
+  return cursor >= e;
+}
+
 function calculateLeaveHoursLocal(r, holidays) {
   if (r.hours !== undefined && r.hours !== null) {
     return parseFloat(r.hours);
@@ -3710,17 +3737,7 @@ function renderYearlyIssues() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true; // lunch is exempt
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
-
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
 
       const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
       const isFullDayExempted = isRangeExempted(shift.start, shift.end, dayLeaves);
@@ -3941,17 +3958,7 @@ function calcAttendance() {
       });
 
       // 2. Helper functions
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true; // lunch is exempt
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
-
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
 
       // 💡 V37-v34: 自動依據『特別排班』工作表適應上下班起迄，不再寫死 09:00 - 18:00
       const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
