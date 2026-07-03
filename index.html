@@ -140,36 +140,35 @@ display:none;
   background: var(--bg-header);
   border-bottom: 2px solid var(--green-border);
   padding: 12px 20px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr; /* 左空白 / logo / 右側功能區，三欄自動保留空間 */
+  display: flex;
   align-items: center;
+  justify-content: center; /* Centered Logo */
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow);
 }
 .header-left {
-  grid-column: 2;
-  justify-self: center;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0; /* 允許在極窄螢幕下縮小，不撐破版面 */
+  justify-content: center;
+  flex: 1;
 }
 .header-left img {
-  height: 52px;
-  max-width: 100%;
+  height: 52px !important; /* Increased height to 52px for 置中加大 */
   display: block;
-  transition: height 0.2s;
+  margin: 0 auto;
 }
 .header-right {
-  grid-column: 3;
-  justify-self: end;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
+  gap: 12px;
+  position: absolute;
+  right: 20px;
 }
+.header-left { display:flex; align-items:center; gap:10px; }
+.header-left img { height:52px; transition: height 0.2s; } /* 置中加大 1.5 倍 */
+.header-right { display:flex; align-items:center; gap:10px; }
 .header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
 .header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; }
 .logout-btn {
@@ -915,7 +914,6 @@ display: inline-block;
             </tr>
           </tbody>
         </table>
-        <div class="record-list" id="yearIssueList" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -984,10 +982,8 @@ display: inline-block;
 <div class="input-group" style="margin-bottom:20px;">
 <label class="input-label" style="display:flex; justify-content:space-between; align-items:center;">
   <span>證明文件（病假/公假等需提供）</span>
-  <button type="button" class="pw-toggle-btn" style="border-color:var(--accent-orange); color:var(--accent-orange);" onclick="document.getElementById('leaveProofFile').click()">📎 選擇證明文件</button>
+  <a href="https://drive.google.com/drive/folders/1XR_EUQoaJlkDCoxvJZcsPKXN53Xze1xE?usp=drive_link" target="_blank" class="pw-toggle-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-color:var(--accent-orange); color:var(--accent-orange);">📎 前往雲端上傳證明</a>
 </label>
-<input type="file" id="leaveProofFile" accept="image/*,.pdf" style="display:none" onchange="document.getElementById('leaveProofFileName').textContent = this.files[0] ? '已選擇：' + this.files[0].name : ''">
-<div id="leaveProofFileName" style="font-size:12px; color:var(--text-muted); margin-top:4px;"></div>
 </div>
 <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
 </div>
@@ -1237,6 +1233,13 @@ display: inline-block;
     </div>
     <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
     <div class="record-list" id="pendingList"></div>
+
+    <!-- 💡 V55: 背景批次產生 PDF 歸檔手動按鈕 -->
+    <div class="profile-card" style="padding:16px; margin-top: 24px; border-top: 3px solid var(--blue-light);">
+      <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">🗃️ 雲端 PDF 歸檔控制台</p>
+      <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-bottom:12px;">系統預設每日凌晨自動將核准單據產生 PDF 並填回 Google Sheets 連結。若欲立即同步，可點選下方按鈕進行批次產檔。</p>
+      <button class="submit-btn blue" style="margin: 0;" onclick="triggerBatchPdf(this)">✓ 立即執行背景 PDF 歸檔</button>
+    </div>
   </div>
 
   <!-- 2. 考勤與假別看板 子頁面 -->
@@ -1293,7 +1296,8 @@ display: inline-block;
           </div>
         </div>
         
-        
+        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡對帳日曆：</p>
+        <div id="aq-calendar-container"></div>
       </div>
     </div>
 
@@ -1498,27 +1502,9 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v51.js')
-      .then(reg => {
-        console.log('SW 註冊成功:', reg.scope);
-
-        // 每 10 分鐘主動檢查一次有沒有新版 SW（單位：毫秒）
-        setInterval(() => reg.update(), 5 * 60 * 1000);
-
-        // App 從背景切回前景時也順便檢查一次
-        document.addEventListener('visibilitychange', () => {
-          if (!document.hidden) reg.update();
-        });
-      })
-      .catch(err => console.error('SW 註冊失敗:', err));
-
-    // 偵測到新 SW 接管頁面，自動重新整理拿到最新版
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    });
+    navigator.serviceWorker.register('sw-v56.js')
+      .then(reg => console.log('SW-v30 註冊成功:', reg.scope))
+      .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
 
@@ -1612,11 +1598,11 @@ document.getElementById('loginScreen').style.display = 'flex';
 document.getElementById('mainApp').style.display = 'none';
 }
 
-async function showApp() {
+function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
   
-  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'admin1' || currentUser.role === 'admin2' || currentUser.isActiveProxy;
+  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'admin1' || currentUser.role === 'admin2';
   
   // 動態過濾頁籤實體顯示 (主管只看 admin、profile；員工看除了 admin 以外的 6 個頁籤)
   document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -1636,6 +1622,7 @@ async function showApp() {
     }
   });
 
+  applyAdminSubTabVisibility();
   // 建立主管穿透查詢下拉選單 & 新增排班調整下拉選單 & 主管代理人下拉選單
   const selectEl = document.getElementById('adminQueryUserSelect');
   const adjustSelectEl = document.getElementById('adminAdjustEmpId');
@@ -1702,21 +1689,11 @@ async function showApp() {
     }
   }
   
-if (currentUser.role !== 'admin') {
+  if (currentUser.role !== 'admin') {
     setInterval(checkApprovalUpdates, 60000);
   }
   checkConnectivity();
   setInterval(checkConnectivity, 30000);
-
-  // 💡 開啟畫面先用本機快取(上面的 renderAllList)秒開，
-  // 緊接著向後端拉最新資料回來後再重繪一次，避免看到舊快取
-  try {
-    await syncProfileAndAccumulatedLeaves();
-    renderAllList();
-    updateNotifBadge();
-  } catch (e) {
-    console.error('初始資料刷新失敗:', e);
-  }
 }
 
 // ── Login / Logout ─────────────────────────────────────────────
@@ -1734,7 +1711,7 @@ document.getElementById('loginErr').style.display = 'none';
 try {
 const data = await callGAS({ action: 'login', empId, password });
 if (data.status === 'ok') {
-currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || '專任', defaultShift: data.defaultShift || '09:00-18:00', quota: data.quota || null, employeeList: data.employeeList || [] };
+currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || '專任', defaultShift: data.defaultShift || '09:00-18:00', quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false };
 sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
 showApp();
 } else {
@@ -1931,7 +1908,7 @@ addNotif('system', `${type}打卡成功 ${record.time} 📍`);
 showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
 }
 
-async function submitLeave() {
+function submitLeave() {
 const id = Date.now();
 const record = {
 id, clientId: String(id), type: '請假', subType: document.getElementById('leaveType').value,
@@ -1940,28 +1917,10 @@ date: document.getElementById('leaveStart').value, startTime: document.getElemen
 endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
 reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
 };
-
-let uploadPayload = null;
-const fileInput = document.getElementById('leaveProofFile');
-if (fileInput.files && fileInput.files[0]) {
-  const file = fileInput.files[0];
-  if (file.size > 8 * 1024 * 1024) { showToast('⚠️ 證明文件不可超過 8MB'); return; }
-  showToast('📤 附件處理中…');
-  const base64 = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-  uploadPayload = { proofFileName: file.name, proofMimeType: file.type, proofFileData: base64 };
-}
-
-records.unshift(record);       // 本機只存輕量版,不含 base64,避免塞爆 localStorage
+records.unshift(record);
 saveRecords();
 renderAllList();
-syncToSheet(uploadPayload ? { ...record, ...uploadPayload } : record); // 送到後端才帶檔案內容
-fileInput.value = '';
-document.getElementById('leaveProofFileName').textContent = '';
+syncToSheet(record);
 addNotif('pending', `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
 showToast('📝 請假申請已送出');
 }
@@ -2093,6 +2052,32 @@ function submitAdminAdjust() {
   
   showToast('✓ 班別異動指派成功並已直接生效！');
   document.getElementById('adminAdjustReason').value = '';
+}
+
+async function triggerBatchPdf(btn) {
+  let originalText = "";
+  if (btn) {
+    originalText = btn.textContent;
+    btn.innerHTML = '<span class="spinner"></span> 正在產生 PDF 歸檔...';
+    btn.disabled = true;
+  }
+  showLoading();
+  try {
+    const res = await callGAS({ action: 'batchPdf' });
+    hideLoading();
+    if (res && res.status === 'ok') {
+      showToast('✅ PDF 歸檔成功！共處理 ' + (res.totalGenerated ?? 0) + ' 筆核准單據');
+    } else {
+      showToast('⚠️ 歸檔處理失敗：' + (res.message || '未知錯誤'));
+    }
+  } catch (e) {
+    hideLoading();
+    showToast('⚠️ 連線失敗，請檢查網路');
+  }
+  if (btn) {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 }
 
 function quickLeave() {
@@ -2607,7 +2592,7 @@ function formatDateTimeRange(r) {
       return `${dateStr} ${startT}～${endDateStr} ${endT}${hoursText}`;
     }
   } else if (r.type === '補打卡') {
-    return `${getConciseDateText(r.date)} ${formatLocalTimeStr(r.time || '')}`;
+    return `${dateStr} ${formatLocalTimeStr(r.time || '')}`;
   } else if (r.type === '班別調整') {
     return `${dateStr} ${r.subType || ''}`;
   } else {
@@ -2691,24 +2676,31 @@ ${retractButton}
 
 // ── Admin ───────────────────────────────────────────────────────
 async function loadAdminData() {
-  if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && !(currentUser.role === 'admin2' && currentUser.isActiveProxy))) return;
+  if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && currentUser.role !== 'admin2')) return;
+  applyAdminSubTabVisibility();
+  if (currentUser.role === 'admin2' && !currentUser.isActiveProxy) {
+    switchAdminSubTab('board');
+  }
   document.getElementById('pendingLoading').textContent = '載入中…';
   
   // 💡 V37-v28: 本地快取降級顯示
-  let pending = (window.pendingRecordsCache && window.pendingRecordsCache.length)
-  ? window.pendingRecordsCache
-  : records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'|| r.type === '班別調整'));
-document.getElementById('statLeave').innerHTML = pending.filter(r => r.type === '請假').length + '<span>筆</span>';
-document.getElementById('statOT').innerHTML = pending.filter(r => r.type === '加班' || r.type === '補打卡' || r.type === '班別調整').length + '<span>筆</span>';
-document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+  document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
+  document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
+  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+  
   try {
     const data = await callGAS({ action: 'getAll' });
     document.getElementById('pendingLoading').textContent = '';
+    if (data && data.status === 'ok') {
+      if (data.employeeList) {
+        currentUser.employeeList = data.employeeList;
+        sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+      }
+    }
     
     // 💡 V37-v28: 若後台有傳回實時所有員工的待審核清單，直接用後台數據更新
     if (data && data.pending) {
-      // 在 if (data && data.pending) { ... } 區塊內,加這一行
-      window.pendingRecordsCache = data.pending;
       const pendingList = data.pending;
       const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
       const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
@@ -2808,11 +2800,7 @@ document.getElementById('pendingList').innerHTML = pending.length ? pending.map(
         </div>`).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
     }
   } catch (e) {
-    document.getElementById('pendingLoading').textContent = '（離線，顯示上次資料）';
-    // 補上：離線/逾時時，用上次成功取得的快取撐住待審清單，不要讓畫面停在空白
-  if (window.pendingRecordsCache && window.pendingRecordsCache.length) {
-    document.getElementById('pendingList').innerHTML = window.pendingRecordsCache.map(r => recordHTML(r, true, true)).join('');
-  }
+    document.getElementById('pendingLoading').textContent = '（離線）';
     const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const recentRecords = records.filter(r => safeNewDate(r.timestamp) >= oneWeekAgo);
     document.getElementById('adminRecords').innerHTML = recentRecords.map(r => recordHTML(r, true)).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
@@ -2870,6 +2858,8 @@ async function handleAdminQueryChange() {
       document.getElementById('aq-y-late').textContent = lateEarlyCount + ' 次';
 
       // 每月明細表格已依照主管需求移除
+      // 📅 V56: 動態渲染該同仁本月的打卡對帳日曆！
+      renderAdminQueryCalendarTable(empId, empRecords, res, empInfo);
     }
     } catch (e) {
     console.error('handleAdminQueryChange 失敗: ', e);
@@ -2893,6 +2883,330 @@ function switchAdminSubTab(subTab) {
     }
   });
 }
+// 📅 V56: 主管專屬「穿透查詢同仁本月打卡對帳日曆」渲染大腦 (唯讀，無onclick點擊補卡，相容專兼任)
+function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
+  const container = document.getElementById('aq-calendar-container');
+  if (!container) return;
+
+  const empType = empInfo ? (empInfo.empType || '專任') : '專任';
+  const holidayStrings = res.holidayStrings || [];
+  const specialShifts = res.specialShifts || [];
+
+  // 💡 兼任人員專屬：整年度打卡收折呈現 (只列出有打卡的日期)
+  if (empType === '兼任') {
+    const currentYear = new Date().getFullYear();
+    const minePunch = empRecords.filter(r => {
+      if (r.type !== '上班' && r.type !== '下班') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getFullYear() === currentYear;
+    });
+
+    const mineSupp = empRecords.filter(r => {
+      if (r.type !== '補打卡' || r.status !== '同意') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getFullYear() === currentYear;
+    });
+
+    const dailyMap = {};
+    
+    minePunch.forEach(r => {
+      const d = safeNewDate(r.date || r.timestamp);
+      const key = formatLocalDateStr(d);
+      if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
+      if (r.type === '上班') {
+        if (!dailyMap[key].in || r.time < dailyMap[key].in) dailyMap[key].in = r.time;
+      } else if (r.type === '下班') {
+        if (!dailyMap[key].out || r.time > dailyMap[key].out) dailyMap[key].out = r.time;
+      }
+    });
+
+    mineSupp.forEach(r => {
+      const d = safeNewDate(r.date || r.timestamp);
+      const key = formatLocalDateStr(d);
+      if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
+      if (r.subType === '上班') dailyMap[key].in = r.time;
+      if (r.subType === '下班') dailyMap[key].out = r.time;
+    });
+
+    const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
+
+    let html = `
+      <div class="calendar-table-container">
+        <table class="calendar-table">
+          <thead>
+            <tr>
+              <th>📅 出勤日期</th>
+              <th>🟢 上班簽到</th>
+              <th>🏁 下班簽退</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (sortedKeys.length === 0) {
+      html += `
+        <tr>
+          <td colspan="3" style="text-align:center; color:var(--text-secondary); padding:20px;">
+            尚無年度打卡紀錄
+          </td>
+        </tr>
+      `;
+    } else {
+      sortedKeys.forEach(key => {
+        const item = dailyMap[key];
+        const dateObj = item.dateObj;
+        const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+        const formattedDate = `${key.slice(5)} (${weekdayStr})`; // MM-DD (W)
+        
+        const checkinHTML = item.in || '—';
+        const checkoutHTML = item.out || '—';
+        
+        html += `
+          <tr>
+            <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+            <td>${checkinHTML}</td>
+            <td>${checkoutHTML}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+    container.innerHTML = html;
+    return;
+  }
+
+  // 💡 專任人員：當月打卡對帳日曆
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  
+  const minePunch = empRecords.filter(r => {
+    if (r.type !== '上班' && r.type !== '下班') return false;
+    const d = safeNewDate(r.date || r.timestamp);
+    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+  });
+
+  const mineLeave = empRecords.filter(r => {
+    if (r.type !== '請假' || r.status !== '同意') return false;
+    const d = safeNewDate(r.date || r.timestamp);
+    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+  });
+
+  const punchMap = {};
+  minePunch.forEach(r => {
+    const d = safeNewDate(r.date || r.timestamp);
+    const dayKey = d.getDate();
+    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: '—', 下班: '—' };
+    if (r.type === '上班') punchMap[dayKey].上班 = r.time || '—';
+    if (r.type === '下班') punchMap[dayKey].下班 = r.time || '—';
+  });
+
+  const leaveMap = {};
+  mineLeave.forEach(r => {
+    const dStart = safeNewDate(r.date);
+    const dEnd = safeNewDate(r.endDate || r.date);
+    const sDay = dStart.getDate();
+    const eDay = dEnd.getDate();
+    const typeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '請假');
+    for (let day = sDay; day <= eDay; day++) {
+      leaveMap[day] = `🌴 已${typeLabel}`;
+    }
+  });
+
+  let html = `
+    <div class="calendar-table-container">
+      <table class="calendar-table">
+        <thead>
+          <tr>
+            <th>📅 日期</th>
+            <th>🟢 上班簽到</th>
+            <th>🏁 下班簽退</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateObj = new Date(year, month - 1, day);
+    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+    const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+    const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isHoliday = holidayStrings.includes(dateStrHyphen);
+    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+    let punch = punchMap[day] || { 上班: '—', 下班: '—' };
+    let leaveLabel = leaveMap[day];
+
+    let checkinHTML = punch.上班;
+    let checkoutHTML = punch.下班;
+
+    if (day > now.getDate()) {
+      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
+      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
+    } else if (isWeekend || isHoliday) {
+      if (punch.上班 === '—') checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
+      if (punch.下班 === '—') checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
+    } else {
+      const dayLeaves = mineLeave.filter(r => {
+        const startD = safeNewDate(r.date);
+        const endD = safeNewDate(r.endDate || r.date);
+        return dateObj >= startD && dateObj <= endD;
+      }).map(r => {
+        const startD = safeNewDate(r.date);
+        const endD = safeNewDate(r.endDate || r.date);
+        
+        let leaveStartMin = 540;
+        let leaveEndMin = 1080;
+        
+        const isStart = dateObj.getFullYear() === startD.getFullYear() && dateObj.getMonth() === startD.getMonth() && dateObj.getDate() === startD.getDate();
+        const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
+        
+        if (isStart && isEnd) {
+          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveEndMin = timeToMin(r.endTime || '18:00');
+        } else if (isStart) {
+          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveEndMin = 1080;
+        } else if (isEnd) {
+          leaveStartMin = 540;
+          leaveEndMin = timeToMin(r.endTime || '18:00');
+        } else {
+          leaveStartMin = 540;
+          leaveEndMin = 1080;
+        }
+        return { start: leaveStartMin, end: leaveEndMin };
+      });
+
+      const isTimeExempted = (min, leaves) => {
+        if (min >= 720 && min < 780) return true;
+        return leaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e, leaves) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m, leaves)) return false;
+        }
+        return true;
+      };
+
+      const shift = getShiftMinutesForDate(dateStr, empId, specialShifts);
+      const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
+      const isAfternoonExempted = isRangeExempted(780, shift.end, dayLeaves);
+
+      if (punch.上班 === '—') {
+        if (isMorningExempted) {
+          checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
+        } else if (day !== now.getDate()) {
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
+        } else {
+          checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+        }
+      }
+      
+      if (punch.下班 === '—') {
+        if (isAfternoonExempted) {
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
+        } else if (day !== now.getDate()) {
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
+        } else {
+          checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+        }
+      }
+    }
+
+    const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
+
+    html += `
+      <tr ${rowStyle}>
+        <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+        <td>${checkinHTML}</td>
+        <td>${checkoutHTML}</td>
+      </tr>
+    `;
+  }
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
+
+function renderAdminEmployeeOverviewTable() {
+  const body = document.getElementById('adminEmployeeOverviewBody');
+  if (!body) return;
+  if (!currentUser || !currentUser.employeeList || currentUser.employeeList.length === 0) {
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:12px; color:var(--text-muted);">無資料</td></tr>';
+    return;
+  }
+  // Filter out admin and show only '專任'
+  const ftEmployees = currentUser.employeeList.filter(emp => emp.role !== 'admin' && emp.empType === '專任');
+  if (ftEmployees.length === 0) {
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:12px; color:var(--text-muted);">尚無專任員工資料</td></tr>';
+    return;
+  }
+  body.innerHTML = ftEmployees.map(emp => {
+    return `
+      <tr style="border-bottom:1px solid var(--card-border); text-align:center;">
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); font-weight:bold; color:var(--text-primary);">${emp.empId}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); font-weight:bold; color:var(--blue-light);">${emp.name}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.joinDate || '—'}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.seniorityText || '—'}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.specialLeaveTotalHours || 0} h</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--accent-orange); font-weight:bold;">${emp.specialLeaveUsedHours || 0} h</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--green-light); font-weight:bold;">${emp.specialLeaveRemainingHours || 0} h</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--accent-purple); font-weight:bold;">${emp.compLeaveRemainingHours || 0} h</td>
+        <td style="padding:8px;">
+          <button class="pw-toggle-btn" onclick="triggerEmployeeQuery('${emp.empId}')">🔍 穿透對帳</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.triggerEmployeeQuery = function(empId) {
+  const selectEl = document.getElementById('adminQueryUserSelect');
+  if (selectEl) {
+    selectEl.value = empId;
+    handleAdminQueryChange();
+    const resultDiv = document.getElementById('adminQueryResults');
+    if (resultDiv) {
+      resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+};
+
+
+function applyAdminSubTabVisibility() {
+  if (!currentUser) return;
+  const agentTab = document.getElementById('adminSubTab-agent');
+  if (agentTab) {
+    if (currentUser.role === 'admin2') {
+      agentTab.style.setProperty('display', 'none', 'important');
+    } else {
+      agentTab.style.setProperty('display', 'inline-flex', 'important');
+    }
+  }
+  
+  const pendingTab = document.getElementById('adminSubTab-pending');
+  if (pendingTab) {
+    if (currentUser.role === 'admin2' && !currentUser.isActiveProxy) {
+      pendingTab.style.setProperty('display', 'none', 'important');
+    } else {
+      pendingTab.style.setProperty('display', 'inline-flex', 'important');
+    }
+  }
+}
+
 function saveRecords() {
 localStorage.setItem('tjcpm_records', JSON.stringify(records));
 }
@@ -3006,7 +3320,7 @@ if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin
 showToast('⚠️ 您沒有審核權限');
 return;
 }
-const rec = records.find(r => r.id === id) || (window.pendingRecordsCache || []).find(r => r.id === id);
+const rec = records.find(r => r.id === id);
 if (!rec) return;
 rec.status = decision;
 if (comment) rec.approveComment = comment;
@@ -3060,37 +3374,6 @@ syncProfileAndAccumulatedLeaves();
   updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
 }
 
-// 💡 V52: 補回缺失的函式定義 — 原本被呼叫兩次卻從未定義，導致主管總覽表格
-// 永遠卡在「資料載入中…」且每次呼叫都會拋出 ReferenceError。
-// 資料源刻意直接沿用 currentUser.employeeList（後端 getRichEmployeeList 回傳），
-// 與個人頁面 profileAnnualLeave/accumAnnual 用的是同一組 specialLeave*/compLeave* 欄位，
-// 避免同一份特休數字在不同畫面上因為各自計算而兜不起來。
-function renderAdminEmployeeOverviewTable() {
-  const tbody = document.getElementById('adminEmployeeOverviewBody');
-  if (!tbody) return;
-  const list = (currentUser && currentUser.employeeList) || [];
-  const fullTimeList = list.filter(e => (e.empType || '專任') === '專任');
-
-  if (fullTimeList.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:12px; color:var(--text-muted);">目前無專任同仁資料</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = fullTimeList.map(emp => `
-    <tr style="text-align:center; border-bottom:1px solid var(--card-border);">
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${emp.empId}</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${emp.name}</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${emp.joinDate || '—'}</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${emp.seniorityText || '—'}</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${(emp.specialLeaveTotalHours ?? 0)}h</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${(emp.specialLeaveUsedHours ?? 0)}h</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border); font-weight:bold; color:var(--green-light);">${(emp.specialLeaveRemainingHours ?? 0)}h</td>
-      <td style="padding:6px; border-right:1px solid var(--card-border);">${(emp.compLeaveRemainingHours ?? 0)}h</td>
-      <td style="padding:6px;"><button class="submit-btn blue" style="padding:4px 10px; margin:0; font-size:12px;" onclick="switchAdminSubTab('board'); document.getElementById('adminQueryUserSelect').value='${emp.empId}'; handleAdminQueryChange();">查看</button></td>
-    </tr>
-  `).join('');
-}
-
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
 async function syncProfileAndAccumulatedLeaves() {
   try {
@@ -3099,9 +3382,6 @@ async function syncProfileAndAccumulatedLeaves() {
       // 100% 覆蓋本機緩存紀錄，實現跨裝置即時同步
       records = data.updates;
       saveRecords();
-      
-      if (data.correctionStartDate) currentUser.correctionStartDate = data.correctionStartDate;
-      calcAttendance(); // 👈 校正日設定完成後，重新算一次年度問題清單
 
       // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
       let annualLeaveUsed = 0;
@@ -3148,6 +3428,10 @@ async function syncProfileAndAccumulatedLeaves() {
         if (data.settledAccumulated) {
           currentUser.settledAccumulated = data.settledAccumulated;
         }
+        if (data.hasOwnProperty('isActiveProxy')) {
+          currentUser.isActiveProxy = data.isActiveProxy;
+        }
+        applyAdminSubTabVisibility();
         sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
       } else {
         // 舊版或無 quota 回傳時之手動估算
@@ -3178,9 +3462,18 @@ async function syncProfileAndAccumulatedLeaves() {
 }
 
 
-// 💡 日期格式標準化輔助函式 (統一改為 YYYY-MM-DD，與 formatLocalDateStr / 後端 formatDateString 一致)
+// 💡 日期格式標準化輔助函式 (YYYY/M/D)
 function normalizeDate(str) {
-  return formatLocalDateStr(str);
+  if (!str) return '';
+  const clean = str.replace(/-/g, '/');
+  const parts = clean.split('/');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    const d = parseInt(parts[2], 10);
+    return `${y}/${m}/${d}`;
+  }
+  return clean;
 }
 
 
@@ -3339,14 +3632,12 @@ function calcAttendance() {
     for (let d = 1; d <= endDayCheck; d++) {
     const dateObj = new Date(thisYear, thisMonth - 1, d);
     const dayOfWeek = dateObj.getDay();
-    const dateStr = `${thisYear}-${String(thisMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`; // 💡 統一為補零 YYYY-MM-DD，與 normalizeDate() 對齊
+    const dateStr = `${thisYear}/${thisMonth}/${d}`; // 💡 使用無補零之標準 M/D 格式對齊
     
     // We can check if it's weekend
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-    const holidayDateStr = `${thisYear}-${String(thisMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isHoliday = (currentUser.holidayStrings || []).includes(holidayDateStr);
     
-    if (!isWeekend && !isHoliday) {
+    if (!isWeekend) {
       const punch = dailyPunches[dateStr];
       
       // 1. Gather all approved leaves covering dateObj for this employee
@@ -3480,104 +3771,8 @@ function calcAttendance() {
     if (yMissEl) yMissEl.textContent = yMissedCount + ' 次';
     if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ' 次';
   }
-
-  // === 年度彙整：問題日期清單（到職週期起點/歷史校正日 ~ 上個月底，本月不計） ===
-let yearIssues = [];
-if (currentUser.empType !== '兼任' && currentUser.joinDate) {
-  const yearStart = currentUser.correctionStartDate
-    ? new Date(currentUser.correctionStartDate)
-    : getYearRangeStartDate(currentUser.joinDate);
-  const prevMonthEnd = new Date(thisYear, thisMonth - 1, 0);
-
-  const problemRows = records.filter(r =>
-    matchEmpId(r.empId, currentUser?.empId) &&
-    (r.type === '上班' || r.type === '下班') &&
-    r.problem &&
-    safeNewDate(r.date) >= yearStart && safeNewDate(r.date) <= prevMonthEnd
-  );
-
-  const byDate = {};
-  problemRows.forEach(r => {
-    const d = normalizeDate(r.date);
-    if (!byDate[d]) byDate[d] = { date: d, in: '—', out: '—', inFlag: '', outFlag: '' };
-    if (r.type === '上班') { byDate[d].in = r.time || '—'; byDate[d].inFlag = r.problem === '已補正' ? '' : r.problem; }
-    if (r.type === '下班') { byDate[d].out = r.time || '—'; byDate[d].outFlag = r.problem === '已補正' ? '' : r.problem; }
-  });
-  yearIssues = Object.values(byDate).filter(x => x.inFlag || x.outFlag);
-}
-renderYearIssueList(yearIssues);
-}
-  
-function renderYearIssueList(issues) {
-  const el = document.getElementById('yearIssueList');
-  if (!el) return;
-
-  if (!issues.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度無異常</div></div>';
-    return;
-  }
-
-  let html = `
-    <div class="calendar-table-container">
-      <table class="calendar-table">
-        <thead>
-          <tr>
-            <th>📅 日期</th>
-            <th>🟢 上班簽到</th>
-            <th>🏁 下班簽退</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  issues.forEach(r => {
-    const inCell = r.inFlag
-      ? `<span style="color:#ef4444;font-weight:bold;">${r.in} ⚠️${r.inFlag}</span>`
-      : r.in;
-    const outCell = r.outFlag
-      ? `<span style="color:#ef4444;font-weight:bold;">${r.out} ⚠️${r.outFlag}</span>`
-      : r.out;
-    html += `
-      <tr>
-        <td>${r.date}</td>
-        <td>${inCell}</td>
-        <td>${outCell}</td>
-      </tr>
-    `;
-  });
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-  el.innerHTML = html;
 }
 
-function getYearRangeStartDate(joinDateStr) {
-  if (!joinDateStr) return null;
-  const joinParts = joinDateStr.split(/[-/]/);
-  const jYear = parseInt(joinParts[0], 10);
-  const jMonth = parseInt(joinParts[1], 10) - 1;
-  const jDay = parseInt(joinParts[2], 10);
-
-  const now = new Date();
-  const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  let y = jYear;
-  let start = new Date(jYear, jMonth, jDay);
-  while (true) {
-    const s = new Date(y, jMonth, jDay);
-    const e = new Date(y + 1, jMonth, jDay - 1, 23, 59, 59, 999);
-    if (todayZero >= s && todayZero <= e) { start = s; break; }
-    if (todayZero < s) { start = new Date(jYear, jMonth, jDay); break; }
-    y++;
-    if (y > jYear + 100) break;
-  }
-  return start;
-}
-  
-  
 function togglePwChange() {
 const area = document.getElementById('pwChangeArea');
 area.classList.toggle('open');
