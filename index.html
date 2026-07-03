@@ -2688,6 +2688,8 @@ async function loadAdminData() {
     
     // 💡 V37-v28: 若後台有傳回實時所有員工的待審核清單，直接用後台數據更新
     if (data && data.pending) {
+      // 在 if (data && data.pending) { ... } 區塊內,加這一行
+      window.pendingRecordsCache = data.pending;
       const pendingList = data.pending;
       const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
       const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
@@ -2981,7 +2983,7 @@ if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin
 showToast('⚠️ 您沒有審核權限');
 return;
 }
-const rec = records.find(r => r.id === id);
+const rec = records.find(r => r.id === id) || (window.pendingRecordsCache || []).find(r => r.id === id);
 if (!rec) return;
 rec.status = decision;
 if (comment) rec.approveComment = comment;
