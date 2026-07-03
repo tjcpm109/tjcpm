@@ -2677,7 +2677,7 @@ async function loadAdminData() {
   document.getElementById('pendingLoading').textContent = '載入中…';
   
   // 💡 V37-v28: 本地快取降級顯示
-  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'|| r.type === '班別調整'));
   document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
