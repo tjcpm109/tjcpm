@@ -1523,7 +1523,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v77.js')
+    navigator.serviceWorker.register('sw-v78.js')
       .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -3192,11 +3192,11 @@ async function loadAdminData() {
             <div class="record-info">
               <div class="record-type" style="font-weight: bold; color: var(--text-primary);">
                 <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
-                \${r[2]||''}（\${r[1]}）
+                ${r[2]||''}（${r[1]}）
               </div>
               <div class="record-meta" style="color: var(--text-secondary); margin-top: 4px; line-height: 1.6;">
-                📅 \${fmtDate(r[4] || r[0])} · ⏰ \${fmtTime(r[5])} · 💬 外勤備註：\${remarkText}<br>
-                \${jDisplay}
+                📅 ${fmtDate(r[4] || r[0])} · ⏰ ${fmtTime(r[5])} · 💬 外勤備註：${remarkText}<br>
+                ${jDisplay}
               </div>
             </div>
           </div>
