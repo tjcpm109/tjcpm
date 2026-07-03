@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1424,7 +1424,10 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9g
 function parseLocalDate(d) { return safeNewDate(d); }
 
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串
-function getYearRangeString(joinDateStr) {
+// 💡 V58: 新增 correctionDateStr 參數 — 若校正生效中且校正日晚於原本以到職日算出的起算日，
+// 則本週期的起算日與顯示改用校正日（呈現「以校正時間起算」），校正一年到期後 correctionDateStr
+// 會自動變成 null（因後端 isCorrectionActive 失效），届時自動回歸到職日起算，不需另外處理。
+function getYearRangeString(joinDateStr, correctionDateStr) {
   if (!joinDateStr) return '';
   const joinParts = joinDateStr.split(/[-/]/);
   const jYear = parseInt(joinParts[0], 10);
@@ -1452,6 +1455,18 @@ function getYearRangeString(joinDateStr) {
       break;
     }
   }
+
+  // 💡 V58: 校正日覆蓋起算日邏輯
+  if (correctionDateStr) {
+    const cParts = String(correctionDateStr).split(/[-/]/);
+    const cYear = parseInt(cParts[0], 10);
+    const cMonth = parseInt(cParts[1], 10) - 1;
+    const cDay = parseInt(cParts[2], 10);
+    const cDate = new Date(cYear, cMonth, cDay);
+    if (!isNaN(cDate.getTime()) && cDate.getTime() > range.start.getTime() && cDate.getTime() <= range.end.getTime()) {
+      range = { start: cDate, end: range.end };
+    }
+  }
   
   const sy = range.start.getFullYear();
   const sm = String(range.start.getMonth() + 1).padStart(2, '0');
@@ -1465,7 +1480,11 @@ function getYearRangeString(joinDateStr) {
 // 💡 V37-v29: 實時更新所有頁面的年度考勤區間顯示
 function updateAllYearRanges() {
   if (!currentUser || !currentUser.joinDate) return;
-  const rangeStr = getYearRangeString(currentUser.joinDate);
+  // 💡 V58: 若校正生效中，改用「歷史累計校正」起算日作為年度區間起點
+  const correctionStartDate = (currentUser.quota && currentUser.quota.correction && currentUser.quota.correction.startDate)
+    ? currentUser.quota.correction.startDate
+    : null;
+  const rangeStr = getYearRangeString(currentUser.joinDate, correctionStartDate);
   
   const yRangeEl = document.getElementById('y-range-span');
   if (yRangeEl) yRangeEl.textContent = `(${rangeStr})`;
@@ -2406,6 +2425,22 @@ function renderCalendarTable() {
           checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
         }
       }
+
+      // 💡 V58: 遲到/早退偵測 — 比照「年度出勤異常明細」套用同一套請假豁免邏輯，
+      // 讓「本月打卡對帳日曆」與「年度出勤異常明細」判定一致
+      const shiftForCal = getShiftMinutesForDate(dateQueryStr, currentUser?.empId, currentUser?.specialShifts);
+      if (punch.上班 !== '—') {
+        const punchInMin = timeToMin(punch.上班);
+        if (punchInMin > shiftForCal.start && !isRangeExempted(shiftForCal.start, punchInMin, dayLeaves)) {
+          checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.上班} ⚠️遲到</span>`;
+        }
+      }
+      if (punch.下班 !== '—') {
+        const punchOutMin = timeToMin(punch.下班);
+        if (punchOutMin < shiftForCal.end && !isRangeExempted(punchOutMin, shiftForCal.end, dayLeaves)) {
+          checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.下班} ⚠️早退</span>`;
+        }
+      }
     }
 
     const rowStyle = isToday ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
@@ -3088,6 +3123,21 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
         }
       }
+
+      // 💡 V58: 遲到/早退偵測 — 與個人「本月打卡對帳日曆」、「年度出勤異常明細」套用同一套請假豁免邏輯，
+      // 確保主管查看同仁日曆時的判定結果一致
+      if (punch.上班 !== '—') {
+        const punchInMin = timeToMin(punch.上班);
+        if (punchInMin > shift.start && !isRangeExempted(shift.start, punchInMin, dayLeaves)) {
+          checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.上班} ⚠️遲到</span>`;
+        }
+      }
+      if (punch.下班 !== '—') {
+        const punchOutMin = timeToMin(punch.下班);
+        if (punchOutMin < shift.end && !isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
+          checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.下班} ⚠️早退</span>`;
+        }
+      }
     }
 
     const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
@@ -3426,6 +3476,7 @@ async function syncProfileAndAccumulatedLeaves() {
         
         // 同步儲存至 currentUser 中，確保全系統共享
         currentUser.quota = data.quota;
+        updateAllYearRanges(); // 💡 V58: quota.correction 到手後立即用校正日刷新年度區間顯示
         if (data.holidayStrings) {
           currentUser.holidayStrings = data.holidayStrings;
         }
