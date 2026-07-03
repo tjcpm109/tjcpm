@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統61</title>
+<title>TJCPM 員工系統62</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2231,252 +2231,6 @@ function renderAllList() {
   }
 }
 
-// ── 核心升級：三欄日曆式對帳表格（請假核可豁免，點選自動補卡） ──
-function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
-  const container = document.getElementById('aq-calendar-container');
-  if (!container) return;
-
-  const empType = empInfo ? (empInfo.empType || '專任') : '專任';
-  const holidayStrings = res.holidayStrings || [];
-  const specialShifts = res.specialShifts || [];
-
-  // 💡 兼任人員專屬：整年度打卡收折呈現 (只列出有打卡的日期)
-  if (empType === '兼任') {
-    const currentYear = new Date().getFullYear();
-    const minePunch = empRecords.filter(r => {
-      if (r.type !== '上班' && r.type !== '下班') return false;
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getFullYear() === currentYear;
-    });
-
-    const mineSupp = empRecords.filter(r => {
-      if (r.type !== '補打卡' || r.status !== '同意') return false;
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getFullYear() === currentYear;
-    });
-
-    const dailyMap = {};
-    
-    minePunch.forEach(r => {
-      const d = safeNewDate(r.date || r.timestamp);
-      const key = formatLocalDateStr(d);
-      if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
-      if (r.type === '上班') {
-        if (!dailyMap[key].in || r.time < dailyMap[key].in) dailyMap[key].in = r.time;
-      } else if (r.type === '下班') {
-        if (!dailyMap[key].out || r.time > dailyMap[key].out) dailyMap[key].out = r.time;
-      }
-    });
-
-    mineSupp.forEach(r => {
-      const d = safeNewDate(r.date || r.timestamp);
-      const key = formatLocalDateStr(d);
-      if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
-      if (r.subType === '上班') dailyMap[key].in = r.time;
-      if (r.subType === '下班') dailyMap[key].out = r.time;
-    });
-
-    const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
-
-    let html = `
-      <div class="calendar-table-container">
-        <table class="calendar-table">
-          <thead>
-            <tr>
-              <th>📅 出勤日期</th>
-              <th>🟢 上班簽到</th>
-              <th>🏁 下班簽退</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    if (sortedKeys.length === 0) {
-      html += `
-        <tr>
-          <td colspan="3" style="text-align:center; color:var(--text-secondary); padding:20px;">
-            尚無年度打卡紀錄
-          </td>
-        </tr>
-      `;
-    } else {
-      sortedKeys.forEach(key => {
-        const item = dailyMap[key];
-        const dateObj = item.dateObj;
-        const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
-        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-        const formattedDate = `${key.slice(5)} (${weekdayStr})`; // MM-DD (W)
-        
-        const checkinHTML = item.in || '—';
-        const checkoutHTML = item.out || '—';
-        
-        html += `
-          <tr>
-            <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
-            <td>${checkinHTML}</td>
-            <td>${checkoutHTML}</td>
-          </tr>
-        `;
-      });
-    }
-
-    html += `
-          </tbody>
-        </table>
-      </div>
-    `;
-    container.innerHTML = html;
-    return;
-  }
-
-  // 💡 專任人員：當月打卡對帳日曆
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const daysInMonth = new Date(year, month, 0).getDate();
-  
-  const minePunch = empRecords.filter(r => {
-    if (r.type !== '上班' && r.type !== '下班') return false;
-    const d = safeNewDate(r.date || r.timestamp);
-    return d.getFullYear() === year && (d.getMonth() + 1) === month;
-  });
-
-  const mineLeave = empRecords.filter(r => {
-    if (r.type !== '請假' || r.status !== '同意') return false;
-    const d = safeNewDate(r.date || r.timestamp);
-    return d.getFullYear() === year && (d.getMonth() + 1) === month;
-  });
-
-  const punchMap = {};
-  minePunch.forEach(r => {
-    const d = safeNewDate(r.date || r.timestamp);
-    const dayKey = d.getDate();
-    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: '—', 下班: '—' };
-    if (r.type === '上班') punchMap[dayKey].上班 = r.time || '—';
-    if (r.type === '下班') punchMap[dayKey].下班 = r.time || '—';
-  });
-
-  const leaveMap = {};
-  mineLeave.forEach(r => {
-    const dStart = safeNewDate(r.date);
-    const dEnd = safeNewDate(r.endDate || r.date);
-    const sDay = dStart.getDate();
-    const eDay = dEnd.getDate();
-    const typeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '請假');
-    for (let day = sDay; day <= eDay; day++) {
-      leaveMap[day] = `🌴 已${typeLabel}`;
-    }
-  });
-
-  let html = `
-    <div class="calendar-table-container">
-      <table class="calendar-table">
-        <thead>
-          <tr>
-            <th>📅 日期</th>
-            <th>🟢 上班簽到</th>
-            <th>🏁 下班簽退</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateObj = new Date(year, month - 1, day);
-    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
-    const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
-    const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`;
-    const isHoliday = holidayStrings.includes(dateStrHyphen);
-    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-
-    let punch = punchMap[day] || { 上班: '—', 下班: '—' };
-    let leaveLabel = leaveMap[day];
-
-    let checkinHTML = punch.上班;
-    let checkoutHTML = punch.下班;
-
-    if (day > now.getDate()) {
-      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
-      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
-    } else if (isWeekend || isHoliday) {
-      if (punch.上班 === '—') checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
-      if (punch.下班 === '—') checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
-    } else {
-      const dayLeaves = mineLeave.filter(r => {
-        const startD = safeNewDate(r.date);
-        const endD = safeNewDate(r.endDate || r.date);
-        return dateObj >= startD && dateObj <= endD;
-      }).map(r => {
-        const startD = safeNewDate(r.date);
-        const endD = safeNewDate(r.endDate || r.date);
-        
-        let leaveStartMin = 540;
-        let leaveEndMin = 1080;
-        
-        const isStart = dateObj.getFullYear() === startD.getFullYear() && dateObj.getMonth() === startD.getMonth() && dateObj.getDate() === startD.getDate();
-        const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
-        
-        if (isStart && isEnd) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
-          leaveEndMin = timeToMin(r.endTime || '18:00');
-        } else if (isStart) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
-          leaveEndMin = 1080;
-        } else if (isEnd) {
-          leaveStartMin = 540;
-          leaveEndMin = timeToMin(r.endTime || '18:00');
-        } else {
-          leaveStartMin = 540;
-          leaveEndMin = 1080;
-        }
-        return { start: leaveStartMin, end: leaveEndMin };
-      });
-
-      const shift = getShiftMinutesForDate(dateStr, empId, specialShifts);
-      const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
-      const isAfternoonExempted = isRangeExempted(780, shift.end, dayLeaves);
-
-      if (punch.上班 === '—') {
-        if (isMorningExempted) {
-          checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
-        } else if (day !== now.getDate()) {
-          checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
-        } else {
-          checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
-        }
-      }
-      
-      if (punch.下班 === '—') {
-        if (isAfternoonExempted) {
-          checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
-        } else if (day !== now.getDate()) {
-          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
-        } else {
-          checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
-        }
-      }
-    }
-
-    const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
-
-    html += `
-      <tr ${rowStyle}>
-        <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
-        <td>${checkinHTML}</td>
-        <td>${checkoutHTML}</td>
-      </tr>
-    `;
-  }
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-  container.innerHTML = html;
-}
-
 function renderCalendarTable() {
   const el = document.getElementById('allRecordsList');
   if (!el) return;
@@ -3341,6 +3095,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
     const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
     const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`;
     const isHoliday = holidayStrings.includes(dateStrHyphen);
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
@@ -3583,6 +3338,24 @@ el.textContent = msg;
 el.classList.add('show');
 clearTimeout(toastTimer);
 toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// 💡 修復：showLoading/hideLoading 先前被呼叫但從未定義，
+// 會導致呼叫它們的函式（如主管「儲存代理設定」）直接拋出例外、後續程式碼（含 callGAS 送出）完全不會執行。
+function showLoading() {
+  let el = document.getElementById('globalLoadingOverlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'globalLoadingOverlay';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;';
+    el.innerHTML = '<div style="background:var(--card-bg,#fff);padding:16px 22px;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-primary,#0f172a);box-shadow:0 4px 16px rgba(0,0,0,0.15);"><span class="spinner" style="border-top-color:var(--blue-main,#1a6fc4);border-color:rgba(26,111,196,0.25);"></span>處理中…</div>';
+    document.body.appendChild(el);
+  }
+  el.style.display = 'flex';
+}
+function hideLoading() {
+  const el = document.getElementById('globalLoadingOverlay');
+  if (el) el.style.display = 'none';
 }
 document.querySelectorAll('.modal-overlay').forEach(o => {
 o.addEventListener('click', e => {
