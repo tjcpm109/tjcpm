@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統62</title>
+<title>TJCPM 員工系統61-3</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3531,6 +3531,12 @@ async function syncProfileAndAccumulatedLeaves() {
       let annualRemaining = 24;
       let compRemaining = 16;
 
+      // 💡 修復：settledAccumulated 移到 if(data.quota) 外層，避免 quota 剛好為 null 時，
+      // 年度累計加班/漏卡/遲到早退資料也一併被跳過、完全沒被寫入 currentUser。
+      if (data.settledAccumulated) {
+        currentUser.settledAccumulated = data.settledAccumulated;
+      }
+
       if (data.quota) {
         annualRemaining = data.quota.specialLeaveRemainingHours;
         compRemaining = data.quota.compLeaveRemainingHours;
@@ -3546,9 +3552,6 @@ async function syncProfileAndAccumulatedLeaves() {
         }
         if (data.defaultShift) {
           currentUser.defaultShift = data.defaultShift;
-        }
-        if (data.settledAccumulated) {
-          currentUser.settledAccumulated = data.settledAccumulated;
         }
         if (data.hasOwnProperty('isActiveProxy')) {
           currentUser.isActiveProxy = data.isActiveProxy;
