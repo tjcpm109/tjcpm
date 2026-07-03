@@ -1427,6 +1427,20 @@ display: inline-block;
 <div class="toast" id="toast"></div>
 
 <script>
+
+// 💡 V68 全域相容性大腦：集中定義請假與午休豁免計算，防止 renderAdminQueryCalendarTable 因 ReferenceError 崩潰
+function isTimeExempted(min, leaves) {
+  if (min >= 720 && min < 780) return true; // 午休固定豁免
+  return leaves.some(l => min >= l.start && min < l.end);
+}
+
+function isRangeExempted(s, e, leaves) {
+  for (let m = s; m < e; m++) {
+    if (!isTimeExempted(m, leaves)) return false;
+  }
+  return true;
+}
+
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
 // 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 'yyyy-mm-dd' (無補零) 格式導致 Invalid Date 的相容性問題
 function parseLocalDate(d) { return safeNewDate(d); }
@@ -1512,7 +1526,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v67.js')
+    navigator.serviceWorker.register('sw-v68.js')
       .then(reg => console.log('SW-v62 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -2751,17 +2765,9 @@ function renderCalendarTable() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true;
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
+      /* local isTimeExempted removed */
 
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      /* local isRangeExempted removed */
 
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, 1080, dayLeaves);
@@ -3825,17 +3831,9 @@ function renderYearlyIssues() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true; // lunch is exempt
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
+      /* local isTimeExempted removed */
 
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      /* local isRangeExempted removed */
 
       const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
       const isFullDayExempted = isRangeExempted(shift.start, shift.end, dayLeaves);
@@ -4063,17 +4061,9 @@ function calcAttendance() {
       });
 
       // 2. Helper functions
-      const isTimeExempted = (min, leaves) => {
-        if (min >= 720 && min < 780) return true; // lunch is exempt
-        return leaves.some(l => min >= l.start && min < l.end);
-      };
+      /* local isTimeExempted removed */
 
-      const isRangeExempted = (s, e, leaves) => {
-        for (let m = s; m < e; m++) {
-          if (!isTimeExempted(m, leaves)) return false;
-        }
-        return true;
-      };
+      /* local isRangeExempted removed */
 
       // 💡 V37-v34: 自動依據『特別排班』工作表適應上下班起迄，不再寫死 09:00 - 18:00
       const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
