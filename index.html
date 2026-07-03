@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -920,6 +919,32 @@ display: inline-block;
       <div id="yearIssueList"></div>
     </div>
 
+    <!-- 年度累計頁籤內容 -->
+    <div id="record-year-content" style="display:none;">
+      <p class="section-title">📅 個人年度出勤彙整總表 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+      <div class="profile-card" style="padding:12px; overflow-x:auto;">
+        <table class="attendance-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+          <thead>
+            <tr style="border-bottom: 1.5px solid var(--card-border); color: var(--text-secondary);">
+              <th style="padding: 8px;">⏰ 累計加班時數</th>
+              <th style="padding: 8px;">🔄 累計漏打卡次數</th>
+              <th style="padding: 8px;">⚠️ 累計遲到/早退次數</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="color: var(--text-primary); font-weight: bold;">
+              <td id="y-ot" style="padding: 8px; color: var(--blue-main);">0.0 h</td>
+              <td id="y-miss" style="padding: 8px; color: var(--accent-red);">0 次</td>
+              <td id="y-lateearly" style="padding: 8px; color: var(--accent-orange);">0 次</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <p class="section-title" style="margin-top:16px;">⚠️ 年度出勤異常明細 (漏打卡、遲到、早退)</p>
+      <div id="yearIssueList"></div>
+    </div>
+
     <!-- 打卡明細 (純打卡日曆) -->
     <div id="record-detail-content" style="display:none;">
       <p class="section-title">📅 本月打卡對帳日曆</p>
@@ -1224,22 +1249,22 @@ display: inline-block;
 
   <!-- 1. 待審核 子頁面 -->
   <div class="admin-subpage" id="adminSubPage-pending">
-    <div class="stats-grid">
-      <div class="stat-card" style="border-top:3px solid var(--accent-orange);">
-        <div class="stat-label">待審請假</div>
-        <div class="stat-value" id="statLeave" style="color:var(--accent-orange);">—<span>筆</span></div>
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr) !important;">
+      <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審請假</div>
+        <div class="stat-value" id="statLeave" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
       </div>
-      <div class="stat-card" style="border-top:3px solid var(--accent-purple);">
-        <div class="stat-label">待審加班</div>
-        <div class="stat-value" id="statOT" style="color:var(--accent-purple);">—<span>筆</span></div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-purple); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審加班</div>
+        <div class="stat-value" id="statOT" style="color:var(--accent-purple); font-size: 20px;">—<span>筆</span></div>
       </div>
-      <div class="stat-card" style="border-top:3px solid var(--blue-light);">
-        <div class="stat-label">待審補打卡</div>
-        <div class="stat-value" id="statSupp" style="color:var(--blue-light);">—<span>筆</span></div>
+      <div class="stat-card" style="border-top:3px solid var(--blue-light); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審補卡</div>
+        <div class="stat-value" id="statSupp" style="color:var(--blue-light); font-size: 20px;">—<span>筆</span></div>
       </div>
-      <div class="stat-card" style="border-top:3px solid var(--green-main);">
-        <div class="stat-label">待審班別異動</div>
-        <div class="stat-value" id="statAdjust" style="color:var(--green-main);">—<span>筆</span></div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審排班</div>
+        <div class="stat-value" id="statAdjust" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
       </div>
     </div>
     <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
@@ -1433,10 +1458,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9g
 function parseLocalDate(d) { return safeNewDate(d); }
 
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串
-// 💡 V58: 新增 correctionDateStr 參數 — 若校正生效中且校正日晚於原本以到職日算出的起算日，
-// 則本週期的起算日與顯示改用校正日（呈現「以校正時間起算」），校正一年到期後 correctionDateStr
-// 會自動變成 null（因後端 isCorrectionActive 失效），届時自動回歸到職日起算，不需另外處理。
-function getYearRangeString(joinDateStr, correctionDateStr) {
+function getYearRangeString(joinDateStr) {
   if (!joinDateStr) return '';
   const joinParts = joinDateStr.split(/[-/]/);
   const jYear = parseInt(joinParts[0], 10);
@@ -1464,18 +1486,6 @@ function getYearRangeString(joinDateStr, correctionDateStr) {
       break;
     }
   }
-
-  // 💡 V58: 校正日覆蓋起算日邏輯
-  if (correctionDateStr) {
-    const cParts = String(correctionDateStr).split(/[-/]/);
-    const cYear = parseInt(cParts[0], 10);
-    const cMonth = parseInt(cParts[1], 10) - 1;
-    const cDay = parseInt(cParts[2], 10);
-    const cDate = new Date(cYear, cMonth, cDay);
-    if (!isNaN(cDate.getTime()) && cDate.getTime() > range.start.getTime() && cDate.getTime() <= range.end.getTime()) {
-      range = { start: cDate, end: range.end };
-    }
-  }
   
   const sy = range.start.getFullYear();
   const sm = String(range.start.getMonth() + 1).padStart(2, '0');
@@ -1489,11 +1499,7 @@ function getYearRangeString(joinDateStr, correctionDateStr) {
 // 💡 V37-v29: 實時更新所有頁面的年度考勤區間顯示
 function updateAllYearRanges() {
   if (!currentUser || !currentUser.joinDate) return;
-  // 💡 V58: 若校正生效中，改用「歷史累計校正」起算日作為年度區間起點
-  const correctionStartDate = (currentUser.quota && currentUser.quota.correction && currentUser.quota.correction.startDate)
-    ? currentUser.quota.correction.startDate
-    : null;
-  const rangeStr = getYearRangeString(currentUser.joinDate, correctionStartDate);
+  const rangeStr = getYearRangeString(currentUser.joinDate);
   
   const yRangeEl = document.getElementById('y-range-span');
   if (yRangeEl) yRangeEl.textContent = `(${rangeStr})`;
@@ -1577,22 +1583,28 @@ const banner = document.getElementById('offlineBanner');
 const checkinSub = document.getElementById('checkinSub');
 const checkoutSub = document.getElementById('checkoutSub');
 if (!btnCheckin || !btnCheckout) return;
-const canPunch = isOnline && isGpsLocked;
+const canPunch = isGpsLocked; // 💡 離線打卡：只要有 GPS 鎖定即可打卡
 btnCheckin.classList.toggle('disabled', !canPunch);
 btnCheckout.classList.toggle('disabled', !canPunch);
 let reason = '';
-if (!isOnline) reason = '⚠️ 無法連線';
+if (!isOnline) reason = '☁️ 離線打卡已就緒';
 else if (!isGpsLocked) reason = '⚠️ 無 GPS 定位';
 if (banner) {
-banner.classList.toggle('show', !canPunch);
-if (!canPunch) {
-banner.textContent = !isOnline
-? '⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試'
-: '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
+banner.classList.toggle('show', !isOnline || !isGpsLocked);
+if (!isOnline) {
+banner.textContent = '☁️ 離線狀態已啟用：您目前處於離線狀態，系統已為您開啟「離線打卡」保護，您的打卡資料將暫存於手機中，並於連線恢復時自動完成雲端同步！';
+banner.style.backgroundColor = 'var(--accent-orange-pale)';
+banner.style.color = 'var(--accent-orange)';
+banner.style.borderColor = 'var(--accent-orange)';
+} else if (!isGpsLocked) {
+banner.textContent = '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
+banner.style.backgroundColor = 'var(--accent-red-pale)';
+banner.style.color = 'var(--accent-red)';
+banner.style.borderColor = 'var(--accent-red)';
 }
 }
-if (checkinSub) checkinSub.textContent = canPunch ? '打卡上班' : reason;
-if (checkoutSub) checkoutSub.textContent = canPunch ? '打卡下班' : reason;
+if (checkinSub) checkinSub.textContent = canPunch ? (isOnline ? '打卡上班' : '離線打卡') : reason;
+if (checkoutSub) checkoutSub.textContent = canPunch ? (isOnline ? '打卡下班' : '離線打卡') : reason;
 }
 
 function setOnlineStatus(online) {
@@ -1610,6 +1622,7 @@ connectivityCheckInFlight = true;
 try {
 await callGAS({}, 6000);
 setOnlineStatus(true);
+await processOfflineQueue(); // 💡 重連時自動觸發背景補傳
 } catch (e) {
 setOnlineStatus(false);
 } finally {
@@ -1875,7 +1888,6 @@ renderAllList();
 // ── Actions ─────────────────────────────────────────────────────
 function handleAction(type) {
 if (!currentUser) return;
-if (!isOnline) { showToast('⚠️ 目前無法連線，請確認網路後再試'); return; }
 if (!isGpsLocked) { showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試'); return; }
 const now = new Date();
 const remarkEl = document.getElementById('punchRemark');
@@ -1897,10 +1909,58 @@ remark: remark
 records.unshift(record);
 saveRecords();
 renderAllList();
-syncToSheet(record);
 if (remarkEl) remarkEl.value = ''; // 成功後清空打卡備註說明
-addNotif('system', `${type}打卡成功 ${record.time} 📍`);
-showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
+
+if (!isOnline) {
+  let offlineQueue = JSON.parse(localStorage.getItem('tjcpm_offline_queue') || '[]');
+  offlineQueue.push(record);
+  localStorage.setItem('tjcpm_offline_queue', JSON.stringify(offlineQueue));
+  addNotif('system', `${type}離線打卡成功 ${record.time} 📍 (待同步)`);
+  showToast(`✅ 離線${type}打卡成功！已加入補傳佇列`);
+} else {
+  syncToSheet(record);
+  addNotif('system', `${type}打卡成功 ${record.time} 📍`);
+  showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
+}
+}
+
+async function processOfflineQueue() {
+  let offlineQueue = JSON.parse(localStorage.getItem('tjcpm_offline_queue') || '[]');
+  if (offlineQueue.length === 0) return;
+  console.log(`[Sync] 偵測到 ${offlineQueue.length} 筆離線打卡，開始背景補傳...`);
+  const remaining = [];
+  const statusEl = document.getElementById('syncStatus');
+  if (statusEl) {
+    statusEl.textContent = `🔄 正在自動同步離線打卡 ${offlineQueue.length} 筆…`;
+    statusEl.style.color = 'var(--accent-orange)';
+  }
+  for (let i = 0; i < offlineQueue.length; i++) {
+    const record = offlineQueue[i];
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record)
+      });
+      console.log(`[Sync] id=${record.id} 補傳成功！`);
+      addNotif('system', `☁️ 離線打卡 (${record.date} ${record.time} ${record.type}) 已成功自動補傳同步！`);
+    } catch (err) {
+      console.error(`[Sync] id=${record.id} 補傳失敗:`, err);
+      remaining.push(record);
+    }
+  }
+  localStorage.setItem('tjcpm_offline_queue', JSON.stringify(remaining));
+  if (statusEl) {
+    if (remaining.length === 0) {
+      statusEl.textContent = '✅ 所有離線打卡已同步雲端';
+      statusEl.style.color = 'var(--green-main)';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    } else {
+      statusEl.textContent = `⚠️ 賸餘 ${remaining.length} 筆離線打卡待同步`;
+      statusEl.style.color = 'var(--accent-orange)';
+    }
+  }
 }
 
 function submitLeave() {
@@ -2198,6 +2258,251 @@ function renderAllList() {
 }
 
 // ── 核心升級：三欄日曆式對帳表格（請假核可豁免，點選自動補卡） ──
+function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
+  const container = document.getElementById('aq-calendar-container');
+  if (!container) return;
+
+  const empType = empInfo ? (empInfo.empType || '專任') : '專任';
+  const holidayStrings = res.holidayStrings || [];
+  const specialShifts = res.specialShifts || [];
+
+  // 💡 兼任人員專屬：整年度打卡收折呈現 (只列出有打卡的日期)
+  if (empType === '兼任') {
+    const currentYear = new Date().getFullYear();
+    const minePunch = empRecords.filter(r => {
+      if (r.type !== '上班' && r.type !== '下班') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getFullYear() === currentYear;
+    });
+
+    const mineSupp = empRecords.filter(r => {
+      if (r.type !== '補打卡' || r.status !== '同意') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getFullYear() === currentYear;
+    });
+
+    const dailyMap = {};
+    
+    minePunch.forEach(r => {
+      const d = safeNewDate(r.date || r.timestamp);
+      const key = formatLocalDateStr(d);
+      if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
+      if (r.type === '上班') {
+        if (!dailyMap[key].in || r.time < dailyMap[key].in) dailyMap[key].in = r.time;
+      } else if (r.type === '下班') {
+        if (!dailyMap[key].out || r.time > dailyMap[key].out) dailyMap[key].out = r.time;
+      }
+    });
+
+    mineSupp.forEach(r => {
+      const d = safeNewDate(r.date || r.timestamp);
+      const key = formatLocalDateStr(d);
+      if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
+      if (r.subType === '上班') dailyMap[key].in = r.time;
+      if (r.subType === '下班') dailyMap[key].out = r.time;
+    });
+
+    const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
+
+    let html = `
+      <div class="calendar-table-container">
+        <table class="calendar-table">
+          <thead>
+            <tr>
+              <th>📅 出勤日期</th>
+              <th>🟢 上班簽到</th>
+              <th>🏁 下班簽退</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (sortedKeys.length === 0) {
+      html += `
+        <tr>
+          <td colspan="3" style="text-align:center; color:var(--text-secondary); padding:20px;">
+            尚無年度打卡紀錄
+          </td>
+        </tr>
+      `;
+    } else {
+      sortedKeys.forEach(key => {
+        const item = dailyMap[key];
+        const dateObj = item.dateObj;
+        const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+        const formattedDate = `${key.slice(5)} (${weekdayStr})`; // MM-DD (W)
+        
+        const checkinHTML = item.in || '—';
+        const checkoutHTML = item.out || '—';
+        
+        html += `
+          <tr>
+            <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+            <td>${checkinHTML}</td>
+            <td>${checkoutHTML}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+    container.innerHTML = html;
+    return;
+  }
+
+  // 💡 專任人員：當月打卡對帳日曆
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  
+  const minePunch = empRecords.filter(r => {
+    if (r.type !== '上班' && r.type !== '下班') return false;
+    const d = safeNewDate(r.date || r.timestamp);
+    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+  });
+
+  const mineLeave = empRecords.filter(r => {
+    if (r.type !== '請假' || r.status !== '同意') return false;
+    const d = safeNewDate(r.date || r.timestamp);
+    return d.getFullYear() === year && (d.getMonth() + 1) === month;
+  });
+
+  const punchMap = {};
+  minePunch.forEach(r => {
+    const d = safeNewDate(r.date || r.timestamp);
+    const dayKey = d.getDate();
+    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: '—', 下班: '—' };
+    if (r.type === '上班') punchMap[dayKey].上班 = r.time || '—';
+    if (r.type === '下班') punchMap[dayKey].下班 = r.time || '—';
+  });
+
+  const leaveMap = {};
+  mineLeave.forEach(r => {
+    const dStart = safeNewDate(r.date);
+    const dEnd = safeNewDate(r.endDate || r.date);
+    const sDay = dStart.getDate();
+    const eDay = dEnd.getDate();
+    const typeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '請假');
+    for (let day = sDay; day <= eDay; day++) {
+      leaveMap[day] = `🌴 已${typeLabel}`;
+    }
+  });
+
+  let html = `
+    <div class="calendar-table-container">
+      <table class="calendar-table">
+        <thead>
+          <tr>
+            <th>📅 日期</th>
+            <th>🟢 上班簽到</th>
+            <th>🏁 下班簽退</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateObj = new Date(year, month - 1, day);
+    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+    const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+    const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`;
+    const isHoliday = holidayStrings.includes(dateStrHyphen);
+    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
+    let punch = punchMap[day] || { 上班: '—', 下班: '—' };
+    let leaveLabel = leaveMap[day];
+
+    let checkinHTML = punch.上班;
+    let checkoutHTML = punch.下班;
+
+    if (day > now.getDate()) {
+      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
+      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
+    } else if (isWeekend || isHoliday) {
+      if (punch.上班 === '—') checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
+      if (punch.下班 === '—') checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
+    } else {
+      const dayLeaves = mineLeave.filter(r => {
+        const startD = safeNewDate(r.date);
+        const endD = safeNewDate(r.endDate || r.date);
+        return dateObj >= startD && dateObj <= endD;
+      }).map(r => {
+        const startD = safeNewDate(r.date);
+        const endD = safeNewDate(r.endDate || r.date);
+        
+        let leaveStartMin = 540;
+        let leaveEndMin = 1080;
+        
+        const isStart = dateObj.getFullYear() === startD.getFullYear() && dateObj.getMonth() === startD.getMonth() && dateObj.getDate() === startD.getDate();
+        const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
+        
+        if (isStart && isEnd) {
+          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveEndMin = timeToMin(r.endTime || '18:00');
+        } else if (isStart) {
+          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveEndMin = 1080;
+        } else if (isEnd) {
+          leaveStartMin = 540;
+          leaveEndMin = timeToMin(r.endTime || '18:00');
+        } else {
+          leaveStartMin = 540;
+          leaveEndMin = 1080;
+        }
+        return { start: leaveStartMin, end: leaveEndMin };
+      });
+
+      const shift = getShiftMinutesForDate(dateStr, empId, specialShifts);
+      const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
+      const isAfternoonExempted = isRangeExempted(780, shift.end, dayLeaves);
+
+      if (punch.上班 === '—') {
+        if (isMorningExempted) {
+          checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
+        } else if (day !== now.getDate()) {
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
+        } else {
+          checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+        }
+      }
+      
+      if (punch.下班 === '—') {
+        if (isAfternoonExempted) {
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
+        } else if (day !== now.getDate()) {
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
+        } else {
+          checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+        }
+      }
+    }
+
+    const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
+
+    html += `
+      <tr ${rowStyle}>
+        <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+        <td>${checkinHTML}</td>
+        <td>${checkoutHTML}</td>
+      </tr>
+    `;
+  }
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
 function renderCalendarTable() {
   const el = document.getElementById('allRecordsList');
   if (!el) return;
@@ -2400,7 +2705,17 @@ function renderCalendarTable() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
+      const isTimeExempted = (min, leaves) => {
+        if (min >= 720 && min < 780) return true;
+        return leaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e, leaves) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m, leaves)) return false;
+        }
+        return true;
+      };
 
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, 1080, dayLeaves);
@@ -2422,22 +2737,6 @@ function renderCalendarTable() {
           checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp('${dateQueryStr}','下班',event)">⚠️ 漏打卡</span>`;
         } else {
           checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
-        }
-      }
-
-      // 💡 V58: 遲到/早退偵測 — 比照「年度出勤異常明細」套用同一套請假豁免邏輯，
-      // 讓「本月打卡對帳日曆」與「年度出勤異常明細」判定一致
-      const shiftForCal = getShiftMinutesForDate(dateQueryStr, currentUser?.empId, currentUser?.specialShifts);
-      if (punch.上班 !== '—') {
-        const punchInMin = timeToMin(punch.上班);
-        if (punchInMin > shiftForCal.start && !isRangeExempted(shiftForCal.start, punchInMin, dayLeaves)) {
-          checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.上班} ⚠️遲到</span>`;
-        }
-      }
-      if (punch.下班 !== '—') {
-        const punchOutMin = timeToMin(punch.下班);
-        if (punchOutMin < shiftForCal.end && !isRangeExempted(punchOutMin, shiftForCal.end, dayLeaves)) {
-          checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.下班} ⚠️早退</span>`;
         }
       }
     }
@@ -2537,11 +2836,30 @@ function getShiftMinutesForDate(dateStr, empId, shiftsList) {
       }
     }
   }
-  return match || { start: 540, end: 1080 }; // 預設 09:00 - 18:00
+  let defaultStart = 540; // 09:00
+  let defaultEnd = 1080;  // 18:00
+  if (currentUser && currentUser.defaultShift) {
+    const parts = currentUser.defaultShift.split('-');
+    if (parts.length === 2) {
+      defaultStart = timeToMin(parts[0].trim());
+      defaultEnd = timeToMin(parts[1].trim());
+    }
+  }
+  return match || { start: defaultStart, end: defaultEnd };
 }
 
 
 // 💡 V37-v40: 支援包含前導零（如 002 與 2）以及非數字（如 acls2000）的魯棒員工編號比對大腦
+function isApproveCommentBoxOpen() {
+  const textareas = document.querySelectorAll('.approve-comment-input');
+  for (let i = 0; i < textareas.length; i++) {
+    if (textareas[i].parentElement.style.display === 'block') {
+      return true;
+    }
+  }
+  return false;
+}
+
 function matchEmpId(id1, id2) {
   var s1 = String(id1 || "").trim();
   var s2 = String(id2 || "").trim();
@@ -2686,19 +3004,10 @@ async function loadAdminData() {
   document.getElementById('pendingLoading').textContent = '載入中…';
   
   // 💡 V37-v28: 本地快取降級顯示
-  // 🐞 V59修復: 原本漏了「班別調整」類型，導致該類待審項目在伺服器資料回來前，本地快取畫面完全不會顯示
-  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡' || r.type === '班別調整'));
+  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
   document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('statOT').innerHTML = records.filter(r => r.type === '加班' && r.status === '待審').length + '<span>筆</span>';
-  // 🐞 V59新增: 補打卡、班別異動 各自獨立統計數字
-  document.getElementById('statSupp').innerHTML = records.filter(r => r.type === '補打卡' && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('statAdjust').innerHTML = records.filter(r => r.type === '班別調整' && r.status === '待審').length + '<span>筆</span>';
-  // 🐞 V59修復: 若主管正在填寫某筆的簽核意見(comment box 已展開)，跳過本次重繪，
-  // 避免 innerHTML 整批替換把該筆按鈕換成新的DOM節點，導致點擊「確認送出」時
-  // pendingApproveDecision[id] 對應不到（該筆的核准/拒絕狀態是綁在舊節點上的id），造成「沒反應」
-  if (!isApproveCommentBoxOpen()) {
-    document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
-  }
+  document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
+  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
   
   try {
     const data = await callGAS({ action: 'getAll' });
@@ -2715,15 +3024,12 @@ async function loadAdminData() {
     if (data && data.pending) {
       const pendingList = data.pending;
       const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
-      const otPendingCount = pendingList.filter(r => r.type === '加班').length;
-      const suppPendingCount = pendingList.filter(r => r.type === '補打卡').length;
-      const adjustPendingCount = pendingList.filter(r => r.type === '班別調整').length;
+      const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
       
       document.getElementById('statLeave').innerHTML = leavePendingCount + '<span>筆</span>';
       document.getElementById('statOT').innerHTML = otPendingCount + '<span>筆</span>';
-      document.getElementById('statSupp').innerHTML = suppPendingCount + '<span>筆</span>';
-      document.getElementById('statAdjust').innerHTML = adjustPendingCount + '<span>筆</span>';
-      // 🐞 V59修復: 同上，正在填寫簽核意見時跳過重繪
+      document.getElementById('statSupp').innerHTML = pendingList.filter(r => r.type === '補打卡').length + '<span>筆</span>';
+      document.getElementById('statAdjust').innerHTML = pendingList.filter(r => r.type === '班別調整').length + '<span>筆</span>';
       if (!isApproveCommentBoxOpen()) {
         document.getElementById('pendingList').innerHTML = pendingList.length 
           ? pendingList.map(r => recordHTML(r, true, true)).join('') 
@@ -3057,7 +3363,6 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
     const dateStr = `${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
     const dateStrHyphen = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`; // 🐞 V59修復: 補回遺漏的 formattedDate 定義，此前每次執行到此都會拋出 ReferenceError，導致主管穿透查詢整組畫面(含年度統計數字)被 catch 區塊覆蓋成「⚠️ 錯誤」，且每日對帳日曆完全無法渲染
     const isHoliday = holidayStrings.includes(dateStrHyphen);
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
@@ -3104,7 +3409,17 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
+      const isTimeExempted = (min, leaves) => {
+        if (min >= 720 && min < 780) return true;
+        return leaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e, leaves) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m, leaves)) return false;
+        }
+        return true;
+      };
 
       const shift = getShiftMinutesForDate(dateStr, empId, specialShifts);
       const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
@@ -3127,21 +3442,6 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
         } else {
           checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
-        }
-      }
-
-      // 💡 V58: 遲到/早退偵測 — 與個人「本月打卡對帳日曆」、「年度出勤異常明細」套用同一套請假豁免邏輯，
-      // 確保主管查看同仁日曆時的判定結果一致
-      if (punch.上班 !== '—') {
-        const punchInMin = timeToMin(punch.上班);
-        if (punchInMin > shift.start && !isRangeExempted(shift.start, punchInMin, dayLeaves)) {
-          checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.上班} ⚠️遲到</span>`;
-        }
-      }
-      if (punch.下班 !== '—') {
-        const punchOutMin = timeToMin(punch.下班);
-        if (punchOutMin < shift.end && !isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
-          checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;font-size:13px;">${punch.下班} ⚠️早退</span>`;
         }
       }
     }
@@ -3340,10 +3640,6 @@ if (suppEl) suppEl.value = '08:00';
 
 // ── 主管簽核 ──
 let pendingApproveDecision = {};
-// 🐞 V59新增: 判斷目前是否有任何一筆「簽核意見框」正在展開中，供 loadAdminData() 重繪待審清單前檢查
-function isApproveCommentBoxOpen() {
-  return document.querySelectorAll('.approve-comment-area.open').length > 0;
-}
 function toggleApproveComment(id, decision) {
 document.querySelectorAll('.approve-comment-area.open').forEach(el => {
 const rid = el.id.replace('approveArea-','');
@@ -3377,19 +3673,8 @@ delete pendingApproveDecision[id];
 }
 
 function confirmApprove(id) {
-let decision = pendingApproveDecision[id];
-if (!decision) {
-  // 🐞 V59修復: 過去這裡直接 return，畫面上完全沒有任何提示，使用者會覺得「按了沒反應」。
-  // 改為從按鈕當下顯示的文字反推決定（確認核准/確認拒絕），並提示使用者重新操作，避免靜默失敗。
-  const btn = document.getElementById('approveConfirmBtn-' + id);
-  const btnText = btn ? btn.textContent : '';
-  if (btnText.includes('核准')) decision = '同意';
-  else if (btnText.includes('拒絕')) decision = '拒絕';
-  if (!decision) {
-    showToast('⚠️ 此筆申請畫面已過期，請重新點擊核准/拒絕');
-    return;
-  }
-}
+const decision = pendingApproveDecision[id];
+if (!decision) return;
 const commentEl = document.getElementById('approveComment-' + id);
 const comment = commentEl ? commentEl.value.trim() : '';
 approveRecord(id, decision, comment);
@@ -3497,7 +3782,6 @@ async function syncProfileAndAccumulatedLeaves() {
         
         // 同步儲存至 currentUser 中，確保全系統共享
         currentUser.quota = data.quota;
-        updateAllYearRanges(); // 💡 V58: quota.correction 到手後立即用校正日刷新年度區間顯示
         if (data.holidayStrings) {
           currentUser.holidayStrings = data.holidayStrings;
         }
@@ -3563,29 +3847,6 @@ function timeToMin(timeStr) {
   if (!timeStr) return 540; // Default to 09:00 if empty
   const parts = timeStr.split(':');
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || 0, 10);
-}
-
-// 🐞 V59優化: 統一共用的請假豁免判定函式。
-// 原本 calcAttendance()／renderYearlyIssues()／renderAdminQueryCalendarTable()／renderCalendarTable()
-// 這 4 處各自重複定義同一套邏輯，且 isRangeExempted 是「逐分鐘」跑迴圈(最多重算 540 次/次呼叫)。
-// 改成集中一份、用區間排序掃描一次判斷覆蓋，同一段時間不會被反覆逐分鐘重算，結果與原邏輯完全一致。
-function isTimeExempted(min, leaves) {
-  if (min >= 720 && min < 780) return true; // 午休固定豁免
-  return leaves.some(l => min >= l.start && min < l.end);
-}
-function isRangeExempted(s, e, leaves) {
-  if (s >= e) return true;
-  const intervals = leaves.concat([{ start: 720, end: 780 }])
-    .filter(l => l.end > s && l.start < e)
-    .sort((a, b) => a.start - b.start);
-  let cursor = s;
-  for (let i = 0; i < intervals.length; i++) {
-    const iv = intervals[i];
-    if (iv.start > cursor) return false;
-    if (iv.end > cursor) cursor = iv.end;
-    if (cursor >= e) return true;
-  }
-  return cursor >= e;
 }
 
 function calculateLeaveHoursLocal(r, holidays) {
@@ -3754,7 +4015,17 @@ function renderYearlyIssues() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
+      const isTimeExempted = (min, leaves) => {
+        if (min >= 720 && min < 780) return true; // lunch is exempt
+        return leaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e, leaves) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m, leaves)) return false;
+        }
+        return true;
+      };
 
       const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
       const isFullDayExempted = isRangeExempted(shift.start, shift.end, dayLeaves);
@@ -3975,7 +4246,17 @@ function calcAttendance() {
       });
 
       // 2. Helper functions
-      // 🐞 V59優化: isTimeExempted / isRangeExempted 已改為全域共用函式 (見 timeToMin 下方)，此處不再重複定義與逐分鐘重算
+      const isTimeExempted = (min, leaves) => {
+        if (min >= 720 && min < 780) return true; // lunch is exempt
+        return leaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e, leaves) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m, leaves)) return false;
+        }
+        return true;
+      };
 
       // 💡 V37-v34: 自動依據『特別排班』工作表適應上下班起迄，不再寫死 09:00 - 18:00
       const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
