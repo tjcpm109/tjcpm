@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統61</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -919,32 +919,6 @@ display: inline-block;
       <div id="yearIssueList"></div>
     </div>
 
-    <!-- 年度累計頁籤內容 -->
-    <div id="record-year-content" style="display:none;">
-      <p class="section-title">📅 個人年度出勤彙整總表 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
-      <div class="profile-card" style="padding:12px; overflow-x:auto;">
-        <table class="attendance-table" style="width: 100%; border-collapse: collapse; text-align: center;">
-          <thead>
-            <tr style="border-bottom: 1.5px solid var(--card-border); color: var(--text-secondary);">
-              <th style="padding: 8px;">⏰ 累計加班時數</th>
-              <th style="padding: 8px;">🔄 累計漏打卡次數</th>
-              <th style="padding: 8px;">⚠️ 累計遲到/早退次數</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="color: var(--text-primary); font-weight: bold;">
-              <td id="y-ot" style="padding: 8px; color: var(--blue-main);">0.0 h</td>
-              <td id="y-miss" style="padding: 8px; color: var(--accent-red);">0 次</td>
-              <td id="y-lateearly" style="padding: 8px; color: var(--accent-orange);">0 次</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <p class="section-title" style="margin-top:16px;">⚠️ 年度出勤異常明細 (漏打卡、遲到、早退)</p>
-      <div id="yearIssueList"></div>
-    </div>
-
     <!-- 打卡明細 (純打卡日曆) -->
     <div id="record-detail-content" style="display:none;">
       <p class="section-title">📅 本月打卡對帳日曆</p>
@@ -1539,8 +1513,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw-v61.js')
-      .then(reg => console.log('SW-v30 註冊成功:', reg.scope))
-      .catch(err => console.error('SW-v30 註冊失敗:', err));
+      .then(reg => console.log('SW-v61 註冊成功:', reg.scope))
+      .catch(err => console.error('SW-v61 註冊失敗:', err));
   });
 }
 
@@ -2994,6 +2968,8 @@ ${retractButton}
 }
 
 // ── Admin ───────────────────────────────────────────────────────
+// 🔧 修復：主管待審清單快取（含所有員工的待審申請），供 approveRecord() 查找核准對象
+let adminPendingCache = [];
 async function loadAdminData() {
   if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && currentUser.role !== 'admin2')) return;
   applyAdminSubTabVisibility();
@@ -3003,8 +2979,9 @@ async function loadAdminData() {
   rebuildAdminDropdownsAndTable(); // 💡 V58: 立即渲染本機快取的主管穿透下拉選單與假別看板！
   document.getElementById('pendingLoading').textContent = '載入中…';
   
-  // 💡 V37-v28: 本地快取降級顯示
+  // 💡 本地快取降級顯示
   let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+  adminPendingCache = pending; // 🔧 修復：快取起來，供 approveRecord() 查找
   document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
@@ -3023,6 +3000,7 @@ async function loadAdminData() {
     // 💡 V37-v28: 若後台有傳回實時所有員工的待審核清單，直接用後台數據更新
     if (data && data.pending) {
       const pendingList = data.pending;
+      adminPendingCache = pendingList; // 🔧 修復：以後台全員清單覆蓋快取，供 approveRecord() 查找
       const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
       const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
       
@@ -3686,8 +3664,13 @@ if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin
 showToast('⚠️ 您沒有審核權限');
 return;
 }
-const rec = records.find(r => r.id === id);
-if (!rec) return;
+// 🔧 修復：待審清單裡多半是「其他員工」送出的申請，本機 records 只有登入者自己的紀錄，
+// 一定要先從 adminPendingCache（loadAdminData 抓回的全員待審清單）查找，才會找得到。
+const rec = adminPendingCache.find(r => r.id === id) || records.find(r => r.id === id);
+if (!rec) {
+showToast('⚠️ 找不到此筆申請資料，請重新整理後再試');
+return;
+}
 rec.status = decision;
 if (comment) rec.approveComment = comment;
 saveRecords();
@@ -3929,7 +3912,16 @@ function renderYearlyIssues() {
     return;
   }
 
-  const range = getCurrentEmploymentYearRange();
+  // 🔧 修復：若同仁有啟用「歷史累計校正」，計算起始日應改以校正起始日為準
+  // （而非一律用到職週年日），才會與上方「年度累計」欄位（已含校正基準）的統計期間一致
+  const correction = currentUser.quota && currentUser.quota.correction;
+  let range = getCurrentEmploymentYearRange();
+  if (correction && correction.startDate) {
+    const corrStart = parseLocalDate(correction.startDate);
+    if (corrStart && !isNaN(corrStart.getTime()) && corrStart > range.start) {
+      range = { start: corrStart, end: range.end };
+    }
+  }
   const startYear = range.start.getFullYear();
   const startMonth = range.start.getMonth();
   const startDay = range.start.getDate();
@@ -4088,12 +4080,27 @@ function renderYearlyIssues() {
 
   issues.sort((a, b) => b.date.localeCompare(a.date));
 
+  // 🔧 修復：校正基準說明區塊 — 讓明細清單與上方「年度累計」（已含校正）的數字對得起來，
+  // 校正起始日之前的歷史次數無法逐日列出，改以總計說明呈現
+  let correctionNoteHtml = '';
+  if (correction && (correction.initMissed || correction.initLateEarly)) {
+    correctionNoteHtml = `
+      <div class="profile-card" style="padding:12px; margin-bottom:12px; border-left:4px solid var(--accent-orange); background:var(--card-bg-soft);">
+        <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          📌 <b>校正基準</b>（${correction.startDate} 之前歷史累計，已計入上方年度加總）：
+          漏打卡 <b style="color:var(--accent-red);">${correction.initMissed || 0}</b> 次、
+          遲到/早退 <b style="color:var(--accent-orange);">${correction.initLateEarly || 0}</b> 次
+        </div>
+      </div>
+    `;
+  }
+
   if (issues.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
+    el.innerHTML = correctionNoteHtml || '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
     return;
   }
 
-  let html = `
+  let html = correctionNoteHtml + `
     <div class="calendar-table-container">
       <table class="calendar-table">
         <thead>
