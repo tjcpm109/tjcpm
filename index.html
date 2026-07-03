@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1499,8 +1499,26 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw-v51.js')
-      .then(reg => console.log('SW-v30 註冊成功:', reg.scope))
-      .catch(err => console.error('SW-v30 註冊失敗:', err));
+      .then(reg => {
+        console.log('SW 註冊成功:', reg.scope);
+
+        // 每 10 分鐘主動檢查一次有沒有新版 SW（單位：毫秒）
+        setInterval(() => reg.update(), 5 * 60 * 1000);
+
+        // App 從背景切回前景時也順便檢查一次
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) reg.update();
+        });
+      })
+      .catch(err => console.error('SW 註冊失敗:', err));
+
+    // 偵測到新 SW 接管頁面，自動重新整理拿到最新版
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
   });
 }
 
