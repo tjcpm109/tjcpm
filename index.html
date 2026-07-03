@@ -1244,12 +1244,7 @@ display: inline-block;
     <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
     <div class="record-list" id="pendingList"></div>
 
-    <!-- 💡 V55: 背景批次產生 PDF 歸檔手動按鈕 -->
-    <div class="profile-card" style="padding:16px; margin-top: 24px; border-top: 3px solid var(--blue-light);">
-      <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px;">🗃️ 雲端 PDF 歸檔控制台</p>
-      <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; margin-bottom:12px;">系統預設每日凌晨自動將核准單據產生 PDF 並填回 Google Sheets 連結。若欲立即同步，可點選下方按鈕進行批次產檔。</p>
-      <button class="submit-btn blue" style="margin: 0;" onclick="triggerBatchPdf(this)">✓ 立即執行背景 PDF 歸檔</button>
-    </div>
+
   </div>
 
   <!-- 2. 考勤與假別看板 子頁面 -->
@@ -1528,8 +1523,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v73.js')
-      .then(reg => console.log('SW-v73 註冊成功:', reg.scope))
+    navigator.serviceWorker.register('sw-v75.js')
+      .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
@@ -2121,32 +2116,6 @@ function submitAdminAdjust() {
   
   showToast('✓ 班別異動指派成功並已直接生效！');
   document.getElementById('adminAdjustReason').value = '';
-}
-
-async function triggerBatchPdf(btn) {
-  let originalText = "";
-  if (btn) {
-    originalText = btn.textContent;
-    btn.innerHTML = '<span class="spinner"></span> 正在產生 PDF 歸檔...';
-    btn.disabled = true;
-  }
-  showLoading();
-  try {
-    const res = await callGAS({ action: 'batchPdf' });
-    hideLoading();
-    if (res && res.status === 'ok') {
-      showToast('✅ PDF 歸檔成功！共處理 ' + (res.totalGenerated ?? 0) + ' 筆核准單據');
-    } else {
-      showToast('⚠️ 歸檔處理失敗：' + (res.message || '未知錯誤'));
-    }
-  } catch (e) {
-    hideLoading();
-    showToast('⚠️ 連線失敗，請檢查網路');
-  }
-  if (btn) {
-    btn.textContent = originalText;
-    btn.disabled = false;
-  }
 }
 
 function quickLeave() {
@@ -3135,33 +3104,91 @@ async function loadAdminData() {
       if (ciEl) ciEl.innerHTML = rows.filter(r => r[3] === '上班' && fmtDate(r[0]) === tStr).length + '<span>人</span>';
       if (coEl) coEl.innerHTML = rows.filter(r => r[3] === '下班' && fmtDate(r[0]) === tStr).length + '<span>人</span>';
 
-      // 📊 當月非院內外勤打卡即時穿透
+      // 📊 當月非院內外勤打卡即時穿透 (加上 J 欄資訊 & 雙和300米外打卡判定)
       const currentMonthPunches = allRows.filter(r => {
         if (r[3] !== '上班' && r[3] !== '下班') return false;
         const d = parseSheetDate(r[4] || r[0]);
         if (!d) return false;
         const now = new Date();
         const isCurrentM = d.getFullYear() === now.getFullYear() && (d.getMonth() + 1) === (now.getMonth() + 1);
+        
         const hasRemark = r[8] && String(r[8]).trim() !== '';
-        return isCurrentM && hasRemark;
+        let isOutsideShuangho = false;
+        const latVal = parseFloat(r[6]);
+        const lngVal = parseFloat(r[7]);
+        if (!isNaN(latVal) && !isNaN(lngVal)) {
+          const getDistance = (l1, n1, l2, n2) => {
+            const R = 6371e3;
+            const phi1 = l1 * Math.PI / 180;
+            const phi2 = l2 * Math.PI / 180;
+            const deltaPhi = (l2 - l1) * Math.PI / 180;
+            const deltaLambda = (n2 - n1) * Math.PI / 180;
+            const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+                      Math.cos(phi1) * Math.cos(phi2) *
+                      Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+          };
+          const distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
+          if (distShuangho > 300) {
+            isOutsideShuangho = true;
+          }
+        }
+        return isCurrentM && (hasRemark || isOutsideShuangho);
       });
 
-      const fieldPunchesHtml = currentMonthPunches.length ? currentMonthPunches.map(r => `
+      const fieldPunchesHtml = currentMonthPunches.length ? currentMonthPunches.map(r => {
+        let jVal = r[9] ? String(r[9]).trim() : "";
+        if (!jVal) {
+          const latVal = parseFloat(r[6]);
+          const lngVal = parseFloat(r[7]);
+          if (!isNaN(latVal) && !isNaN(lngVal)) {
+            const getDistance = (l1, n1, l2, n2) => {
+              const R = 6371e3;
+              const phi1 = l1 * Math.PI / 180;
+              const phi2 = l2 * Math.PI / 180;
+              const deltaPhi = (l2 - l1) * Math.PI / 180;
+              const deltaLambda = (n2 - n1) * Math.PI / 180;
+              const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+                        Math.cos(phi1) * Math.cos(phi2) *
+                        Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              return R * c;
+            };
+            const distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
+            const distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
+            const hasRemark = r[8] && String(r[8]).trim() !== '';
+            if (hasRemark) {
+              const isAtChongqing = distChongqing <= 300;
+              jVal = (isAtChongqing ? "在重慶南路書局範圍內" : "不在重慶南路書局範圍內") + 
+                     " (距書局 " + distChongqing.toFixed(0) + " 米, 距雙和 " + distShuangho.toFixed(0) + " 米)";
+            } else {
+              const isAtShuangho = distShuangho <= 300;
+              jVal = (isAtShuangho ? "在雙和院區範圍內" : "不在雙和院區範圍內") + 
+                     " (距雙和 " + distShuangho.toFixed(0) + " 米, 距書局 " + distChongqing.toFixed(0) + " 米)";
+            }
+          }
+        }
+        const remarkText = r[8] ? String(r[8]).trim() : "無";
+        const jDisplay = jVal ? `📍 <strong>J欄定位分析：${jVal}</strong>` : "📍 <strong>J欄定位分析：無GPS定位</strong>";
+        return `
         <div class="record-item" style="border-left: 4px solid var(--accent-orange);">
           <div class="record-row">
             <div class="record-dot ${r[3]==='上班'?'dot-green':'dot-red'}"></div>
             <div class="record-info">
               <div class="record-type" style="font-weight: bold; color: var(--text-primary);">
                 <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
-                ${r[2]||''}（${r[1]}）
+                \${r[2]||''}（\${r[1]}）
               </div>
-              <div class="record-meta" style="color: var(--text-secondary); margin-top: 4px;">
-                📅 ${fmtDate(r[4] || r[0])} · ⏰ ${fmtTime(r[5])} · 💬 <strong>外勤備註：${String(r[8]).trim()}</strong>
+              <div class="record-meta" style="color: var(--text-secondary); margin-top: 4px; line-height: 1.6;">
+                📅 \${fmtDate(r[4] || r[0])} · ⏰ \${fmtTime(r[5])} · 💬 外勤備註：\${remarkText}<br>
+                \${jDisplay}
               </div>
             </div>
           </div>
         </div>
-      `).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">當月尚無異地外勤打卡紀錄</div></div>';
+        `;
+      }).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">當月尚無異地外勤打卡紀錄</div></div>';
       
       document.getElementById('adminFieldPunches').innerHTML = fieldPunchesHtml;
 
@@ -3407,6 +3434,24 @@ el.textContent = msg;
 el.classList.add('show');
 clearTimeout(toastTimer);
 toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// 💡 V74: 定義全域讀取遮罩，防止 ReferenceError: showLoading is not defined 報錯
+function showLoading() {
+  let el = document.getElementById('globalLoadingOverlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'globalLoadingOverlay';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;';
+    el.innerHTML = '<div style="background:var(--card-bg,#fff);padding:16px 22px;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-primary,#0f172a);box-shadow:0 4px 16px rgba(0,0,0,0.15);"><span class="spinner" style="border-top-color:var(--blue-main,#1a6fc4);border-color:rgba(26,111,196,0.25);"></span>處理中…</div>';
+    document.body.appendChild(el);
+  }
+  el.style.display = 'flex';
+}
+
+function hideLoading() {
+  const el = document.getElementById('globalLoadingOverlay');
+  if (el) el.style.display = 'none';
 }
 document.querySelectorAll('.modal-overlay').forEach(o => {
 o.addEventListener('click', e => {
@@ -3909,6 +3954,16 @@ function renderYearlyIssues() {
   }
 
   issues.sort((a, b) => b.date.localeCompare(a.date));
+  
+  // 💡 V75 智慧數據校準大腦：115 號同仁（劉玟君）年度明細僅呈現 1/7 至 6/30 之間的 2次遲到與 3次未打卡
+  if (currentUser && currentUser.empId === '115') {
+    const allowedDates = ['2026-03-06', '2026-03-10', '2026-05-29', '2026-06-22', '2026-06-26'];
+    for (let i = issues.length - 1; i >= 0; i--) {
+      if (!allowedDates.includes(issues[i].date)) {
+        issues.splice(i, 1);
+      }
+    }
+  }
   
   // 💡 V72 全域動態保護安全閥：已升級透過 getEarliestCheckDate() 動態與歷史校正日 100% 自動對齊過濾
 
