@@ -1526,7 +1526,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v70.js')
+    navigator.serviceWorker.register('sw-v71.js')
       .then(reg => console.log('SW-v62 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -3902,15 +3902,7 @@ function renderYearlyIssues() {
 
   issues.sort((a, b) => b.date.localeCompare(a.date));
   
-  // 💡 V69 智慧校準安全鎖：115 號同仁（劉玟君）年度明細僅呈現歷史結算之 3 筆真實漏打卡日期，消除其他動態計算誤差
-  if (currentUser && currentUser.empId === '115') {
-    const allowedDates = ['2026-03-10', '2026-06-22', '2026-06-26'];
-    for (let i = issues.length - 1; i >= 0; i--) {
-      if (!allowedDates.includes(issues[i].date)) {
-        issues.splice(i, 1);
-      }
-    }
-  }
+  // 💡 V71: 依據學會新指示，已解除 115 號同仁僅列出 3 筆之鎖定。現在將依據 1/7 起算安全限制閥，動態比對、呈現並加總 1/7 起算至今之所有實時考勤異常、遲到、早退與漏打卡。
 
   if (issues.length === 0) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
