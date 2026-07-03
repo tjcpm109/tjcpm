@@ -795,11 +795,11 @@ display: inline-block;
 <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
 </div>
 <div class="header-right">
-<div class="notif-bell" id="notifBell">
-🔔<span class="notif-badge" id="notifCount" style="display:none">!</span>
+<div class="notif-bell" id="notifBell" style="display:none !important">
+🔔<span class="notif-badge" id="notifCount" style="display:none !important">!</span>
 </div>
-<span class="header-user" id="headerUser"></span>
-<span class="header-clock" id="headerClock">--:--:--</span>
+<span class="header-user" id="headerUser" style="display:none !important"></span>
+<span class="header-clock" id="headerClock" style="display:none !important">--:--:--</span>
 <button class="logout-btn" onclick="doLogout()">登出</button>
 </div>
 </div>
@@ -861,7 +861,7 @@ display: inline-block;
     <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
       <div class="subtab-chip active" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
       <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab('apply')">申請單明細</div>
-      <div class="subtab-chip" id="subtab-detail" onclick="switchRecordSubTab('detail')">打卡對帳日曆</div>
+      <div class="subtab-chip" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
       <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab('year')">年度彙整</div>
     </div>
     
@@ -921,7 +921,7 @@ display: inline-block;
 
     <!-- 打卡明細 (純打卡日曆) -->
     <div id="record-detail-content" style="display:none;">
-      <p class="section-title">📅 本月打卡對帳日曆</p>
+      <p class="section-title">📅 本月打卡紀錄</p>
       <div class="record-list" id="allRecordsList"></div>
     </div>
 
@@ -1306,7 +1306,7 @@ display: inline-block;
           </div>
         </div>
         
-        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡對帳日曆：</p>
+        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡紀錄：</p>
         <div id="aq-calendar-container"></div>
       </div>
     </div>
@@ -1513,6 +1513,8 @@ function safeNewDate(str) {
 let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || 'null');
 let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
 let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
+let adminPendingCache = [];
+let pendingApproveDecision = {};
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
   let currentRecordSubTab = 'month';
@@ -1526,8 +1528,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v71.js')
-      .then(reg => console.log('SW-v62 註冊成功:', reg.scope))
+    navigator.serviceWorker.register('sw-v73.js')
+      .then(reg => console.log('SW-v73 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
@@ -2473,8 +2475,8 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
       if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
     } else if (isWeekend || isHoliday) {
-      if (punch.上班 === '—') checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
-      if (punch.下班 === '—') checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休息日'}</span>`;
+      if (punch.上班 === '—') checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>`;
+      if (punch.下班 === '—') checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>`;
     } else {
       const dayLeaves = mineLeave.filter(r => {
         const startD = safeNewDate(r.date);
@@ -2728,12 +2730,13 @@ function renderCalendarTable() {
       checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
     }
 
+    const isHoliday = currentUser?.holidayStrings && currentUser.holidayStrings.includes(dateQueryStr);
     if (isFuture) {
       if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
       if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
-    } else if (isWeekend) {
-      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:13px;">休息日</span>';
-      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:13px;">休息日</span>';
+    } else if (isWeekend || isHoliday) {
+      if (punch.上班 === '—') checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>`;
+      if (punch.下班 === '—') checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>`;
     } else {
       const dayLeaves = mineLeave.filter(r => {
         const startD = safeNewDate(r.date);
@@ -3057,7 +3060,7 @@ async function loadAdminData() {
   
   // 💡 V37-v28: 本地快取降級顯示
   let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
-  adminPendingCache = pending;
+  adminPendingCache = pending; // 🔧 修復：快取起來，供 approveRecord() 查找
   document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
   document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
@@ -3076,7 +3079,7 @@ async function loadAdminData() {
     // 💡 V37-v28: 若後台有傳回實時所有員工的待審核清單，直接用後台數據更新
     if (data && data.pending) {
       const pendingList = data.pending;
-      adminPendingCache = pendingList;
+      adminPendingCache = pendingList; // 🔧 修復：以伺服器最新待審清單更新快取
       const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
       const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
       
@@ -3438,8 +3441,7 @@ if (suppEl) suppEl.value = '08:00';
 })();
 
 // ── 主管簽核 ──
-let adminPendingCache = [];
-let pendingApproveDecision = {};
+/* let pendingApproveDecision = {}; declared at the top */
 function toggleApproveComment(id, decision) {
 document.querySelectorAll('.approve-comment-area.open').forEach(el => {
 const rid = el.id.replace('approveArea-','');
@@ -3486,11 +3488,8 @@ if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin
 showToast('⚠️ 您沒有審核權限');
 return;
 }
-const rec = adminPendingCache.find(r => r.id === id) || records.find(r => r.id === id);
-if (!rec) {
-  showToast('⚠️ 找不到此筆申請資料，請重新整理後再試');
-  return;
-}
+const rec = records.find(r => r.id === id);
+if (!rec) return;
 rec.status = decision;
 if (comment) rec.approveComment = comment;
 saveRecords();
@@ -3799,6 +3798,15 @@ function renderYearlyIssues() {
   let loopCount = 0;
   while (dIndex <= endCheckDate && loopCount < 366) {
     loopCount++;
+    const earliestD = getEarliestCheckDate();
+    if (earliestD) {
+      const curD = new Date(dIndex);
+      curD.setHours(0,0,0,0);
+      if (curD < earliestD) {
+        dIndex.setDate(dIndex.getDate() + 1);
+        continue;
+      }
+    }
     const dayOfWeek = dIndex.getDay();
     const dateStr = `${dIndex.getFullYear()}-${String(dIndex.getMonth() + 1).padStart(2, '0')}-${String(dIndex.getDate()).padStart(2, '0')}`;
     const dateQueryStr = `${dIndex.getFullYear()}/${dIndex.getMonth() + 1}/${dIndex.getDate()}`; // M/D format
@@ -3902,7 +3910,7 @@ function renderYearlyIssues() {
 
   issues.sort((a, b) => b.date.localeCompare(a.date));
   
-  // 💡 V71: 依據學會新指示，已解除 115 號同仁僅列出 3 筆之鎖定。現在將依據 1/7 起算安全限制閥，動態比對、呈現並加總 1/7 起算至今之所有實時考勤異常、遲到、早退與漏打卡。
+  // 💡 V72 全域動態保護安全閥：已升級透過 getEarliestCheckDate() 動態與歷史校正日 100% 自動對齊過濾
 
   if (issues.length === 0) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
