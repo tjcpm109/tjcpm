@@ -915,6 +915,8 @@ display: inline-block;
           </tbody>
         </table>
       </div>
+      <p class="section-title" style="margin-top: 24px;">⚠️ 年度出勤異常明細 (漏打卡、遲到、早退)</p>
+      <div id="yearIssueList"></div>
     </div>
 
     <!-- 打卡明細 (純打卡日曆) -->
@@ -1502,7 +1504,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v56.js')
+    navigator.serviceWorker.register('sw-v58.js')
       .then(reg => console.log('SW-v30 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -1623,42 +1625,7 @@ function showApp() {
   });
 
   applyAdminSubTabVisibility();
-  // 建立主管穿透查詢下拉選單 & 新增排班調整下拉選單 & 主管代理人下拉選單
-  const selectEl = document.getElementById('adminQueryUserSelect');
-  const adjustSelectEl = document.getElementById('adminAdjustEmpId');
-  const agentSelectEl = document.getElementById('adminAgentEmpId');
-  if (selectEl && currentUser.employeeList) {
-    selectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
-    if (adjustSelectEl) adjustSelectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
-    if (agentSelectEl) agentSelectEl.innerHTML = '<option value="">-- 請選擇代理主管 --</option>';
-    currentUser.employeeList.forEach(emp => {
-      // 穿透查詢 與 排班異動：只限非 Admin 員工
-      if (emp.role !== 'admin' && emp.role !== 'admin1' && emp.role !== 'admin2') {
-        const option = document.createElement('option');
-        option.value = emp.empId;
-        option.textContent = `${emp.empId} - ${emp.name}`;
-        selectEl.appendChild(option);
-        
-        if (adjustSelectEl) {
-          const opt2 = document.createElement('option');
-          opt2.value = emp.empId;
-          opt2.textContent = `${emp.empId} - ${emp.name}`;
-          adjustSelectEl.appendChild(opt2);
-        }
-      }
-      // 👥 代理主管：主要主管（admin1）只能選次要主管（admin2）作為代理人
-      const isAgentOptionAllowed = (currentUser.role === 'admin1' && emp.role === 'admin2') || (currentUser.role === 'admin' && (emp.role === 'admin' || emp.role === 'admin1' || emp.role === 'admin2') && String(emp.empId) !== String(currentUser.empId));
-      if (isAgentOptionAllowed) {
-        if (agentSelectEl) {
-          const opt3 = document.createElement('option');
-          opt3.value = emp.empId;
-          opt3.textContent = `${emp.empId} - ${emp.name}`;
-          agentSelectEl.appendChild(opt3);
-        }
-      }
-    });
-  }
-  renderAdminEmployeeOverviewTable();
+  rebuildAdminDropdownsAndTable();
 
   if (!isAdmin) {
     const adminPage = document.getElementById('page-admin');
@@ -2681,6 +2648,7 @@ async function loadAdminData() {
   if (currentUser.role === 'admin2' && !currentUser.isActiveProxy) {
     switchAdminSubTab('board');
   }
+  rebuildAdminDropdownsAndTable(); // 💡 V58: 立即渲染本機快取的主管穿透下拉選單與假別看板！
   document.getElementById('pendingLoading').textContent = '載入中…';
   
   // 💡 V37-v28: 本地快取降級顯示
@@ -2696,6 +2664,7 @@ async function loadAdminData() {
       if (data.employeeList) {
         currentUser.employeeList = data.employeeList;
         sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+        rebuildAdminDropdownsAndTable(); // 💡 V58: 核心修復！重新建立主管穿透下拉選單與看板，達到即時同步！
       }
     }
     
@@ -3141,6 +3110,47 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
 }
 
 
+
+function rebuildAdminDropdownsAndTable() {
+  const selectEl = document.getElementById('adminQueryUserSelect');
+  const adjustSelectEl = document.getElementById('adminAdjustEmpId');
+  const agentSelectEl = document.getElementById('adminAgentEmpId');
+  if (currentUser && currentUser.employeeList) {
+    if (selectEl) selectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
+    if (adjustSelectEl) adjustSelectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
+    if (agentSelectEl) agentSelectEl.innerHTML = '<option value="">-- 請選擇代理主管 --</option>';
+    currentUser.employeeList.forEach(emp => {
+      // 穿透查詢 與 排班異動：只限非 Admin 員工
+      if (emp.role !== 'admin' && emp.role !== 'admin1' && emp.role !== 'admin2') {
+        if (selectEl) {
+          const option = document.createElement('option');
+          option.value = emp.empId;
+          option.textContent = `${emp.empId} - ${emp.name}`;
+          selectEl.appendChild(option);
+        }
+        if (adjustSelectEl) {
+          const opt2 = document.createElement('option');
+          opt2.value = emp.empId;
+          opt2.textContent = `${emp.empId} - ${emp.name}`;
+          adjustSelectEl.appendChild(opt2);
+        }
+      }
+      // 👥 代理主管：主要主管（admin1）只能選次要主管（admin2）作為代理人
+      const isAgentOptionAllowed = (currentUser.role === 'admin1' && emp.role === 'admin2') || (currentUser.role === 'admin' && (emp.role === 'admin' || emp.role === 'admin1' || emp.role === 'admin2') && String(emp.empId) !== String(currentUser.empId));
+      if (isAgentOptionAllowed) {
+        if (agentSelectEl) {
+          const opt3 = document.createElement('option');
+          opt3.value = emp.empId;
+          opt3.textContent = `${emp.empId} - ${emp.name}`;
+          agentSelectEl.appendChild(opt3);
+        }
+      }
+    });
+  }
+  renderAdminEmployeeOverviewTable();
+}
+
+
 function renderAdminEmployeeOverviewTable() {
   const body = document.getElementById('adminEmployeeOverviewBody');
   if (!body) return;
@@ -3555,6 +3565,213 @@ function calculateLeaveHoursLocal(r, holidays) {
   return parseFloat(totalHours.toFixed(1));
 }
 
+function renderYearlyIssues() {
+  const el = document.getElementById('yearIssueList');
+  if (!el) return;
+  if (!currentUser || currentUser.empType === '兼任') {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">兼任同仁不計算漏打卡與遲到/早退</div></div>';
+    return;
+  }
+
+  const range = getCurrentEmploymentYearRange();
+  const startYear = range.start.getFullYear();
+  const startMonth = range.start.getMonth();
+  const startDay = range.start.getDate();
+
+  const now = new Date();
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const endCheckDate = yesterday;
+
+  let dIndex = new Date(startYear, startMonth, startDay);
+  const issues = [];
+
+  const myPunches = records.filter(r => {
+    if (!matchEmpId(r.empId, currentUser?.empId)) return false;
+    return r.type === '上班' || r.type === '下班';
+  });
+
+  const mySupps = records.filter(r => {
+    if (!matchEmpId(r.empId, currentUser?.empId)) return false;
+    return r.type === '補打卡';
+  });
+
+  const myLeaves = records.filter(r => {
+    if (!matchEmpId(r.empId, currentUser?.empId)) return false;
+    return r.type === '請假' && r.status === '同意';
+  });
+
+  const dailyPunches = {};
+  myPunches.forEach(r => {
+    const normD = normalizeDate(r.date);
+    if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
+    if (r.type === '上班') {
+      if (!dailyPunches[normD].in || r.time < dailyPunches[normD].in) dailyPunches[normD].in = r.time;
+    } else if (r.type === '下班') {
+      if (!dailyPunches[normD].out || r.time > dailyPunches[normD].out) dailyPunches[normD].out = r.time;
+    }
+  });
+
+  mySupps.filter(r => r.status === '同意').forEach(r => {
+    const normD = normalizeDate(r.date);
+    if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
+    if (r.subType === '上班') dailyPunches[normD].in = r.time;
+    if (r.subType === '下班') dailyPunches[normD].out = r.time;
+  });
+
+  let loopCount = 0;
+  while (dIndex <= endCheckDate && loopCount < 366) {
+    loopCount++;
+    const dayOfWeek = dIndex.getDay();
+    const dateStr = `${dIndex.getFullYear()}-${String(dIndex.getMonth() + 1).padStart(2, '0')}-${String(dIndex.getDate()).padStart(2, '0')}`;
+    const dateQueryStr = `${dIndex.getFullYear()}/${dIndex.getMonth() + 1}/${dIndex.getDate()}`; // M/D format
+
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    const isHoliday = currentUser.holidayStrings && currentUser.holidayStrings.includes(dateStr);
+
+    if (!isWeekend && !isHoliday) {
+      const punch = dailyPunches[dateQueryStr] || dailyPunches[dateStr] || { in: null, out: null };
+
+      // Gather leaves covering dIndex
+      const dayLeaves = myLeaves.filter(r => {
+        const startD = safeNewDate(r.date);
+        const endD = safeNewDate(r.endDate || r.date);
+        return dIndex >= startD && dIndex <= endD;
+      }).map(r => {
+        const startD = safeNewDate(r.date);
+        const endD = safeNewDate(r.endDate || r.date);
+        let leaveStartMin = 540;
+        let leaveEndMin = 1080;
+        const isStart = dIndex.getFullYear() === startD.getFullYear() && dIndex.getMonth() === startD.getMonth() && dIndex.getDate() === startD.getDate();
+        const isEnd = dIndex.getFullYear() === endD.getFullYear() && dIndex.getMonth() === endD.getMonth() && dIndex.getDate() === endD.getDate();
+        if (isStart && isEnd) {
+          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveEndMin = timeToMin(r.endTime || '18:00');
+        } else if (isStart) {
+          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveEndMin = 1080;
+        } else if (isEnd) {
+          leaveStartMin = 540;
+          leaveEndMin = timeToMin(r.endTime || '18:00');
+        } else {
+          leaveStartMin = 540;
+          leaveEndMin = 1080;
+        }
+        return { start: leaveStartMin, end: leaveEndMin };
+      });
+
+      const isTimeExempted = (min, leaves) => {
+        if (min >= 720 && min < 780) return true; // lunch is exempt
+        return leaves.some(l => min >= l.start && min < l.end);
+      };
+
+      const isRangeExempted = (s, e, leaves) => {
+        for (let m = s; m < e; m++) {
+          if (!isTimeExempted(m, leaves)) return false;
+        }
+        return true;
+      };
+
+      const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
+      const isFullDayExempted = isRangeExempted(shift.start, shift.end, dayLeaves);
+
+      if (!isFullDayExempted) {
+        let isProblem = false;
+        let reason = [];
+        let checkinHTML = punch.in || '—';
+        let checkoutHTML = punch.out || '—';
+
+        if (!punch.in && !punch.out) {
+          isProblem = true;
+          reason.push('雙簽漏卡');
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
+        } else {
+          if (!punch.in) {
+            isProblem = true;
+            reason.push('上班漏卡');
+            checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
+          } else {
+            const punchInMin = timeToMin(punch.in);
+            if (punchInMin > shift.start) {
+              if (!isRangeExempted(shift.start, punchInMin, dayLeaves)) {
+                isProblem = true;
+                reason.push('遲到');
+                checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.in} ⚠️遲到</span>`;
+              }
+            }
+          }
+          
+          if (!punch.out) {
+            isProblem = true;
+            reason.push('下班漏卡');
+            checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
+          } else {
+            const punchOutMin = timeToMin(punch.out);
+            if (punchOutMin < shift.end) {
+              if (!isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
+                isProblem = true;
+                reason.push('早退');
+                checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.out} ⚠️早退</span>`;
+              }
+            }
+          }
+        }
+
+        if (isProblem) {
+          issues.push({
+            date: dateStr,
+            inHTML: checkinHTML,
+            outHTML: checkoutHTML,
+            reason: reason.join('、')
+          });
+        }
+      }
+    }
+    dIndex.setDate(dIndex.getDate() + 1);
+  }
+
+  issues.sort((a, b) => b.date.localeCompare(a.date));
+
+  if (issues.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
+    return;
+  }
+
+  let html = `
+    <div class="calendar-table-container">
+      <table class="calendar-table">
+        <thead>
+          <tr>
+            <th>📅 日期</th>
+            <th>🟢 上班時間</th>
+            <th>🏁 下班時間</th>
+            <th>⚠️ 異常類別</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  issues.forEach(item => {
+    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][new Date(item.date).getDay()];
+    const dateDisplay = `${item.date.slice(5)} (${weekdayStr})`;
+    html += `
+      <tr>
+        <td style="font-weight:bold; color:var(--text-secondary);">${dateDisplay}</td>
+        <td>${item.inHTML}</td>
+        <td>${item.outHTML}</td>
+        <td><span class="badge ${item.reason.includes('漏卡') ? 'badge-red' : 'badge-orange'}">${item.reason}</span></td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+  el.innerHTML = html;
+}
+
 function calcAttendance() {
   if (!currentUser) return;
   const now = new Date();
@@ -3770,6 +3987,9 @@ function calcAttendance() {
     if (yOtEl) yOtEl.textContent = yOtHours.toFixed(1) + ' h';
     if (yMissEl) yMissEl.textContent = yMissedCount + ' 次';
     if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ' 次';
+  }
+  if (typeof renderYearlyIssues === 'function') {
+    renderYearlyIssues();
   }
 }
 
