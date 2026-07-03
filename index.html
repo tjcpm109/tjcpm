@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統63</title>
+<title>TJCPM 員工系統64</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -919,32 +919,6 @@ display: inline-block;
       <div id="yearIssueList"></div>
     </div>
 
-    <!-- 年度累計頁籤內容 -->
-    <div id="record-year-content" style="display:none;">
-      <p class="section-title">📅 個人年度出勤彙整總表 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
-      <div class="profile-card" style="padding:12px; overflow-x:auto;">
-        <table class="attendance-table" style="width: 100%; border-collapse: collapse; text-align: center;">
-          <thead>
-            <tr style="border-bottom: 1.5px solid var(--card-border); color: var(--text-secondary);">
-              <th style="padding: 8px;">⏰ 累計加班時數</th>
-              <th style="padding: 8px;">🔄 累計漏打卡次數</th>
-              <th style="padding: 8px;">⚠️ 累計遲到/早退次數</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="color: var(--text-primary); font-weight: bold;">
-              <td id="y-ot" style="padding: 8px; color: var(--blue-main);">0.0 h</td>
-              <td id="y-miss" style="padding: 8px; color: var(--accent-red);">0 次</td>
-              <td id="y-lateearly" style="padding: 8px; color: var(--accent-orange);">0 次</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <p class="section-title" style="margin-top:16px;">⚠️ 年度出勤異常明細 (漏打卡、遲到、早退)</p>
-      <div id="yearIssueList"></div>
-    </div>
-
     <!-- 打卡明細 (純打卡日曆) -->
     <div id="record-detail-content" style="display:none;">
       <p class="section-title">📅 本月打卡對帳日曆</p>
@@ -1538,7 +1512,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v63.js')
+    navigator.serviceWorker.register('sw-v64.js')
       .then(reg => console.log('SW-v62 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
