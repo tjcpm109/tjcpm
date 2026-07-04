@@ -1266,11 +1266,13 @@ display: inline-block;
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休已請</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休賸餘</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
             <th style="padding:8px;">穿透對帳</th>
           </tr>
         </thead>
         <tbody id="adminEmployeeOverviewBody">
-          <tr><td colspan="9" style="text-align:center; padding:12px; color:var(--text-muted);">資料載入中…</td></tr>
+          <tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">資料載入中…</td></tr>
         </tbody>
       </table>
     </div>
@@ -1550,7 +1552,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v84.js')
+    navigator.serviceWorker.register('sw-v85.js')
       .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -2312,6 +2314,19 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   const holidayStrings = res.holidayStrings || [];
   const specialShifts = res.specialShifts || [];
 
+  const getDistance = (l1, n1, l2, n2) => {
+    const R = 6371e3;
+    const phi1 = l1 * Math.PI / 180;
+    const phi2 = l2 * Math.PI / 180;
+    const deltaPhi = (l2 - l1) * Math.PI / 180;
+    const deltaLambda = (n2 - n1) * Math.PI / 180;
+    const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   // 💡 兼任人員專屬：整年度打卡收折呈現 (只列出有打卡的日期)
   if (empType === '兼任') {
     const currentYear = new Date().getFullYear();
@@ -2323,6 +2338,12 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
 
     const mineSupp = empRecords.filter(r => {
       if (r.type !== '補打卡' || r.status !== '同意') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getFullYear() === currentYear;
+    });
+
+    const mineLeave = empRecords.filter(r => {
+      if (r.type !== '請假' || r.status !== '同意') return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
@@ -2358,6 +2379,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
               <th>📅 出勤日期</th>
               <th>🟢 上班簽到</th>
               <th>🏁 下班簽退</th>
+              <th>💬 外勤定位與請假備註</th>
             </tr>
           </thead>
           <tbody>
@@ -2366,7 +2388,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     if (sortedKeys.length === 0) {
       html += `
         <tr>
-          <td colspan="3" style="text-align:center; color:var(--text-secondary); padding:20px;">
+          <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">
             尚無年度打卡紀錄
           </td>
         </tr>
@@ -2381,12 +2403,78 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         
         const checkinHTML = item.in || '—';
         const checkoutHTML = item.out || '—';
+
+        // Gather leaves covering dateObj
+        const dayLeavesForDay = mineLeave.filter(r => {
+          const startD = safeNewDate(r.date);
+          const endD = safeNewDate(r.endDate || r.date);
+          return dateObj >= startD && dateObj <= endD;
+        });
+
+        const leaveStrings = dayLeavesForDay.map(r => {
+          const hoursLabel = r.hours ? `${r.hours}h` : '';
+          return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}</span>`;
+        });
+
+        // Gather punches for that day
+        const dayPunches = empRecords.filter(r => {
+          if (r.type !== '上班' && r.type !== '下班') return false;
+          const d = safeNewDate(r.date || r.timestamp);
+          return formatLocalDateStr(d) === key;
+        });
+
+        const outOfOfficeStrings = [];
+        dayPunches.forEach(p => {
+          const hasRemark = p.remark && String(p.remark).trim() !== '';
+          let isOutsideShuangho = false;
+          let distShuangho = 0;
+          let distChongqing = 0;
+          const latVal = parseFloat(p.lat);
+          const lngVal = parseFloat(p.lng);
+          if (!isNaN(latVal) && !isNaN(lngVal)) {
+            distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
+            distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
+            if (distShuangho > 300) {
+              isOutsideShuangho = true;
+            }
+          }
+          
+          if (hasRemark || isOutsideShuangho) {
+            let typeBadge = p.type === '上班' ? '<span class="badge badge-green">上班</span>' : '<span class="badge badge-red">下班</span>';
+            let locationText = '';
+            if (!isNaN(latVal) && !isNaN(lngVal)) {
+              if (isOutsideShuangho) {
+                const isAtChongqing = distChongqing <= 300;
+                const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
+                locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
+              } else {
+                locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
+              }
+            } else {
+              locationText = '無GPS定位';
+            }
+            
+            let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
+            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
+          }
+        });
+
+        const col4Items = [];
+        if (leaveStrings.length > 0) {
+          col4Items.push(leaveStrings.join('<br>'));
+        }
+        if (outOfOfficeStrings.length > 0) {
+          col4Items.push(outOfOfficeStrings.join(''));
+        }
+        
+        const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
         
         html += `
           <tr>
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
+            <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
         `;
       });
@@ -2448,6 +2536,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             <th>📅 日期</th>
             <th>🟢 上班簽到</th>
             <th>🏁 下班簽退</th>
+            <th>💬 外勤定位與請假備註</th>
           </tr>
         </thead>
         <tbody>
@@ -2557,6 +2646,70 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       }
     }
 
+    // Gather leave labels and out of office info for Column 4
+    const dayLeavesForDay = mineLeave.filter(r => {
+      const startD = safeNewDate(r.date);
+      const endD = safeNewDate(r.endDate || r.date);
+      return dateObj >= startD && dateObj <= endD;
+    });
+
+    const leaveStrings = dayLeavesForDay.map(r => {
+      const hoursLabel = r.hours ? `${r.hours}h` : '';
+      return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}</span>`;
+    });
+
+    const dayPunches = empRecords.filter(r => {
+      if (r.type !== '上班' && r.type !== '下班') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getDate() === day && (d.getMonth() + 1) === month && d.getFullYear() === year;
+    });
+
+    const outOfOfficeStrings = [];
+    dayPunches.forEach(p => {
+      const hasRemark = p.remark && String(p.remark).trim() !== '';
+      let isOutsideShuangho = false;
+      let distShuangho = 0;
+      let distChongqing = 0;
+      const latVal = parseFloat(p.lat);
+      const lngVal = parseFloat(p.lng);
+      if (!isNaN(latVal) && !isNaN(lngVal)) {
+        distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
+        distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
+        if (distShuangho > 300) {
+          isOutsideShuangho = true;
+        }
+      }
+      
+      if (hasRemark || isOutsideShuangho) {
+        let typeBadge = p.type === '上班' ? '<span class="badge badge-green">上班</span>' : '<span class="badge badge-red">下班</span>';
+        let locationText = '';
+        if (!isNaN(latVal) && !isNaN(lngVal)) {
+          if (isOutsideShuangho) {
+            const isAtChongqing = distChongqing <= 300;
+            const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
+            locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
+          } else {
+            locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
+          }
+        } else {
+          locationText = '無GPS定位';
+        }
+        
+        let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
+        outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
+      }
+    });
+
+    const col4Items = [];
+    if (leaveStrings.length > 0) {
+      col4Items.push(leaveStrings.join('<br>'));
+    }
+    if (outOfOfficeStrings.length > 0) {
+      col4Items.push(outOfOfficeStrings.join(''));
+    }
+    
+    const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
+
     const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
 
     html += `
@@ -2564,6 +2717,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
+        <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
     `;
   }
@@ -3074,6 +3228,7 @@ ${retractButton}
 
 // ── Admin ───────────────────────────────────────────────────────
 async function loadAdminData() {
+  window.adminOutOfOfficeStats = {};
   if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && currentUser.role !== 'admin2')) return;
   applyAdminSubTabVisibility();
   if (currentUser.role === 'admin2' && !currentUser.isActiveProxy) {
@@ -3247,6 +3402,22 @@ async function loadAdminData() {
       
       document.getElementById('adminFieldPunches').innerHTML = fieldPunchesHtml;
 
+      // 💡 V85: 統計當月每個員工的外勤打卡次數
+      const stats = {};
+      currentMonthPunches.forEach(r => {
+        const empId = String(r[1]).trim();
+        if (!stats[empId]) {
+          stats[empId] = { checkin: 0, checkout: 0 };
+        }
+        if (r[3] === '上班') {
+          stats[empId].checkin++;
+        } else if (r[3] === '下班') {
+          stats[empId].checkout++;
+        }
+      });
+      window.adminOutOfOfficeStats = stats;
+      renderAdminEmployeeOverviewTable(); // 即時刷上看盤畫面
+
       // 主管端依然完整保留 GPS 數字與備註
       document.getElementById('adminRecords').innerHTML = rows.length ? rows.map(r => `
         <div class="record-item">
@@ -3395,16 +3566,20 @@ function renderAdminEmployeeOverviewTable() {
   const body = document.getElementById('adminEmployeeOverviewBody');
   if (!body) return;
   if (!currentUser || !currentUser.employeeList || currentUser.employeeList.length === 0) {
-    body.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:12px; color:var(--text-muted);">無資料</td></tr>';
+    body.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">無資料</td></tr>';
     return;
   }
   // Filter out admin and show only '專任'
   const ftEmployees = currentUser.employeeList.filter(emp => emp.role !== 'admin' && emp.empType === '專任');
   if (ftEmployees.length === 0) {
-    body.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:12px; color:var(--text-muted);">尚無專任員工資料</td></tr>';
+    body.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">尚無專任員工資料</td></tr>';
     return;
   }
   body.innerHTML = ftEmployees.map(emp => {
+    const stats = (window.adminOutOfOfficeStats && window.adminOutOfOfficeStats[String(emp.empId).trim()]) || { checkin: 0, checkout: 0 };
+    const checkinText = stats.checkin > 0 ? `<span style="color:var(--green-light);font-weight:bold;">🟢 ${stats.checkin} 次</span>` : '<span style="color:var(--text-muted);">—</span>';
+    const checkoutText = stats.checkout > 0 ? `<span style="color:var(--accent-red);font-weight:bold;">🏁 ${stats.checkout} 次</span>` : '<span style="color:var(--text-muted);">—</span>';
+
     return `
       <tr style="border-bottom:1px solid var(--card-border); text-align:center;">
         <td style="padding:8px; border-right:1.5px solid var(--card-border); font-weight:bold; color:var(--text-primary);">${emp.empId}</td>
@@ -3415,6 +3590,8 @@ function renderAdminEmployeeOverviewTable() {
         <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--accent-orange); font-weight:bold;">${emp.specialLeaveUsedHours || 0} h</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--green-light); font-weight:bold;">${emp.specialLeaveRemainingHours || 0} h</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--accent-purple); font-weight:bold;">${emp.compLeaveRemainingHours || 0} h</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border);">${checkinText}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border);">${checkoutText}</td>
         <td style="padding:8px;">
           <button class="pw-toggle-btn" onclick="triggerEmployeeQuery('${emp.empId}')">🔍 穿透對帳</button>
         </td>
