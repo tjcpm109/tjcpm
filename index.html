@@ -1552,9 +1552,9 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v86.js')
-      .then(reg => console.log('SW-v86 註冊成功:', reg.scope))
-      .catch(err => console.error('SW-v30 註冊失敗:', err));
+    navigator.serviceWorker.register('sw-v87.js')
+      .then(reg => console.log('SW-v87 註冊成功:', reg.scope))
+      .catch(err => console.error('SW-v87 註冊失敗:', err));
   });
 }
 
@@ -2546,6 +2546,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const dateObj = new Date(year, month - 1, day);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不顯示為異常 (以「—」呈現且不可點擊補單)
     let isBeforeJoin = false;
+    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(year, month - 1, day);
       curD.setHours(0,0,0,0);
@@ -2882,6 +2883,7 @@ function renderCalendarTable() {
     const dateObj = new Date(year, month - 1, day);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不顯示為異常 (以「—」呈現且不可點擊補單)
     let isBeforeJoin = false;
+    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(year, month - 1, day);
       curD.setHours(0,0,0,0);
@@ -4091,6 +4093,7 @@ function renderYearlyIssues() {
   let loopCount = 0;
   while (dIndex <= endCheckDate && loopCount < 366) {
     loopCount++;
+    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(dIndex);
       curD.setHours(0,0,0,0);
@@ -4335,6 +4338,7 @@ function calcAttendance() {
     for (let d = 1; d <= endDayCheck; d++) {
     const dateObj = new Date(thisYear, thisMonth - 1, d);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不計算出勤異常
+    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(thisYear, thisMonth - 1, d);
       curD.setHours(0,0,0,0);
