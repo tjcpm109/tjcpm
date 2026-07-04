@@ -1440,8 +1440,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9g
 // 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 'yyyy-mm-dd' (無補零) 格式導致 Invalid Date 的相容性問題
 function parseLocalDate(d) { return safeNewDate(d); }
 
-// 💡 V37-v29: 取得格式化後的年度考勤區間字串
-function getYearRangeString(joinDateStr) {
+// 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
+function getYearRangeString(joinDateStr, quota) {
   if (!joinDateStr) return '';
   const joinParts = joinDateStr.split(/[-/]/);
   const jYear = parseInt(joinParts[0], 10);
@@ -1449,19 +1449,24 @@ function getYearRangeString(joinDateStr) {
   const jDay = parseInt(joinParts[2], 10);
   
   const now = new Date();
-  const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // 上月底結算切分日 (D_prev_end)
+  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  prevMonthEnd.setHours(0,0,0,0);
   
   let y = jYear;
-  let range = { start: new Date(2000, 0, 1), end: new Date(2099, 11, 31) };
+  let start = null;
+  let end = null;
   while (true) {
-    const start = new Date(y, jMonth, jDay);
-    const end = new Date(y + 1, jMonth, jDay - 1, 23, 59, 59, 999);
-    if (todayZero >= start && todayZero <= end) {
-      range = { start, end };
+    const s = new Date(y, jMonth, jDay);
+    const e = new Date(y + 1, jMonth, jDay - 1, 23, 59, 59, 999);
+    if (prevMonthEnd >= s && prevMonthEnd <= e) {
+      start = s;
+      end = e;
       break;
     }
-    if (todayZero < start) {
-      range = { start: new Date(jYear, jMonth, jDay), end: new Date(jYear + 1, jMonth, jDay - 1, 23, 59, 59, 999) };
+    if (prevMonthEnd < s) {
+      start = new Date(jYear, jMonth, jDay);
+      end = new Date(jYear + 1, jMonth, jDay - 1, 23, 59, 59, 999);
       break;
     }
     y++;
@@ -1470,19 +1475,41 @@ function getYearRangeString(joinDateStr) {
     }
   }
   
-  const sy = range.start.getFullYear();
-  const sm = String(range.start.getMonth() + 1).padStart(2, '0');
-  const sd = String(range.start.getDate()).padStart(2, '0');
-  const ey = range.end.getFullYear();
-  const em = String(range.end.getMonth() + 1).padStart(2, '0');
-  const ed = String(range.end.getDate()).padStart(2, '0');
-  return `年度區間: ${sy}.${sm}.${sd} ~ ${ey}.${em}.${ed}`;
+  // 檢查是否有落在此週年區間內的歷史校正
+  let displayedStart = start;
+  let noteText = '';
+  if (quota && quota.correction && quota.correction.startDate) {
+    const corrStart = safeNewDate(quota.correction.startDate);
+    if (corrStart && !isNaN(corrStart.getTime()) && corrStart >= start && corrStart <= end) {
+      displayedStart = corrStart;
+      if (quota.correction.note) {
+        const parts = quota.correction.note.split(/[,，]/);
+        noteText = parts[parts.length - 1].trim(); // 取最末尾段說明字，例：1/7 前無打卡紀錄
+      }
+    }
+  }
+  
+  // 顯示截止日：自動限制在「上月底」(月底才會一次結算)，並受週年結束日(end)限制
+  let displayedEnd = new Date(prevMonthEnd);
+  if (displayedEnd > end) {
+    displayedEnd = end;
+  }
+  
+  const sy = displayedStart.getFullYear();
+  const sm = String(displayedStart.getMonth() + 1); // 智慧去補零：使用原字
+  const sd = String(displayedStart.getDate());      // 智慧去補零：使用原字
+  const ey = displayedEnd.getFullYear();
+  const em = String(displayedEnd.getMonth() + 1);   // 智慧去補零：使用原字
+  const ed = String(displayedEnd.getDate());        // 智慧去補零：使用原字
+  
+  const appendNote = noteText ? ` (${noteText})` : '';
+  return `年度區間: ${sy}.${sm}.${sd} ~ ${ey}.${em}.${ed}${appendNote}`;
 }
 
 // 💡 V37-v29: 實時更新所有頁面的年度考勤區間顯示
 function updateAllYearRanges() {
   if (!currentUser || !currentUser.joinDate) return;
-  const rangeStr = getYearRangeString(currentUser.joinDate);
+  const rangeStr = getYearRangeString(currentUser.joinDate, currentUser.quota);
   
   const yRangeEl = document.getElementById('y-range-span');
   if (yRangeEl) yRangeEl.textContent = `(${rangeStr})`;
@@ -1523,7 +1550,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v78.js')
+    navigator.serviceWorker.register('sw-v81.js')
       .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -3259,7 +3286,7 @@ async function handleAdminQueryChange() {
       // 💡 V37-v29: 主管穿透查詢同仁時，動態渲染其專屬年度區間
       const aqIntervalEl = document.getElementById('aq-interval');
       if (aqIntervalEl) {
-        aqIntervalEl.textContent = getYearRangeString(queryJoinDateStr);
+        aqIntervalEl.textContent = getYearRangeString(queryJoinDateStr, res.quota);
       }
       
       const empRecords = res.updates || [];
