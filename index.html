@@ -1550,7 +1550,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v81.js')
+    navigator.serviceWorker.register('sw-v84.js')
       .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -2530,6 +2530,13 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         } else {
           checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
         }
+      } else {
+        const punchInMin = timeToMin(punch.上班);
+        if (punchInMin > shift.start) {
+          if (!isRangeExempted(shift.start, punchInMin, dayLeaves)) {
+            checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
+          }
+        }
       }
       
       if (punch.下班 === '—') {
@@ -2539,6 +2546,13 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
         } else {
           checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+        }
+      } else {
+        const punchOutMin = timeToMin(punch.下班);
+        if (punchOutMin < shift.end) {
+          if (!isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
+            checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>`;
+          }
         }
       }
     }
@@ -3845,8 +3859,10 @@ function renderYearlyIssues() {
   const startDay = range.start.getDate();
 
   const now = new Date();
-  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-  const endCheckDate = yesterday;
+  // 💡 依據長官指示，當月和過去歷史紀錄本來就是兩個獨立事件，每月不列入計算，到月底才會一次結算。
+  // 因此，明細掃描截止日一律全自動、動態對齊「上個月份的最後一天」（例如：7/4當天只算到6/30；8/5當天只算到7/31）
+  const endCheckDate = new Date(now.getFullYear(), now.getMonth(), 0);
+  endCheckDate.setHours(23, 59, 59, 999);
 
   let dIndex = new Date(startYear, startMonth, startDay);
   const issues = [];
