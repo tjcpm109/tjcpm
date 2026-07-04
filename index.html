@@ -1249,11 +1249,11 @@ display: inline-block;
 
   <!-- 2. 考勤與假別看板 子頁面 -->
   <div class="admin-subpage" id="adminSubPage-board" style="display:none;">
-   <!-- <p class="section-title" style="margin-top:8px;">📊 當月非院內外勤打卡彙整</p>
+  <!--   <p class="section-title" style="margin-top:8px;">📊 當月非院內外勤打卡彙整</p>
     <div class="record-list" id="adminFieldPunches" style="margin-bottom:24px;">
       <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">當月尚無異地外勤打卡紀錄</div></div>
-    </div> -->
-    <p class="section-title">📊 全體專任同仁考勤與假別看板 (對齊 Sheets 假別總表)</p>
+    </div>-->
+    <p class="section-title">📊 全體專任同仁考勤與假別看板</p>
     <div class="profile-card" style="padding:16px; overflow-x:auto;">
       <table style="width:100%; border-collapse:collapse; font-size:13px; border: 1.5px solid var(--card-border);">
         <thead>
@@ -1553,8 +1553,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw-v87.js')
-      .then(reg => console.log('SW-v87 註冊成功:', reg.scope))
-      .catch(err => console.error('SW-v87 註冊失敗:', err));
+      .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
+      .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
 
@@ -2455,7 +2455,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             }
             
             let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
-            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 打卡點: ${locationText}${remarkText}</div>`);
+            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
           }
         });
 
@@ -3577,8 +3577,8 @@ function renderAdminEmployeeOverviewTable() {
   }
   body.innerHTML = ftEmployees.map(emp => {
     const stats = (window.adminOutOfOfficeStats && window.adminOutOfOfficeStats[String(emp.empId).trim()]) || { checkin: 0, checkout: 0 };
-    const checkinText = stats.checkin > 0 ? `<span style="color:var(--green-light);font-weight:bold;"> ${stats.checkin} 次</span>` : '<span style="color:var(--text-muted);">—</span>';
-    const checkoutText = stats.checkout > 0 ? `<span style="color:var(--accent-red);font-weight:bold;"> ${stats.checkout} 次</span>` : '<span style="color:var(--text-muted);">—</span>';
+    const checkinText = stats.checkin > 0 ? `<span style="color:var(--green-light);font-weight:bold;">🟢 ${stats.checkin} 次</span>` : '<span style="color:var(--text-muted);">—</span>';
+    const checkoutText = stats.checkout > 0 ? `<span style="color:var(--accent-red);font-weight:bold;">🏁 ${stats.checkout} 次</span>` : '<span style="color:var(--text-muted);">—</span>';
 
     return `
       <tr style="border-bottom:1px solid var(--card-border); text-align:center;">
