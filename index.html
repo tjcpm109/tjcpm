@@ -859,14 +859,14 @@ display: inline-block;
   <!-- 我的紀錄 -->
   <div class="page" id="page-records">
     <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
-      <div class="subtab-chip active" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
+      <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
       <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab('apply')">申請單明細</div>
-      <div class="subtab-chip" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
+      <div class="subtab-chip" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
       <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab('year')">年度彙整</div>
     </div>
     
     <!-- 本月考勤頁籤內容 (行列交換水平橫表) -->
-    <div id="record-month-content" style="display:block;">
+    <div id="record-month-content" style="display:none;">
       <p class="section-title">📊 本月至今即時考勤（動態累計）</p>
       <div class="profile-card" style="padding:12px; overflow-x:auto;">
         <table class="attendance-table" id="monthSummaryTable" style="width: 100%; border-collapse: collapse; text-align: center;">
@@ -920,7 +920,7 @@ display: inline-block;
     </div>
 
     <!-- 打卡明細 (純打卡日曆) -->
-    <div id="record-detail-content" style="display:none;">
+    <div id="record-detail-content" style="display:block;">
       <p class="section-title">📅 本月打卡紀錄</p>
       <div class="record-list" id="allRecordsList"></div>
     </div>
@@ -1541,7 +1541,7 @@ let adminPendingCache = [];
 let pendingApproveDecision = {};
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
-  let currentRecordSubTab = 'month';
+  let currentRecordSubTab = 'detail';
 let currentApplyFilter = '請假';
 const localNow = new Date();
 const localYear = localNow.getFullYear();
@@ -1552,8 +1552,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v85.js')
-      .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
+    navigator.serviceWorker.register('sw-v86.js')
+      .then(reg => console.log('SW-v86 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
@@ -2546,7 +2546,6 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const dateObj = new Date(year, month - 1, day);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不顯示為異常 (以「—」呈現且不可點擊補單)
     let isBeforeJoin = false;
-    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(year, month - 1, day);
       curD.setHours(0,0,0,0);
@@ -2883,7 +2882,6 @@ function renderCalendarTable() {
     const dateObj = new Date(year, month - 1, day);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不顯示為異常 (以「—」呈現且不可點擊補單)
     let isBeforeJoin = false;
-    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(year, month - 1, day);
       curD.setHours(0,0,0,0);
@@ -4030,16 +4028,29 @@ function renderYearlyIssues() {
     return;
   }
 
+  // 💡 第一步：在函數最上方，同時提取「兩大時間指針」
+  const earliestD = getEarliestCheckDate(); // 指針一：歷史校正起始日
+  const now = new Date();
+  const endCheckDate = new Date(now.getFullYear(), now.getMonth(), 0); // 指針二：當前月份已結算的動態截止線
+  endCheckDate.setHours(23, 59, 59, 999);
+
+  // 💡 第二步：實裝「起迄邊界防禦攔截」
+  if (earliestD) {
+    const compareD = new Date(earliestD);
+    compareD.setHours(0, 0, 0, 0);
+    const compareEnd = new Date(endCheckDate);
+    compareEnd.setHours(23, 59, 59, 999);
+    
+    if (compareD > compareEnd) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
+      return;
+    }
+  }
+
   const range = getCurrentEmploymentYearRange();
   const startYear = range.start.getFullYear();
   const startMonth = range.start.getMonth();
   const startDay = range.start.getDate();
-
-  const now = new Date();
-  // 💡 依據長官指示，當月和過去歷史紀錄本來就是兩個獨立事件，每月不列入計算，到月底才會一次結算。
-  // 因此，明細掃描截止日一律全自動、動態對齊「上個月份的最後一天」（例如：7/4當天只算到6/30；8/5當天只算到7/31）
-  const endCheckDate = new Date(now.getFullYear(), now.getMonth(), 0);
-  endCheckDate.setHours(23, 59, 59, 999);
 
   let dIndex = new Date(startYear, startMonth, startDay);
   const issues = [];
@@ -4080,7 +4091,6 @@ function renderYearlyIssues() {
   let loopCount = 0;
   while (dIndex <= endCheckDate && loopCount < 366) {
     loopCount++;
-    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(dIndex);
       curD.setHours(0,0,0,0);
@@ -4325,7 +4335,6 @@ function calcAttendance() {
     for (let d = 1; d <= endDayCheck; d++) {
     const dateObj = new Date(thisYear, thisMonth - 1, d);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不計算出勤異常
-    const earliestD = getEarliestCheckDate();
     if (earliestD) {
       const curD = new Date(thisYear, thisMonth - 1, d);
       curD.setHours(0,0,0,0);
