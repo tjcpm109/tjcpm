@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統v881</title>
+<title>TJCPM 員工系統v882</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1293,48 +1293,50 @@ display: inline-block;
     </div>
 
     <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度查詢</p>
-    <div class="profile-card" style="padding: 16px;">
-      <div class="input-group" style="margin-bottom:12px;">
-        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">員工選擇</label>
-        <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
-          <option value="">-- 員工選擇 --</option>
-        </select>
-      </div>
-      <div id="adminQueryResults" style="display:none; margin-top:16px;">
-        <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
-        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
-        <div class="stats-grid" style="margin-bottom:16px;">
-          <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
-            <div class="stat-label">年度累計加班</div>
-            <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
-          </div>
-          <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
-            <div class="stat-label">年度累計漏卡</div>
-            <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
-          </div>
-          <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
-            <div class="stat-label">年度累計遲到/早退</div>
-            <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
-          </div>
-        </div>
-        
-        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡紀錄：</p>
-        <div id="aq-calendar-container"></div>
-      </div>
-    </div>
-
-    <div class="record-list" id="adminRecords" style="display:none;"></div>
-<!-- 👨‍💼 主管端：V88 歷史穿透升級 -->
-  <div id="adminQueryResults" style="display:none; margin-top:16px;">
-    <div class="history-ctrl" style="background:var(--blue-pale); border-color:var(--blue-border);">
-      <div style="font-size:14px; color:var(--blue-main); font-weight:bold;">對帳月份</div>
-      <input type="month" id="adminQueryMonthPicker" class="input-field-m" onchange="handleAdminQueryChange()">
-      <button onclick="downloadQueryRecords()" class="pw-toggle-btn" style="background:var(--blue-main); color:white; border:none;">下載 CSV</button>
-    </div>
-    <div id="aq-calendar-container"></div>
-  </div>
     
-  </div>
+    <div class="profile-card" style="padding: 16px;">
+        <!-- 1. 員工選擇下拉選單 -->
+        <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">員工選擇</label>
+            <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
+                <option value="">-- 員工選擇 --</option>
+            </select>
+        </div>
+
+        <!-- 2. 查詢結果區 (唯一 ID) -->
+        <div id="adminQueryResults" style="display:none; margin-top:16px;">
+            
+            <!-- V88 新增：月份切換與在地 CSV 下載控制列 [Artifact 73] -->
+            <div class="history-ctrl" style="background:var(--blue-pale); border-color:var(--blue-border); margin-bottom:16px;">
+                <div style="font-size:14px; color:var(--blue-main); font-weight:bold;">對帳月份</div>
+                <input type="month" id="adminQueryMonthPicker" class="input-field-m" onchange="handleAdminQueryChange()">
+                <button onclick="downloadQueryRecords()" class="pw-toggle-btn" style="background:var(--blue-main); color:white; border:none;">下載 CSV</button>
+            </div>
+
+            <!-- V87 統計區塊：年度累計指標 -->
+            <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
+            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
+            <div class="stats-grid" style="margin-bottom:16px;">
+                <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
+                    <div class="stat-label">年度累計加班</div>
+                    <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
+                </div>
+                <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
+                    <div class="stat-label">年度累計漏卡</div>
+                    <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
+                </div>
+                <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
+                    <div class="stat-label">年度累計遲到/早退</div>
+                    <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
+                </div>
+            </div>
+            
+            <!-- V88 升級：動態標題與日曆容器 -->
+            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 考勤對帳明細（選定月份）：</p>
+            <div id="aq-calendar-container"></div>
+        </div>
+    </div>
+</div>
 
   <!-- 3. 排班異動 子頁面 -->
   <div class="admin-subpage" id="adminSubPage-adjust" style="display:none;">
