@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統11</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1560,6 +1560,7 @@ let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
 let adminPendingCache = [];
 let pendingApproveDecision = {};
 let lastAdminQueryContext = null; // 💡 新增：暫存主管端目前穿透查詢的同仁資料，供下載功能使用
+let hasSyncedOnce = false; // 💡 新增：是否已完成至少一次雲端同步，同步完成前不顯示打卡日曆內容，避免誤判漏打卡
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
   let currentRecordSubTab = 'detail';
@@ -1574,7 +1575,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw-v87.js')
-      .then(reg => console.log('SW-v87 註冊成功:', reg.scope))
+      .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
@@ -1744,6 +1745,7 @@ function showApp() {
   }
   
   if (currentUser.role !== 'admin') {
+    checkApprovalUpdates(); // 💡 新增：登入後立即同步一次，避免要等到 60 秒後才移除「下載中」畫面
     setInterval(checkApprovalUpdates, 60000);
   }
   checkConnectivity();
@@ -1911,24 +1913,10 @@ badge.style.display = 'none';
 }
 
 // ── Poll approval status ───────────────────────────────────────
+// 💡 合併：原本這裡會獨立呼叫一次 getMyStatus，現在改為委派給 syncProfileAndAccumulatedLeaves()
+// （兩者原本各自打一次 getMyStatus，等於每次背景輪詢都重複下載兩次雲端資料，已合併為一次）
 async function checkApprovalUpdates() {
-try {
-const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-if (data.status === 'ok' && data.updates) {
-data.updates.forEach(u => {
-const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
-if (existing && existing.status !== u.status) {
-existing.status = u.status;
-const approved = u.status === '同意';
-const msg = `您的${u.type}申請（${u.date}）已${approved ? '核准' : '拒絕'}`;
-addNotif(approved ? 'approve' : 'reject', msg);
-sendPush('TJCPM 審批結果', msg);
-saveRecords();
-renderAllList();
-}
-});
-}
-} catch (e) {}
+  await syncProfileAndAccumulatedLeaves();
 }
 
 // ── Actions ─────────────────────────────────────────────────────
@@ -2468,7 +2456,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           if (!isNaN(latVal) && !isNaN(lngVal)) {
             distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
             distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
-            if (distShuangho > 300) {
+            if (distShuangho > 50) {
               isOutsideShuangho = true;
             }
           }
@@ -2478,11 +2466,11 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             let locationText = '';
             if (!isNaN(latVal) && !isNaN(lngVal)) {
               if (isOutsideShuangho) {
-                const isAtChongqing = distChongqing <= 300;
+                const isAtChongqing = distChongqing <= 50;
                 const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
                 locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
               } else {
-                locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
+                locationText = `距雙和 ${distShuangho.toFixed(0)}米`;
               }
             } else {
               locationText = '無GPS定位';
@@ -2724,7 +2712,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       if (!isNaN(latVal) && !isNaN(lngVal)) {
         distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
         distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
-        if (distShuangho > 300) {
+        if (distShuangho > 50) {
           isOutsideShuangho = true;
         }
       }
@@ -2734,11 +2722,11 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         let locationText = '';
         if (!isNaN(latVal) && !isNaN(lngVal)) {
           if (isOutsideShuangho) {
-            const isAtChongqing = distChongqing <= 300;
+            const isAtChongqing = distChongqing <= 50;
             const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
             locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
           } else {
-            locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
+            locationText = `距雙和 ${distShuangho.toFixed(0)}米`;
           }
         } else {
           locationText = '無GPS定位';
@@ -2783,6 +2771,12 @@ function renderCalendarTable() {
   const el = document.getElementById('allRecordsList');
   if (!el) return;
 
+  // 💡 新增：雲端資料尚未完成第一次同步前，顯示「下載中」而非直接依本機舊快取判斷漏打卡
+  if (!hasSyncedOnce) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📥</div><div class="empty-text">資料下載中，請稍候…</div></div>`;
+    return;
+  }
+
   // 💡 V37-v41: 兼任人員專屬：整年度打卡收折呈現 (2026-01-01 至 2026-12-31)，格式與專任相同，但只列出有打卡的日期
   if (currentUser && currentUser.empType === '兼任') {
     const currentYear = new Date().getFullYear();
@@ -2796,14 +2790,6 @@ function renderCalendarTable() {
     const mineSupp = records.filter(r => {
       if (!matchEmpId(r.empId, currentUser?.empId)) return false;
       if (r.type !== '補打卡' || r.status !== '同意') return false;
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getFullYear() === currentYear;
-    });
-
-    // 💡 新增：備註欄用 - 抓取本年度已核准請假紀錄
-    const mineLeave = records.filter(r => {
-      if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-      if (r.type !== '請假' || r.status !== '同意') return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
@@ -2863,21 +2849,11 @@ function renderCalendarTable() {
         const checkinHTML = item.in || '—';
         const checkoutHTML = item.out || '—';
 
-        // 💡 新增：組出該日備註欄 (請假事由/時間、異地打卡備註)
-        const dayLeavesForDay = mineLeave.filter(r => {
-          const startD = safeNewDate(r.date);
-          const endD = safeNewDate(r.endDate || r.date);
-          return dateObj >= startD && dateObj <= endD;
-        });
-        const dayPunches = minePunch.filter(r => formatLocalDateStr(safeNewDate(r.date || r.timestamp)) === key);
-        const col4HTML = buildDayRemarkHTML(dayLeavesForDay, dayPunches);
-        
         html += `
           <tr>
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
-            <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
         `;
       });
@@ -3057,24 +3033,11 @@ function renderCalendarTable() {
       ? 'class="calendar-row-missed" title="點擊漏打卡一鍵補單"'
       : '';
 
-    // 💡 新增：組出該日備註欄 (請假事由/時間、異地打卡備註)
-    const dayLeavesForDay = mineLeave.filter(r => {
-      const startD = safeNewDate(r.date);
-      const endD = safeNewDate(r.endDate || r.date);
-      return dateObj >= startD && dateObj <= endD;
-    });
-    const dayPunches = minePunch.filter(r => {
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getDate() === day;
-    });
-    const col4HTML = buildDayRemarkHTML(dayLeavesForDay, dayPunches);
-
     html += `
       <tr ${rowStyle} ${clickAttr}>
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
-        <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
     `;
   }
@@ -3194,67 +3157,6 @@ function matchEmpId(id1, id2) {
     return n1 === n2;
   }
   return false;
-}
-
-// 💡 新增：通用經緯度距離計算 (公尺)，供「我的紀錄」打卡備註欄使用
-function getDistanceMeters(l1, n1, l2, n2) {
-  const R = 6371e3;
-  const phi1 = l1 * Math.PI / 180;
-  const phi2 = l2 * Math.PI / 180;
-  const deltaPhi = (l2 - l1) * Math.PI / 180;
-  const deltaLambda = (n2 - n1) * Math.PI / 180;
-  const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
-            Math.cos(phi1) * Math.cos(phi2) *
-            Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-}
-
-// 💡 新增：組出單日「請假/外勤備註」欄位 HTML，供「我的紀錄」與主管端共用格式
-function buildDayRemarkHTML(dayLeavesForDay, dayPunches) {
-  const leaveStrings = dayLeavesForDay.map(r => {
-    const hoursLabel = r.hours ? `${r.hours}h` : '';
-    const timeLabel = (r.startTime && r.endTime) ? ` ${r.startTime}-${r.endTime}` : '';
-    const reasonLabel = r.reason ? `<br><span style="color:var(--text-secondary);font-weight:normal;">📝 ${r.reason}</span>` : '';
-    return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}${timeLabel}</span>${reasonLabel}`;
-  });
-
-  const outOfOfficeStrings = [];
-  dayPunches.forEach(p => {
-    const hasRemark = p.remark && String(p.remark).trim() !== '';
-    let isOutsideShuangho = false;
-    let distShuangho = 0;
-    let distChongqing = 0;
-    const latVal = parseFloat(p.lat);
-    const lngVal = parseFloat(p.lng);
-    if (!isNaN(latVal) && !isNaN(lngVal)) {
-      distShuangho = getDistanceMeters(latVal, lngVal, 24.99230, 121.49410);
-      distChongqing = getDistanceMeters(latVal, lngVal, 25.04459, 121.51373);
-      if (distShuangho > 300) isOutsideShuangho = true;
-    }
-    if (hasRemark || isOutsideShuangho) {
-      let typeBadge = p.type === '上班' ? '<span class="badge badge-green">上班</span>' : '<span class="badge badge-red">下班</span>';
-      let locationText = '';
-      if (!isNaN(latVal) && !isNaN(lngVal)) {
-        if (isOutsideShuangho) {
-          const isAtChongqing = distChongqing <= 300;
-          const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
-          locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
-        } else {
-          locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
-        }
-      } else {
-        locationText = '無GPS定位';
-      }
-      let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
-      outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
-    }
-  });
-
-  const items = [];
-  if (leaveStrings.length > 0) items.push(leaveStrings.join('<br>'));
-  if (outOfOfficeStrings.length > 0) items.push(outOfOfficeStrings.join(''));
-  return items.length > 0 ? items.join('<br>') : '—';
 }
 
 function formatLocalDateStr(str) {
@@ -3466,7 +3368,7 @@ async function loadAdminData() {
       if (ciEl) ciEl.innerHTML = rows.filter(r => r[3] === '上班' && fmtDate(r[0]) === tStr).length + '<span>人</span>';
       if (coEl) coEl.innerHTML = rows.filter(r => r[3] === '下班' && fmtDate(r[0]) === tStr).length + '<span>人</span>';
 
-      // 📊 當月非院內外勤打卡即時穿透 (加上 J 欄資訊 & 雙和300米外打卡判定)
+      // 📊 當月非院內外勤打卡即時穿透 (加上 J 欄資訊 & 雙和50米外打卡判定)
       const currentMonthPunches = allRows.filter(r => {
         if (r[3] !== '上班' && r[3] !== '下班') return false;
         const d = parseSheetDate(r[4] || r[0]);
@@ -3492,7 +3394,7 @@ async function loadAdminData() {
             return R * c;
           };
           const distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
-          if (distShuangho > 300) {
+          if (distShuangho > 50) {
             isOutsideShuangho = true;
           }
         }
@@ -3521,11 +3423,11 @@ async function loadAdminData() {
             const distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
             const hasRemark = r[8] && String(r[8]).trim() !== '';
             if (hasRemark) {
-              const isAtChongqing = distChongqing <= 300;
+              const isAtChongqing = distChongqing <= 50;
               jVal = (isAtChongqing ? "在重慶南路書局範圍內" : "不在重慶南路書局範圍內") + 
                      " (距書局 " + distChongqing.toFixed(0) + " 米, 距雙和 " + distShuangho.toFixed(0) + " 米)";
             } else {
-              const isAtShuangho = distShuangho <= 300;
+              const isAtShuangho = distShuangho <= 50;
               jVal = (isAtShuangho ? "在雙和院區範圍內" : "不在雙和院區範圍內") + 
                      " (距雙和 " + distShuangho.toFixed(0) + " 米, 距書局 " + distChongqing.toFixed(0) + " 米)";
             }
@@ -3697,6 +3599,11 @@ async function handleAdminQueryChange() {
   document.getElementById('aq-y-ot').textContent = '計算中…';
   document.getElementById('aq-y-miss').textContent = '計算中…';
   document.getElementById('aq-y-late').textContent = '計算中…';
+  // 💡 新增：日曆區也先顯示下載中，避免切換同仁/月份的瞬間殘留上一位同仁的舊日曆內容
+  const aqCalendarEl = document.getElementById('aq-calendar-container');
+  if (aqCalendarEl) {
+    aqCalendarEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📥</div><div class="empty-text">資料下載中，請稍候…</div></div>`;
+  }
   
   try {
     const res = await callGAS({ action: 'getMyStatus', empId: empId });
@@ -3741,6 +3648,9 @@ async function handleAdminQueryChange() {
     document.getElementById('aq-y-ot').textContent = '⚠️ 錯誤';
     document.getElementById('aq-y-miss').textContent = '⚠️ 錯誤';
     document.getElementById('aq-y-late').textContent = '⚠️ 錯誤';
+    if (aqCalendarEl) {
+      aqCalendarEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">資料下載失敗，請重新選擇或稍後再試</div></div>`;
+    }
   }
 }
 
@@ -4063,10 +3973,25 @@ syncProfileAndAccumulatedLeaves();
 }
 
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
+// 💡 合併：本函式現為「我的紀錄」雲端同步的唯一入口，checkApprovalUpdates() 改為委派至此，避免兩處各自重複呼叫 getMyStatus 造成多餘的網路請求
 async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
     if (data.status === 'ok' && data.updates) {
+      const wasFirstSync = !hasSyncedOnce;
+      hasSyncedOnce = true;
+
+      // 💡 合併自原 checkApprovalUpdates：比對狀態變化，推播審批結果通知
+      data.updates.forEach(u => {
+        const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
+        if (existing && existing.status !== u.status) {
+          const approved = u.status === '同意';
+          const msg = `您的${u.type}申請（${u.date}）已${approved ? '核准' : '拒絕'}`;
+          addNotif(approved ? 'approve' : 'reject', msg);
+          sendPush('TJCPM 審批結果', msg);
+        }
+      });
+
       // 💡 V63: 實裝高階髒檢查 (Dirty Check) 機制！比對本次拉取到的 updates 與原本本地快取的 records
       const oldRecordsStr = localStorage.getItem('tjcpm_records') || '[]';
       const newRecordsStr = JSON.stringify(data.updates);
@@ -4083,12 +4008,14 @@ async function syncProfileAndAccumulatedLeaves() {
       
       if (!isRecordsChanged && !isQuotaChanged) {
         console.log('[V63 Dirty Check] 偵測到雲端資料與本機完全一致，自動免除重繪，大幅省電與降低耗能！');
+        if (wasFirstSync) renderAllList(); // 💡 首次同步即使資料無變化，也要把畫面從「下載中」換成正式內容
         return; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
       }
 
       // 100% 覆蓋本機緩存紀錄，實現跨裝置即時同步
       records = data.updates;
       saveRecords();
+      renderAllList(); // 💡 新增：同步完成後立即重繪「打卡紀錄」清單，避免使用過期本機快取誤判漏打卡
 
       // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
       let annualLeaveUsed = 0;
