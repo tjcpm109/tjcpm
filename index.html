@@ -57,7 +57,27 @@
   </style>
 </head>
 <body>
-  <!-- 略過 Login 介面... [1, 2] -->
+ <!-- ── Login 螢幕 ── -->
+<div id="loginScreen">
+  <div class="login-logo">
+    <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
+    <div id="logoTextLogin" class="logo-fallback">TJCPM</div>
+  </div>
+  <div class="login-title">TJCPM</div>
+  <div class="login-sub">員工管理系統</div>
+  <div class="login-box">
+    <div class="login-err" id="loginErr"></div>
+    <div class="input-group">
+      <label class="input-label">員工編號</label>
+      <input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
+    </div>
+    <div class="input-group">
+      <label class="input-label">密碼</label>
+      <input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
+  </div>
+</div>
 
   <div id="mainApp" style="display:none">
     <div class="header">
