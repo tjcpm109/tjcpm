@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統v88</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -311,11 +311,6 @@ margin-bottom:20px;
 .info-box .info-text { font-size:var(--fs-body); color:var(--blue-text-on-pale); line-height:1.65; }
 .info-box .info-text strong { color:var(--blue-main) !important; }
 
-/* V88 歷史控制列樣式 */
-    .history-ctrl { display:flex; gap:8px; margin-bottom:16px; align-items:center; background:var(--card-bg-soft); padding:10px; border-radius:12px; border:1px solid var(--card-border); }
-    .input-field-m { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:10px; color:white; flex:1; outline:none; font-family:inherit; }
-    .pw-toggle-btn { background:var(--blue-pale); border:1px solid var(--blue-border); color:var(--blue-light); border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:700; }
-  
 /* ── Action buttons ── */
 .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
 .action-btn {
@@ -743,6 +738,16 @@ box-shadow:var(--shadow);
 .clock-time{ font-size:64px; }
 }
 
+/* 💡 新增：平板/桌面寬螢幕自適應 — 讓導覽列與內容區維持相同置中寬度，避免視窗變寬時內容仍被侷限在原本的窄版範圍 */
+@media(min-width:768px) {
+.nav { max-width:820px; margin:0 auto !important; }
+.page { max-width:820px; }
+}
+@media(min-width:1100px) {
+.nav { max-width:1000px; margin:0 auto !important; }
+.page { max-width:1000px; }
+}
+
 /* 🏷️ 我的紀錄：假別與審核狀態標籤特別提權放大 */
 .record-type .badge {
   font-size: 14px !important;
@@ -861,9 +866,10 @@ display: inline-block;
 </div>
 
 <!-- 我的紀錄 -->
+  <!-- 我的紀錄 -->
   <div class="page" id="page-records">
     <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
-      <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab('detail')">打卡紀錄</div>
+      <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
       <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab('apply')">申請單明細</div>
       <div class="subtab-chip" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
       <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab('year')">年度彙整</div>
@@ -923,22 +929,15 @@ display: inline-block;
       <div id="yearIssueList"></div>
     </div>
 
-    <!-- 打卡明細 (純打卡日曆) 
+    <!-- 打卡明細 (純打卡日曆，💡 新增：可自由查詢月份，預設為當月；並可下載每月明細) -->
     <div id="record-detail-content" style="display:block;">
-      <p class="section-title">📅 本月打卡紀錄</p>
-      <div class="record-list" id="allRecordsList"></div>
-    </div>-->
-     <!--打卡明細 -->
-      <div id="record-detail-content">
-        <div class="history-ctrl">
-          <div style="font-size:14px; color:var(--text-secondary); font-weight:bold;">查詢月份</div>
-          <input type="month" id="recordMonthPicker" class="input-field-m" onchange="renderAllList()">
-          <button onclick="downloadMyRecords()" class="pw-toggle-btn">下載 CSV</button>
-        </div>
-        <div id="allRecordsList"></div>
+      <p class="section-title">📅 打卡紀錄</p>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:16px; background:var(--card-bg-soft); padding:10px; border-radius:12px; border:1px solid var(--card-border);">
+        <div style="font-size:var(--fs-label); color:var(--text-secondary); font-weight:bold; white-space:nowrap;">查詢月份</div>
+        <input type="month" id="recordMonthPicker" class="input-field" style="flex:1;" onchange="renderAllList()">
+        <button onclick="downloadMyRecords()" class="pw-toggle-btn" style="white-space:nowrap;">📥 下載每月明細</button>
       </div>
-      <div id="recordSubPage-stats" style="display:none"></div>
-      <div id="recordSubPage-yearly" style="display:none"><div id="yearIssueList"></div></div>
+      <div class="record-list" id="allRecordsList"></div>
     </div>
 
     <!-- 申請單明細 (請假/加班/補打卡歷史紀錄) -->
@@ -1260,6 +1259,7 @@ display: inline-block;
     <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
     <div class="record-list" id="pendingList"></div>
 
+
   </div>
 
   <!-- 2. 考勤與假別看板 子頁面 -->
@@ -1283,7 +1283,7 @@ display: inline-block;
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
-            <th style="padding:8px;">穿透查詢</th>
+            <th style="padding:8px;">穿透對帳</th>
           </tr>
         </thead>
         <tbody id="adminEmployeeOverviewBody">
@@ -1292,51 +1292,45 @@ display: inline-block;
       </table>
     </div>
 
-    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度查詢</p>
-    
+    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
     <div class="profile-card" style="padding: 16px;">
-        <!-- 1. 員工選擇下拉選單 -->
-        <div class="input-group" style="margin-bottom:12px;">
-            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">員工選擇</label>
-            <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
-                <option value="">-- 員工選擇 --</option>
-            </select>
+      <div class="input-group" style="margin-bottom:12px;">
+        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
+        <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
+          <option value="">-- 請選擇員工 --</option>
+        </select>
+      </div>
+      <div id="adminQueryResults" style="display:none; margin-top:16px;">
+        <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
+        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
+        <div class="stats-grid" style="margin-bottom:16px;">
+          <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
+            <div class="stat-label">年度累計加班</div>
+            <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
+          </div>
+          <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
+            <div class="stat-label">年度累計漏卡</div>
+            <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
+          </div>
+          <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
+            <div class="stat-label">年度累計遲到/早退</div>
+            <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
+          </div>
         </div>
-
-        <!-- 2. 查詢結果區 (唯一 ID) -->
-        <div id="adminQueryResults" style="display:none; margin-top:16px;">
-            
-            <!-- V88 新增：月份切換與在地 CSV 下載控制列 [Artifact 73] -->
-            <div class="history-ctrl" style="background:var(--blue-pale); border-color:var(--blue-border); margin-bottom:16px;">
-                <div style="font-size:14px; color:var(--blue-main); font-weight:bold;">對帳月份</div>
-                <input type="month" id="adminQueryMonthPicker" class="input-field-m" onchange="handleAdminQueryChange()">
-                <button onclick="downloadQueryRecords()" class="pw-toggle-btn" style="background:var(--blue-main); color:white; border:none;">下載 CSV</button>
-            </div>
-
-            <!-- V87 統計區塊：年度累計指標 -->
-            <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
-            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
-            <div class="stats-grid" style="margin-bottom:16px;">
-                <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
-                    <div class="stat-label">年度累計加班</div>
-                    <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
-                </div>
-                <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
-                    <div class="stat-label">年度累計漏卡</div>
-                    <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
-                </div>
-                <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
-                    <div class="stat-label">年度累計遲到/早退</div>
-                    <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
-                </div>
-            </div>
-            
-            <!-- V88 升級：動態標題與日曆容器 -->
-            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 考勤對帳明細（選定月份）：</p>
-            <div id="aq-calendar-container"></div>
+        
+        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 打卡紀錄：</p>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px; background:var(--blue-pale); padding:10px; border-radius:12px; border:1px solid var(--blue-border);">
+          <div style="font-size:var(--fs-label); color:var(--blue-main); font-weight:bold; white-space:nowrap;">查詢月份</div>
+          <input type="month" id="adminQueryMonthPicker" class="input-field" style="flex:1; border-color:var(--blue-border);" onchange="handleAdminQueryChange()">
+          <button onclick="downloadQueryRecords()" class="pw-toggle-btn" style="white-space:nowrap;">📥 下載每月明細</button>
         </div>
+        <div id="aq-calendar-container"></div>
+      </div>
     </div>
-</div>
+
+
+    <div class="record-list" id="adminRecords" style="display:none;"></div>
+  </div>
 
   <!-- 3. 排班異動 子頁面 -->
   <div class="admin-subpage" id="adminSubPage-adjust" style="display:none;">
@@ -1465,52 +1459,9 @@ function isRangeExempted(s, e, leaves) {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
-  
 // 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 'yyyy-mm-dd' (無補零) 格式導致 Invalid Date 的相容性問題
 function parseLocalDate(d) { return safeNewDate(d); }
 
-// 💡 V88 全域防禦大腦：歷史校正日判定 [496, all]
-    //function getEarliestCheckDate() {
-   //   const correction = currentUser?.quota?.correction;
-  //    return (correction && correction.startDate) ? new Date(correction.startDate.replace(/-/g, '/')) : null;
-  //  }
-
-    // 💡 V88 員工端：歷史數據過濾與防禦渲染 [498, all]
-    function renderAllList() {
-      const el = document.getElementById('allRecordsList');
-      const selectedMonth = document.getElementById('recordMonthPicker').value;
-      const earliestD = getEarliestCheckDate();
-
-      if (earliestD) {
-        const earliestM = `${earliestD.getFullYear()}-${String(earliestD.getMonth() + 1).padStart(2, '0')}`;
-        if (selectedMonth < earliestM) {
-          el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-text">校正起始日（${earliestM}）前之歷史紀錄不予呈現</div></div>`;
-          return;
-        }
-      }
-      const mine = records.filter(r => r.empId === currentUser?.empId && r.date.startsWith(selectedMonth));
-      el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state">尚無紀錄</div>';
-    }
-
-    // 💡 V88 在地下載技術：徹底根除 GAS 逾時 [396, all]
-    function downloadCSV(filename, rows) {
-      const content = "\uFEFF" + rows.map(e => e.join(",")).join("\n");
-      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = filename + ".csv";
-      link.click();
-    }
-
-    function downloadMyRecords() {
-      const m = document.getElementById('recordMonthPicker').value;
-      const mine = records.filter(r => r.empId === currentUser?.empId && r.date.startsWith(m));
-      const rows = [["日期", "類型", "時間", "緯度", "經度", "備註"]];
-      mine.forEach(r => rows.push([r.date, r.type, r.time, r.lat||"", r.lng||"", r.remark||""]));
-      downloadCSV(`我的打卡紀錄_${m}`, rows);
-    }
-
-  
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
 function getYearRangeString(joinDateStr, quota) {
   if (!joinDateStr) return '';
@@ -1608,6 +1559,7 @@ let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
 let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
 let adminPendingCache = [];
 let pendingApproveDecision = {};
+let lastAdminQueryContext = null; // 💡 新增：暫存主管端目前穿透查詢的同仁資料，供下載功能使用
 let gpsLat = null, gpsLng = null;
 let currentFilter = '打卡';
   let currentRecordSubTab = 'detail';
@@ -1767,6 +1719,17 @@ function showApp() {
   });
   
   initGPS();
+  // 💡 新增：打卡紀錄月份選擇器，預設帶入當月
+  const nowM = new Date();
+  const curMonthStr = `${nowM.getFullYear()}-${String(nowM.getMonth() + 1).padStart(2, '0')}`;
+  const recordMonthPickerEl = document.getElementById('recordMonthPicker');
+  if (recordMonthPickerEl && !recordMonthPickerEl.value) {
+    recordMonthPickerEl.value = curMonthStr;
+  }
+  const adminQueryMonthPickerEl = document.getElementById('adminQueryMonthPicker');
+  if (adminQueryMonthPickerEl && !adminQueryMonthPickerEl.value) {
+    adminQueryMonthPickerEl.value = curMonthStr;
+  }
   renderAllList();
   updateNotifBadge();
   
@@ -2482,7 +2445,9 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
 
         const leaveStrings = dayLeavesForDay.map(r => {
           const hoursLabel = r.hours ? `${r.hours}h` : '';
-          return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}</span>`;
+          const timeLabel = (r.startTime && r.endTime) ? ` ${r.startTime}-${r.endTime}` : '';
+          const reasonLabel = r.reason ? `<br><span style="color:var(--text-secondary);font-weight:normal;">📝 ${r.reason}</span>` : '';
+          return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}${timeLabel}</span>${reasonLabel}`;
         });
 
         // Gather punches for that day
@@ -2558,10 +2523,18 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     return;
   }
 
-  // 💡 專任人員：當月打卡對帳日曆
+  // 💡 專任人員：打卡對帳日曆（💡 新增：改由月份選擇器決定要查詢的年月，預設當月）
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const adminMonthPickerEl = document.getElementById('adminQueryMonthPicker');
+  let year, month;
+  if (adminMonthPickerEl && adminMonthPickerEl.value) {
+    const mParts = adminMonthPickerEl.value.split('-');
+    year = parseInt(mParts[0], 10);
+    month = parseInt(mParts[1], 10);
+  } else {
+    year = now.getFullYear();
+    month = now.getMonth() + 1;
+  }
   const daysInMonth = new Date(year, month, 0).getDate();
   
   const minePunch = empRecords.filter(r => {
@@ -2614,8 +2587,9 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   for (let day = 1; day <= daysInMonth; day++) {
     const dateObj = new Date(year, month - 1, day);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不顯示為異常 (以「—」呈現且不可點擊補單)
+    // 💡 修正：改用「被查詢同仁」自己的到職日/歷史校正日，而非目前登入主管自己的資料
     let isBeforeJoin = false;
-    const earliestD = getEarliestCheckDate();
+    const earliestD = getEarliestCheckDate({ joinDate: empInfo ? empInfo.joinDate : null, quota: res.quota });
     if (earliestD) {
       const curD = new Date(year, month - 1, day);
       curD.setHours(0,0,0,0);
@@ -2627,6 +2601,10 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`;
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     const isHoliday = holidayStrings.includes(dateStrHyphen) && !isWeekend;
+    // 💡 新增：以完整日期比對，確保查詢非當月時 isToday/isFuture 判斷仍正確
+    const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const isFutureDay = dateObj.getTime() > todayDateOnly.getTime();
+    const isTodayDay = dateObj.getTime() === todayDateOnly.getTime();
 
     let punch = punchMap[day] || { 上班: '—', 下班: '—' };
     let leaveLabel = leaveMap[day];
@@ -2639,7 +2617,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
     }
 
-    if (day > now.getDate()) {
+    if (isFutureDay) {
       if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
       if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
     } else if (isWeekend || isHoliday) {
@@ -2683,7 +2661,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       if (punch.上班 === '—') {
         if (isMorningExempted) {
           checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
-        } else if (day !== now.getDate()) {
+        } else if (!isTodayDay) {
           checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
         } else {
           checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
@@ -2700,7 +2678,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       if (punch.下班 === '—') {
         if (isAfternoonExempted) {
           checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>`;
-        } else if (day !== now.getDate()) {
+        } else if (!isTodayDay) {
           checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
         } else {
           checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
@@ -2724,7 +2702,9 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
 
     const leaveStrings = dayLeavesForDay.map(r => {
       const hoursLabel = r.hours ? `${r.hours}h` : '';
-      return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}</span>`;
+      const timeLabel = (r.startTime && r.endTime) ? ` ${r.startTime}-${r.endTime}` : '';
+      const reasonLabel = r.reason ? `<br><span style="color:var(--text-secondary);font-weight:normal;">📝 ${r.reason}</span>` : '';
+      return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}${timeLabel}</span>${reasonLabel}`;
     });
 
     const dayPunches = empRecords.filter(r => {
@@ -2779,7 +2759,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     
     const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
 
-    const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
+    const rowStyle = isTodayDay ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
 
     html += `
       <tr ${rowStyle}>
@@ -2820,6 +2800,14 @@ function renderCalendarTable() {
       return d.getFullYear() === currentYear;
     });
 
+    // 💡 新增：備註欄用 - 抓取本年度已核准請假紀錄
+    const mineLeave = records.filter(r => {
+      if (!matchEmpId(r.empId, currentUser?.empId)) return false;
+      if (r.type !== '請假' || r.status !== '同意') return false;
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getFullYear() === currentYear;
+    });
+
     const dailyMap = {};
     
     minePunch.forEach(r => {
@@ -2851,6 +2839,7 @@ function renderCalendarTable() {
               <th>📅 出勤日期</th>
               <th>🟢 上班簽到</th>
               <th>🏁 下班簽退</th>
+              <th>💬 備註</th>
             </tr>
           </thead>
           <tbody>
@@ -2859,7 +2848,7 @@ function renderCalendarTable() {
     if (sortedKeys.length === 0) {
       html += `
         <tr>
-          <td colspan="3" style="text-align:center; color:var(--text-secondary); padding:20px;">
+          <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">
             尚無年度打卡紀錄
           </td>
         </tr>
@@ -2874,12 +2863,22 @@ function renderCalendarTable() {
         
         const checkinHTML = item.in || '—';
         const checkoutHTML = item.out || '—';
+
+        // 💡 新增：組出該日備註欄 (請假事由/時間、異地打卡備註)
+        const dayLeavesForDay = mineLeave.filter(r => {
+          const startD = safeNewDate(r.date);
+          const endD = safeNewDate(r.endDate || r.date);
+          return dateObj >= startD && dateObj <= endD;
+        });
+        const dayPunches = minePunch.filter(r => formatLocalDateStr(safeNewDate(r.date || r.timestamp)) === key);
+        const col4HTML = buildDayRemarkHTML(dayLeavesForDay, dayPunches);
         
         html += `
           <tr>
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
+            <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
         `;
       });
@@ -2894,10 +2893,19 @@ function renderCalendarTable() {
     return;
   }
 
-  // 💡 以下維持原本「專任同仁」的當月 31 天高亮日曆與漏打卡精密計算邏輯
+  // 💡 以下維持原本「專任同仁」的月份 31 天高亮日曆與漏打卡精密計算邏輯
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  // 💡 新增：改由月份選擇器決定要查詢的年月，若尚未選擇則預設為當月
+  const monthPickerEl = document.getElementById('recordMonthPicker');
+  let year, month;
+  if (monthPickerEl && monthPickerEl.value) {
+    const mParts = monthPickerEl.value.split('-');
+    year = parseInt(mParts[0], 10);
+    month = parseInt(mParts[1], 10);
+  } else {
+    year = now.getFullYear();
+    month = now.getMonth() + 1;
+  }
   const daysInMonth = new Date(year, month, 0).getDate();
   
   const minePunch = records.filter(r => {
@@ -2943,6 +2951,7 @@ function renderCalendarTable() {
             <th>📅 日期</th>
             <th>🟢 上班簽到</th>
             <th>🏁 下班簽退</th>
+            <th>💬 備註</th>
           </tr>
         </thead>
         <tbody>
@@ -2960,8 +2969,10 @@ function renderCalendarTable() {
     }
     const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-    const isToday = day === now.getDate();
-    const isFuture = day > now.getDate();
+    // 💡 新增：以完整日期比對（而非僅比對「日」），確保查詢非當月時 isToday/isFuture 判斷仍正確
+    const todayDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const isToday = dateObj.getTime() === todayDateOnly.getTime();
+    const isFuture = dateObj.getTime() > todayDateOnly.getTime();
     
     const formattedDate = `${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})`;
     const dateQueryStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
@@ -3048,11 +3059,24 @@ function renderCalendarTable() {
       ? 'class="calendar-row-missed" title="點擊漏打卡一鍵補單"'
       : '';
 
+    // 💡 新增：組出該日備註欄 (請假事由/時間、異地打卡備註)
+    const dayLeavesForDay = mineLeave.filter(r => {
+      const startD = safeNewDate(r.date);
+      const endD = safeNewDate(r.endDate || r.date);
+      return dateObj >= startD && dateObj <= endD;
+    });
+    const dayPunches = minePunch.filter(r => {
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getDate() === day;
+    });
+    const col4HTML = buildDayRemarkHTML(dayLeavesForDay, dayPunches);
+
     html += `
       <tr ${rowStyle} ${clickAttr}>
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
+        <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
     `;
   }
@@ -3172,6 +3196,67 @@ function matchEmpId(id1, id2) {
     return n1 === n2;
   }
   return false;
+}
+
+// 💡 新增：通用經緯度距離計算 (公尺)，供「我的紀錄」打卡備註欄使用
+function getDistanceMeters(l1, n1, l2, n2) {
+  const R = 6371e3;
+  const phi1 = l1 * Math.PI / 180;
+  const phi2 = l2 * Math.PI / 180;
+  const deltaPhi = (l2 - l1) * Math.PI / 180;
+  const deltaLambda = (n2 - n1) * Math.PI / 180;
+  const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// 💡 新增：組出單日「請假/外勤備註」欄位 HTML，供「我的紀錄」與主管端共用格式
+function buildDayRemarkHTML(dayLeavesForDay, dayPunches) {
+  const leaveStrings = dayLeavesForDay.map(r => {
+    const hoursLabel = r.hours ? `${r.hours}h` : '';
+    const timeLabel = (r.startTime && r.endTime) ? ` ${r.startTime}-${r.endTime}` : '';
+    const reasonLabel = r.reason ? `<br><span style="color:var(--text-secondary);font-weight:normal;">📝 ${r.reason}</span>` : '';
+    return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}${timeLabel}</span>${reasonLabel}`;
+  });
+
+  const outOfOfficeStrings = [];
+  dayPunches.forEach(p => {
+    const hasRemark = p.remark && String(p.remark).trim() !== '';
+    let isOutsideShuangho = false;
+    let distShuangho = 0;
+    let distChongqing = 0;
+    const latVal = parseFloat(p.lat);
+    const lngVal = parseFloat(p.lng);
+    if (!isNaN(latVal) && !isNaN(lngVal)) {
+      distShuangho = getDistanceMeters(latVal, lngVal, 24.99230, 121.49410);
+      distChongqing = getDistanceMeters(latVal, lngVal, 25.04459, 121.51373);
+      if (distShuangho > 300) isOutsideShuangho = true;
+    }
+    if (hasRemark || isOutsideShuangho) {
+      let typeBadge = p.type === '上班' ? '<span class="badge badge-green">上班</span>' : '<span class="badge badge-red">下班</span>';
+      let locationText = '';
+      if (!isNaN(latVal) && !isNaN(lngVal)) {
+        if (isOutsideShuangho) {
+          const isAtChongqing = distChongqing <= 300;
+          const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
+          locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
+        } else {
+          locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
+        }
+      } else {
+        locationText = '無GPS定位';
+      }
+      let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
+      outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
+    }
+  });
+
+  const items = [];
+  if (leaveStrings.length > 0) items.push(leaveStrings.join('<br>'));
+  if (outOfOfficeStrings.length > 0) items.push(outOfOfficeStrings.join(''));
+  return items.length > 0 ? items.join('<br>') : '—';
 }
 
 function formatLocalDateStr(str) {
@@ -3515,11 +3600,97 @@ async function loadAdminData() {
 }
 
 // 👨‍💼 主管：員工考勤多維度穿透查詢
+// 💡 新增：員工端「我的紀錄」→「打卡紀錄」每月明細下載，依目前選定的查詢月份匯出（含請假/加班/補打卡/備註）
+function downloadMyRecords() {
+  if (!currentUser) {
+    showToast('⚠️ 請先登入');
+    return;
+  }
+  const monthPickerEl = document.getElementById('recordMonthPicker');
+  const nowD = new Date();
+  const m = (monthPickerEl && monthPickerEl.value)
+    ? monthPickerEl.value
+    : `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}`;
+
+  const mine = records.filter(r => {
+    if (!matchEmpId(r.empId, currentUser?.empId)) return false;
+    const dStr = r.date || r.timestamp;
+    if (!dStr) return false;
+    const normalized = String(dStr).replace(/\//g, '-').slice(0, 7);
+    return normalized === m;
+  });
+
+  const rows = [["日期", "類型", "細項/狀態", "時間", "定位", "備註"]];
+  mine.forEach(r => {
+    rows.push([
+      r.date || '',
+      r.type || '',
+      r.subType || r.status || '',
+      r.time || '',
+      r.lat ? `${r.lat},${r.lng}` : '',
+      r.remark || r.reason || ''
+    ]);
+  });
+
+  downloadCSV(`每月明細_${currentUser.name || ''}_${currentUser.empId}_${m}`, rows);
+}
+
+// 💡 新增：通用 CSV 下載工具（前端即時產生，含 UTF-8 BOM 避免 Excel 開啟亂碼）
+function downloadCSV(filename, dataRows) {
+  const escapeCell = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const csvContent = "\uFEFF" + dataRows.map(row => row.map(escapeCell).join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename + ".csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+// 💡 新增：主管端「每月明細」下載，依目前選定的同仁 + 查詢月份匯出該月完整明細（含請假/加班/補打卡/備註）
+function downloadQueryRecords() {
+  if (!lastAdminQueryContext || !lastAdminQueryContext.empRecords) {
+    showToast('⚠️ 請先選擇同仁並等待資料載入完成');
+    return;
+  }
+  const { empId, empRecords, empInfo } = lastAdminQueryContext;
+  const monthPickerEl = document.getElementById('adminQueryMonthPicker');
+  const nowD = new Date();
+  const m = (monthPickerEl && monthPickerEl.value)
+    ? monthPickerEl.value
+    : `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}`;
+
+  const mine = empRecords.filter(r => {
+    const dStr = r.date || r.timestamp;
+    if (!dStr) return false;
+    const normalized = String(dStr).replace(/\//g, '-').slice(0, 7);
+    return normalized === m;
+  });
+
+  const rows = [["日期", "類型", "細項/狀態", "時間", "定位", "備註"]];
+  mine.forEach(r => {
+    rows.push([
+      r.date || '',
+      r.type || '',
+      r.subType || r.status || '',
+      r.time || '',
+      r.lat ? `${r.lat},${r.lng}` : '',
+      r.remark || r.reason || ''
+    ]);
+  });
+
+  const empName = empInfo ? (empInfo.name || '') : '';
+  downloadCSV(`每月明細_${empName}_${empId}_${m}`, rows);
+}
+
 async function handleAdminQueryChange() {
   const empId = document.getElementById('adminQueryUserSelect').value;
   const resultsDiv = document.getElementById('adminQueryResults');
   if (!empId) {
     resultsDiv.style.display = 'none';
+    lastAdminQueryContext = null;
     return;
   }
   
@@ -3545,6 +3716,8 @@ async function handleAdminQueryChange() {
       
       const empRecords = res.updates || [];
       const quota = res.quota || null;
+      // 💡 新增：暫存本次查詢結果，供「下載」按鈕使用
+      lastAdminQueryContext = { empId, empRecords, res, empInfo };
       
       // 💡 V49: 主管穿透統計指標直接對齊後端 pre-settled 資料，達到 100% 齒輪咬合一致！
       let otHoursAcc = 0;
