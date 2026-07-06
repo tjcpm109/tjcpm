@@ -1260,7 +1260,6 @@ display: inline-block;
     <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
     <div class="record-list" id="pendingList"></div>
 
-
   </div>
 
   <!-- 2. 考勤與假別看板 子頁面 -->
@@ -1284,7 +1283,7 @@ display: inline-block;
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
-            <th style="padding:8px;">穿透對帳</th>
+            <th style="padding:8px;">穿透查詢</th>
           </tr>
         </thead>
         <tbody id="adminEmployeeOverviewBody">
@@ -1293,12 +1292,12 @@ display: inline-block;
       </table>
     </div>
 
-    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
+    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度查詢</p>
     <div class="profile-card" style="padding: 16px;">
       <div class="input-group" style="margin-bottom:12px;">
-        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
+        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">員工選擇</label>
         <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
-          <option value="">-- 請選擇員工 --</option>
+          <option value="">-- 員工選擇 --</option>
         </select>
       </div>
       <div id="adminQueryResults" style="display:none; margin-top:16px;">
@@ -1324,8 +1323,17 @@ display: inline-block;
       </div>
     </div>
 
-
     <div class="record-list" id="adminRecords" style="display:none;"></div>
+<!-- 👨‍💼 主管端：V88 歷史穿透升級 -->
+  <div id="adminQueryResults" style="display:none; margin-top:16px;">
+    <div class="history-ctrl" style="background:var(--blue-pale); border-color:var(--blue-border);">
+      <div style="font-size:14px; color:var(--blue-main); font-weight:bold;">對帳月份</div>
+      <input type="month" id="adminQueryMonthPicker" class="input-field-m" onchange="handleAdminQueryChange()">
+      <button onclick="downloadQueryRecords()" class="pw-toggle-btn" style="background:var(--blue-main); color:white; border:none;">下載 CSV</button>
+    </div>
+    <div id="aq-calendar-container"></div>
+  </div>
+    
   </div>
 
   <!-- 3. 排班異動 子頁面 -->
@@ -1455,9 +1463,52 @@ function isRangeExempted(s, e, leaves) {
 }
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
+  
 // 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 'yyyy-mm-dd' (無補零) 格式導致 Invalid Date 的相容性問題
 function parseLocalDate(d) { return safeNewDate(d); }
+let currentUser = null, records = []; // v88
+// 💡 V88 全域防禦大腦：歷史校正日判定 [496, all]
+    function getEarliestCheckDate() {
+      const correction = currentUser?.quota?.correction;
+      return (correction && correction.startDate) ? new Date(correction.startDate.replace(/-/g, '/')) : null;
+    }
 
+    // 💡 V88 員工端：歷史數據過濾與防禦渲染 [498, all]
+    function renderAllList() {
+      const el = document.getElementById('allRecordsList');
+      const selectedMonth = document.getElementById('recordMonthPicker').value;
+      const earliestD = getEarliestCheckDate();
+
+      if (earliestD) {
+        const earliestM = `${earliestD.getFullYear()}-${String(earliestD.getMonth() + 1).padStart(2, '0')}`;
+        if (selectedMonth < earliestM) {
+          el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-text">校正起始日（${earliestM}）前之歷史紀錄不予呈現</div></div>`;
+          return;
+        }
+      }
+      const mine = records.filter(r => r.empId === currentUser?.empId && r.date.startsWith(selectedMonth));
+      el.innerHTML = mine.length ? mine.map(r => recordHTML(r)).join('') : '<div class="empty-state">尚無紀錄</div>';
+    }
+
+    // 💡 V88 在地下載技術：徹底根除 GAS 逾時 [396, all]
+    function downloadCSV(filename, rows) {
+      const content = "\uFEFF" + rows.map(e => e.join(",")).join("\n");
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename + ".csv";
+      link.click();
+    }
+
+    function downloadMyRecords() {
+      const m = document.getElementById('recordMonthPicker').value;
+      const mine = records.filter(r => r.empId === currentUser?.empId && r.date.startsWith(m));
+      const rows = [["日期", "類型", "時間", "緯度", "經度", "備註"]];
+      mine.forEach(r => rows.push([r.date, r.type, r.time, r.lat||"", r.lng||"", r.remark||""]));
+      downloadCSV(`我的打卡紀錄_${m}`, rows);
+    }
+
+  
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
 function getYearRangeString(joinDateStr, quota) {
   if (!joinDateStr) return '';
