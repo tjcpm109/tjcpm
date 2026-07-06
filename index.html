@@ -1468,12 +1468,12 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9g
   
 // 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 'yyyy-mm-dd' (無補零) 格式導致 Invalid Date 的相容性問題
 function parseLocalDate(d) { return safeNewDate(d); }
-let currentUser = null, records = []; // v88
+
 // 💡 V88 全域防禦大腦：歷史校正日判定 [496, all]
-    function getEarliestCheckDate() {
-      const correction = currentUser?.quota?.correction;
-      return (correction && correction.startDate) ? new Date(correction.startDate.replace(/-/g, '/')) : null;
-    }
+    //function getEarliestCheckDate() {
+   //   const correction = currentUser?.quota?.correction;
+  //    return (correction && correction.startDate) ? new Date(correction.startDate.replace(/-/g, '/')) : null;
+  //  }
 
     // 💡 V88 員工端：歷史數據過濾與防禦渲染 [498, all]
     function renderAllList() {
