@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0701</title>
+<title>TJCPM 員工系統0702</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1573,7 +1573,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v88.js')
+    navigator.serviceWorker.register('sw-v89.js')
       .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v89 註冊失敗:', err));
   });
@@ -4090,7 +4090,7 @@ syncProfileAndAccumulatedLeaves();
  * 修正版：更新特休與補休卡片顯示
  * 移除硬編碼員工編號，改採「本地預估+雲端校準」
  */
-function updateLeaveQuotaDisplay(sourceRecords, quotaData) {
+/*function updateLeaveQuotaDisplay(sourceRecords, quotaData) {
   const annualLeaveEl = document.getElementById('profileAnnualLeave');
   const compLeaveEl = document.getElementById('profileCompensatoryLeave');
   if (!annualLeaveEl || !compLeaveEl) return;
@@ -4134,8 +4134,44 @@ function updateLeaveQuotaDisplay(sourceRecords, quotaData) {
   const accumComp = document.getElementById('accumComp');
   if (accumAnnual) accumAnnual.textContent = `${annualLeaveUsed.toFixed(1)}h`;
   if (accumComp) accumComp.textContent = `${compLeaveUsed.toFixed(1)}h`;
-}
+} */
+function updateLeaveQuotaDisplay(sourceRecords, quotaData) {
+  const annualLeaveEl = document.getElementById('profileAnnualLeave');
+  const compLeaveEl = document.getElementById('profileCompensatoryLeave');
+  if (!annualLeaveEl || !compLeaveEl) return;
 
+  let annualLeaveUsed = 0;
+  let compLeaveUsed = 0;
+
+  // 1. 先從本地紀錄統計已核准時數
+  (sourceRecords || []).forEach(r => {
+    if (r.type === '請假' && r.status === '同意') {
+      const hours = parseFloat(r.hours) || 0;
+      if (r.subType === '特休') annualLeaveUsed += hours;
+      else if (r.subType === '補休' || r.subType === '加班補休') compLeaveUsed += hours;
+    }
+  });
+
+  let annualRemaining, compRemaining;
+
+  if (quotaData) {
+    // 雲端有回傳精算值時優先使用
+    annualRemaining = quotaData.specialLeaveRemainingHours;
+    compRemaining = quotaData.compLeaveRemainingHours;
+    annualLeaveUsed = quotaData.specialLeaveUsedHours;
+  } else {
+    // 💡 修正點：從 currentUser 讀取校正值，不再寫死 112 或 115
+    let annualBase = currentUser.initialSpecialLeave || 80; // 預設 80
+    let compBase = currentUser.initialCompRest || 0; // 這裡會讀取到 112 號的 16h
+    
+    annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
+    compRemaining = Math.max(0, compBase - compLeaveUsed);
+  }
+
+  // 更新畫面
+  annualLeaveEl.textContent = (annualRemaining == null) ? '—' : annualRemaining + ' 小時';
+  compLeaveEl.textContent = (compRemaining == null) ? '—' : compRemaining + ' 小時';
+}
 async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
