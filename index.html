@@ -1282,7 +1282,7 @@ display: inline-block;
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
-            <th style="padding:8px;">穿透對帳</th>
+            <th style="padding:8px;">穿透查詢</th>
           </tr>
         </thead>
         <tbody id="adminEmployeeOverviewBody">
@@ -1291,10 +1291,10 @@ display: inline-block;
       </table>
     </div>
 
-    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
+    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度查詢</p>
     <div class="profile-card" style="padding: 16px;">
       <div class="input-group" style="margin-bottom:12px;">
-        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
+        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">查詢同仁</label>
         <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
           <option value="">-- 請選擇員工 --</option>
         </select>
@@ -2398,7 +2398,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
               <th>📅 出勤日期</th>
               <th>🟢 上班簽到</th>
               <th>🏁 下班簽退</th>
-              <th>💬 外勤定位與請假備註</th>
+              <th>💬 備註</th>
             </tr>
           </thead>
           <tbody>
@@ -2476,7 +2476,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             }
             
             let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
-            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
+            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge}  ${locationText}${remarkText}</div>`);
           }
         });
 
@@ -2732,7 +2732,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         }
         
         let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
-        outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
+        outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge}  ${locationText}${remarkText}</div>`);
       }
     });
 
