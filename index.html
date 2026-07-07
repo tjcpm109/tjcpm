@@ -170,13 +170,13 @@ display:none;
 .header-left img { height:52px; transition: height 0.2s; } /* 置中加大 1.5 倍 */
 .header-right { display:flex; align-items:center; gap:10px; }
 .header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
-.header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; }
+.header-user { font-size:var(--fs-label); color:#00BFFF; font-weight:500; }
 .logout-btn {
 font-size:var(--fs-label);
 color:var(--accent-red);
 cursor:pointer;
 background:none;
-border:1px solid #5c2a2e;
+border:2px (--blue-light);
 font-family:inherit;
 padding:6px 12px;
 border-radius:6px;
@@ -208,21 +208,22 @@ pointer-events:none;
       display: flex !important;
       width: 100% !important;
       overflow-x: hidden !important;
-      padding: 0 !important;
+      padding: 10px 14px !important;
+      gap: 8px !important;
       margin: 0 !important;
     }
     .nav::-webkit-scrollbar { display:none !important; }
     .nav-tab {
       flex: 1 !important;
       text-align: center !important;
-      padding: 13px 4px !important;
+      padding: 9px 4px !important;
       font-size: var(--fs-label) !important;
       color: #94a3b8 !important; /* Changed from var(--text-secondary) to #94a3b8 for pure black background contrast */
       cursor: pointer !important;
       white-space: nowrap !important;
-      border-bottom: 3px solid transparent !important;
-      border-radius: 0 !important;
-      border: none !important;
+      border-bottom: none !important;
+      border-radius: 20px !important;
+      border: 1px solid var(--card-border) !important;
       transition: all 0.2s !important;
       font-weight: 700 !important;
       user-select: none !important;
