@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07</title>
+<title>TJCPM 員工系統071</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1573,7 +1573,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v88.js')
+    navigator.serviceWorker.register('sw-v89.js')
       .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v89 註冊失敗:', err));
   });
@@ -4372,12 +4372,32 @@ function renderYearlyIssues() {
     }
   }
 
-  const range = getCurrentEmploymentYearRange();
-  const startYear = range.start.getFullYear();
-  const startMonth = range.start.getMonth();
-  const startDay = range.start.getDate();
+  //const range = getCurrentEmploymentYearRange();
+  //const startYear = range.start.getFullYear();
+  //const startMonth = range.start.getMonth();
+  //const startDay = range.start.getDate();
 
-  let dIndex = new Date(startYear, startMonth, startDay);
+  //let dIndex = new Date(startYear, startMonth, startDay);
+  
+  // 💡 第三步：決定統計的起始日期 (到職日 vs 一年前，取較晚者)
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  oneYearAgo.setHours(0, 0, 0, 0);
+
+  let startDate;
+  if (currentUser.joinDate) {
+    const joinD = safeNewDate(currentUser.joinDate);
+    // 💡 邏輯：如果到職日比一年前還早，就只抓一年資料；反之則從到職日開始
+    startDate = (joinD > oneYearAgo) ? joinD : oneYearAgo;
+  } else {
+    startDate = oneYearAgo;
+  }
+
+  // 將起始指針對準計算出的日期
+  let dIndex = new Date(startDate);
+  dIndex.setHours(0, 0, 0, 0);
+
+  
   const issues = [];
 
   const myPunches = records.filter(r => {
@@ -4528,19 +4548,7 @@ function renderYearlyIssues() {
 
   issues.sort((a, b) => b.date.localeCompare(a.date));
   
-  // 💡 V75 智慧數據校準大腦：115 號同仁（劉玟君）年度明細僅呈現 1/7 至 6/30 之間的 2次遲到與 3次未打卡
-  if (currentUser && currentUser.empId === '115') {
-    const allowedDates = ['2026-03-06', '2026-03-10', '2026-05-29', '2026-06-22', '2026-06-26'];
-    for (let i = issues.length - 1; i >= 0; i--) {
-      const issueDate = issues[i].date;
-      // 💡 只有在 1/7 到 6/30 的歷史期間內，才進行這 5 筆異常的精密限制；其餘新月份出勤正常呈現！
-      if (issueDate >= '2026-01-07' && issueDate <= '2026-06-30') {
-        if (!allowedDates.includes(issueDate)) {
-          issues.splice(i, 1);
-        }
-      }
-    }
-  }
+
   
   // 💡 V72 全域動態保護安全閥：已升級透過 getEarliestCheckDate() 動態與歷史校正日 100% 自動對齊過濾
 
