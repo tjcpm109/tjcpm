@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統7</title>
+<title>TJCPM 員工系統8</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1282,7 +1282,7 @@ display: inline-block;
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
             <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
-            <th style="padding:8px;">穿透查詢</th>
+            <th style="padding:8px;">穿透對帳</th>
           </tr>
         </thead>
         <tbody id="adminEmployeeOverviewBody">
@@ -1291,10 +1291,10 @@ display: inline-block;
       </table>
     </div>
 
-    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度查詢</p>
+    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
     <div class="profile-card" style="padding: 16px;">
       <div class="input-group" style="margin-bottom:12px;">
-        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">查詢同仁</label>
+        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
         <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
           <option value="">-- 請選擇員工 --</option>
         </select>
@@ -1318,7 +1318,7 @@ display: inline-block;
         </div>
         
         <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 打卡紀錄：</p>
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px; background:var(--blue-pale); padding:10px; border-radius:12px; border:1px solid var(--blue-border);">
+        <div id="aq-monthpicker-wrap" style="display:flex; gap:8px; align-items:center; margin-bottom:12px; background:var(--blue-pale); padding:10px; border-radius:12px; border:1px solid var(--blue-border);">
           <div style="font-size:var(--fs-label); color:var(--blue-main); font-weight:bold; white-space:nowrap;">查詢月份</div>
           <input type="month" id="adminQueryMonthPicker" class="input-field" style="flex:1; border-color:var(--blue-border);" onchange="handleAdminQueryChange()">
           <button onclick="downloadQueryRecords()" class="pw-toggle-btn" style="white-space:nowrap;">📥 下載每月明細</button>
@@ -1573,7 +1573,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v87.js')
+    navigator.serviceWorker.register('sw-v88.js')
       .then(reg => console.log('SW-v88 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v88 註冊失敗:', err));
   });
@@ -2325,6 +2325,61 @@ function renderAllList() {
 }
 
 // ── 核心升級：三欄日曆式對帳表格（請假核可豁免，點選自動補卡） ──
+// 💡 新增：計算單日工時 (下班-上班，扣除 12:00-13:00 午休重疊時段)
+function calcWorkHoursDisplay(inTime, outTime) {
+  if (!inTime || inTime === '—' || !outTime || outTime === '—') return '—';
+  const toMin = (t) => {
+    const parts = String(t).split(':');
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1] || 0, 10);
+    if (isNaN(h) || isNaN(m)) return NaN;
+    return h * 60 + m;
+  };
+  const inMin = toMin(inTime);
+  const outMin = toMin(outTime);
+  if (isNaN(inMin) || isNaN(outMin) || outMin <= inMin) return '—';
+  let total = outMin - inMin;
+  const lunchStart = 720; // 12:00
+  const lunchEnd = 780;   // 13:00
+  const overlap = Math.max(0, Math.min(outMin, lunchEnd) - Math.max(inMin, lunchStart));
+  total -= overlap;
+  const hours = Math.max(0, total) / 60;
+  return hours.toFixed(1) + 'h';
+}
+
+// 💡 新增：計算「被查詢同仁」目前所屬到職年度的起訖範圍，供主管查詢月份超出範圍時擋畫面使用
+function getEmployeeCurrentYearRange(empInfoObj, quotaObj) {
+  if (!empInfoObj || !empInfoObj.joinDate) return null;
+  const joinD = parseLocalDate(empInfoObj.joinDate);
+  if (!joinD || isNaN(joinD.getTime())) return null;
+
+  let earliest = new Date(joinD);
+  const correction = quotaObj && quotaObj.correction;
+  if (correction && correction.startDate) {
+    const corrD = parseLocalDate(correction.startDate);
+    if (corrD && !isNaN(corrD.getTime()) && corrD > earliest) {
+      earliest = corrD;
+    }
+  }
+  earliest.setHours(0, 0, 0, 0);
+
+  const jMonth = joinD.getMonth();
+  const jDay = joinD.getDate();
+  const now = new Date();
+  const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let y = joinD.getFullYear();
+  let start = new Date(y, jMonth, jDay);
+  let end = new Date(y + 1, jMonth, jDay - 1, 23, 59, 59, 999);
+  while (end < todayZero) {
+    y++;
+    start = new Date(y, jMonth, jDay);
+    end = new Date(y + 1, jMonth, jDay - 1, 23, 59, 59, 999);
+  }
+  if (start < earliest) start = earliest;
+  return { start, end };
+}
+
 function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   const container = document.getElementById('aq-calendar-container');
   if (!container) return;
@@ -2346,25 +2401,18 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     return R * c;
   };
 
-  // 💡 兼任人員專屬：整年度打卡收折呈現 (只列出有打卡的日期)
+  // 💡 兼任人員專屬：不限年度/不需選擇月份，只要有打卡資料就收折呈現
   if (empType === '兼任') {
-    const currentYear = new Date().getFullYear();
     const minePunch = empRecords.filter(r => {
-      if (r.type !== '上班' && r.type !== '下班') return false;
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getFullYear() === currentYear;
+      return (r.type === '上班' || r.type === '下班');
     });
 
     const mineSupp = empRecords.filter(r => {
-      if (r.type !== '補打卡' || r.status !== '同意') return false;
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getFullYear() === currentYear;
+      return (r.type === '補打卡' && r.status === '同意');
     });
 
     const mineLeave = empRecords.filter(r => {
-      if (r.type !== '請假' || r.status !== '同意') return false;
-      const d = safeNewDate(r.date || r.timestamp);
-      return d.getFullYear() === currentYear;
+      return (r.type === '請假' && r.status === '同意');
     });
 
     const dailyMap = {};
@@ -2398,7 +2446,8 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
               <th>📅 出勤日期</th>
               <th>🟢 上班簽到</th>
               <th>🏁 下班簽退</th>
-              <th>💬 備註</th>
+              <th>⏱️ 工時</th>
+              <th>💬 外勤定位與請假備註</th>
             </tr>
           </thead>
           <tbody>
@@ -2455,7 +2504,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           if (!isNaN(latVal) && !isNaN(lngVal)) {
             distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
             distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
-            if (distShuangho > 50) {
+            if (distShuangho > 100) {
               isOutsideShuangho = true;
             }
           }
@@ -2465,9 +2514,12 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             let locationText = '';
             if (!isNaN(latVal) && !isNaN(lngVal)) {
               if (isOutsideShuangho) {
-                const isAtChongqing = distChongqing <= 50;
-                const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
-                locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
+                const isAtChongqing = distChongqing <= 100;
+                if (isAtChongqing) {
+                  locationText = `距雙和 ${distShuangho.toFixed(0)}米 (重慶南路)`;
+                } else {
+                  locationText = `距雙和 ${distShuangho.toFixed(0)}米・距重慶 ${distChongqing.toFixed(0)}米 (異地)`;
+                }
               } else {
                 locationText = `距雙和 ${distShuangho.toFixed(0)}米`;
               }
@@ -2476,7 +2528,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             }
             
             let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
-            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge}  ${locationText}${remarkText}</div>`);
+            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
           }
         });
 
@@ -2489,12 +2541,14 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         }
         
         const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
+        const hoursHTML = calcWorkHoursDisplay(item.in, item.out);
         
         html += `
           <tr>
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
+            <td>${hoursHTML}</td>
             <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
         `;
@@ -2523,7 +2577,18 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     month = now.getMonth() + 1;
   }
   const daysInMonth = new Date(year, month, 0).getDate();
-  
+
+  // 💡 新增：查詢月份超出該同仁本年度區間(到職一年外)或系統尚未啟動(歷史校正日之前)時，直接擋畫面不渲染整張表
+  const empYearRange = getEmployeeCurrentYearRange(empInfo, res.quota);
+  if (empYearRange) {
+    const queryMonthStart = new Date(year, month - 1, 1);
+    const queryMonthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    if (queryMonthEnd < empYearRange.start || queryMonthStart > empYearRange.end) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-text">🛡️ 非本年度區間或系統尚未啟動</div></div>`;
+      return;
+    }
+  }
+
   const minePunch = empRecords.filter(r => {
     if (r.type !== '上班' && r.type !== '下班') return false;
     const d = safeNewDate(r.date || r.timestamp);
@@ -2565,6 +2630,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             <th>📅 日期</th>
             <th>🟢 上班簽到</th>
             <th>🏁 下班簽退</th>
+            <th>⏱️ 工時</th>
             <th>💬 外勤定位與請假備註</th>
           </tr>
         </thead>
@@ -2711,7 +2777,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       if (!isNaN(latVal) && !isNaN(lngVal)) {
         distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
         distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
-        if (distShuangho > 50) {
+        if (distShuangho > 100) {
           isOutsideShuangho = true;
         }
       }
@@ -2721,9 +2787,12 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         let locationText = '';
         if (!isNaN(latVal) && !isNaN(lngVal)) {
           if (isOutsideShuangho) {
-            const isAtChongqing = distChongqing <= 50;
-            const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
-            locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
+            const isAtChongqing = distChongqing <= 100;
+            if (isAtChongqing) {
+              locationText = `距雙和 ${distShuangho.toFixed(0)}米 (重慶南路)`;
+            } else {
+              locationText = `距雙和 ${distShuangho.toFixed(0)}米・距重慶 ${distChongqing.toFixed(0)}米 (異地)`;
+            }
           } else {
             locationText = `距雙和 ${distShuangho.toFixed(0)}米`;
           }
@@ -2732,7 +2801,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         }
         
         let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : '';
-        outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge}  ${locationText}${remarkText}</div>`);
+        outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
       }
     });
 
@@ -2745,6 +2814,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     }
     
     const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
+    const hoursHTML = calcWorkHoursDisplay(punch.上班, punch.下班);
 
     const rowStyle = isTodayDay ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
 
@@ -2753,6 +2823,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
+        <td>${hoursHTML}</td>
         <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
     `;
@@ -3608,6 +3679,11 @@ async function handleAdminQueryChange() {
     const res = await callGAS({ action: 'getMyStatus', empId: empId });
     if (res.status === 'ok') {
       const empInfo = currentUser.employeeList.find(e => matchEmpId(e.empId, empId));
+      // 💡 新增：兼任人員不需要選擇月份(只顯示既有打卡資料)，故隱藏月份選擇器；專任人員維持顯示
+      const aqMonthWrapEl = document.getElementById('aq-monthpicker-wrap');
+      if (aqMonthWrapEl) {
+        aqMonthWrapEl.style.display = (empInfo && empInfo.empType === '兼任') ? 'none' : 'flex';
+      }
       const queryJoinDateStr = empInfo ? empInfo.joinDate : '2025/12/01';
       let joinDate = parseLocalDate(queryJoinDateStr);
       const today = new Date();
@@ -3973,6 +4049,63 @@ syncProfileAndAccumulatedLeaves();
 
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
 // 💡 合併：本函式現為「我的紀錄」雲端同步的唯一入口，checkApprovalUpdates() 改為委派至此，避免兩處各自重複呼叫 getMyStatus 造成多餘的網路請求
+// 💡 修正：抽出「特休/補休賸餘卡片」的計算與 DOM 寫入邏輯為獨立函式，
+// 讓 Dirty Check 判斷資料無變化而提前 return 時，也能補寫一次畫面，避免「個人資料」特休數字停留在初始的「— 小時」不出來
+function updateLeaveQuotaDisplay(sourceRecords, quotaData) {
+  const annualLeaveEl = document.getElementById('profileAnnualLeave');
+  const compLeaveEl = document.getElementById('profileCompensatoryLeave');
+  if (!annualLeaveEl || !compLeaveEl) return; // 尚未進入個人資料頁面，DOM 還不存在
+
+  let annualLeaveUsed = 0;
+  let compLeaveUsed = 0;
+  let sickLeaveUsed = 0;
+  let personalLeaveUsed = 0;
+  let officialLeaveUsed = 0;
+  let marriageLeaveUsed = 0;
+  let funeralLeaveUsed = 0;
+
+  (sourceRecords || []).forEach(r => {
+    if (r.type === '請假' && r.status === '同意') {
+      const leaveType = r.subType === '加班補休' ? '補休' : (r.subType || '');
+      const hours = parseFloat(r.hours) || 0;
+      if (leaveType === '特休') annualLeaveUsed += hours;
+      else if (leaveType === '補休') compLeaveUsed += hours;
+      else if (leaveType === '病假') sickLeaveUsed += hours;
+      else if (leaveType === '事假') personalLeaveUsed += hours;
+      else if (leaveType === '公假') officialLeaveUsed += hours;
+      else if (leaveType === '婚假') marriageLeaveUsed += hours;
+      else if (leaveType === '喪假') funeralLeaveUsed += hours;
+    }
+  });
+
+  let annualRemaining = 24;
+  let compRemaining = 16;
+
+  if (quotaData) {
+    annualRemaining = quotaData.specialLeaveRemainingHours;
+    compRemaining = quotaData.compLeaveRemainingHours;
+    annualLeaveUsed = quotaData.specialLeaveUsedHours;
+  } else {
+    // 舊版或無 quota 回傳時之手動估算
+    let annualBase = currentUser.empId === '115' ? 24 : (currentUser.empId === '111' ? 112 : 80);
+    let compBase = 16;
+    annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
+    compRemaining = Math.max(0, compBase - compLeaveUsed);
+  }
+
+  annualLeaveEl.textContent = `${(annualRemaining === undefined || annualRemaining === null) ? '—' : annualRemaining} 小時`;
+  compLeaveEl.textContent = `${(compRemaining === undefined || compRemaining === null) ? '—' : compRemaining} 小時`;
+
+  // 寫入勞基法說明卡中的「今年已請」累計時數
+  document.getElementById('accumAnnual').textContent = `${annualLeaveUsed}h`;
+  document.getElementById('accumComp').textContent = `${compLeaveUsed}h`;
+  document.getElementById('accumSick').textContent = `${sickLeaveUsed}h`;
+  document.getElementById('accumPersonal').textContent = `${personalLeaveUsed}h`;
+  document.getElementById('accumOfficial').textContent = `${officialLeaveUsed}h`;
+  document.getElementById('accumMarriage').textContent = `${marriageLeaveUsed}h`;
+  document.getElementById('accumFuneral').textContent = `${funeralLeaveUsed}h`;
+}
+
 async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
@@ -4008,6 +4141,9 @@ async function syncProfileAndAccumulatedLeaves() {
       if (!isRecordsChanged && !isQuotaChanged) {
         console.log('[V63 Dirty Check] 偵測到雲端資料與本機完全一致，自動免除重繪，大幅省電與降低耗能！');
         if (wasFirstSync) renderAllList(); // 💡 首次同步即使資料無變化，也要把畫面從「下載中」換成正式內容
+        // 💡 修正：即使打卡紀錄與 quota 皆無變化，特休/補休賸餘卡片仍必須補寫一次，
+        // 避免使用者剛進入個人資料頁時，畫面停留在預設的「— 小時」不出來
+        updateLeaveQuotaDisplay(records, currentUser.quota);
         return; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
       }
 
@@ -4016,37 +4152,7 @@ async function syncProfileAndAccumulatedLeaves() {
       saveRecords();
       renderAllList(); // 💡 新增：同步完成後立即重繪「打卡紀錄」清單，避免使用過期本機快取誤判漏打卡
 
-      // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
-      let annualLeaveUsed = 0;
-      let compLeaveUsed = 0;
-      let sickLeaveUsed = 0;
-      let personalLeaveUsed = 0;
-      let officialLeaveUsed = 0;
-      let marriageLeaveUsed = 0;
-      let funeralLeaveUsed = 0;
-
-      records.forEach(r => {
-        if (r.type === '請假' && r.status === '同意') {
-          const leaveType = r.subType === '加班補休' ? '補休' : (r.subType || '');
-          const hours = parseFloat(r.hours) || 0;
-          if (leaveType === '特休') annualLeaveUsed += hours;
-          else if (leaveType === '補休') compLeaveUsed += hours;
-          else if (leaveType === '病假') sickLeaveUsed += hours;
-          else if (leaveType === '事假') personalLeaveUsed += hours;
-          else if (leaveType === '公假') officialLeaveUsed += hours;
-          else if (leaveType === '婚假') marriageLeaveUsed += hours;
-          else if (leaveType === '喪假') funeralLeaveUsed += hours;
-        }
-      });
-
-      let annualRemaining = 24;
-      let compRemaining = 16;
-
       if (data.quota) {
-        annualRemaining = data.quota.specialLeaveRemainingHours;
-        compRemaining = data.quota.compLeaveRemainingHours;
-        annualLeaveUsed = data.quota.specialLeaveUsedHours;
-        
         // 同步儲存至 currentUser 中，確保全系統共享
         currentUser.quota = data.quota;
         if (data.holidayStrings) {
@@ -4066,25 +4172,10 @@ async function syncProfileAndAccumulatedLeaves() {
         }
         applyAdminSubTabVisibility();
         sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
-      } else {
-        // 舊版或無 quota 回傳時之手動估算
-        let annualBase = currentUser.empId === '115' ? 24 : (currentUser.empId === '111' ? 112 : 80);
-        let compBase = 16;
-        annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
-        compRemaining = Math.max(0, compBase - compLeaveUsed);
       }
 
-      document.getElementById('profileAnnualLeave').textContent = `${annualRemaining} 小時`;
-      document.getElementById('profileCompensatoryLeave').textContent = `${compRemaining} 小時`;
-
-      // 寫入勞基法說明卡中的「今年已請」累計時數
-      document.getElementById('accumAnnual').textContent = `${annualLeaveUsed}h`;
-      document.getElementById('accumComp').textContent = `${compLeaveUsed}h`;
-      document.getElementById('accumSick').textContent = `${sickLeaveUsed}h`;
-      document.getElementById('accumPersonal').textContent = `${personalLeaveUsed}h`;
-      document.getElementById('accumOfficial').textContent = `${officialLeaveUsed}h`;
-      document.getElementById('accumMarriage').textContent = `${marriageLeaveUsed}h`;
-      document.getElementById('accumFuneral').textContent = `${funeralLeaveUsed}h`;
+      // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)，並寫入畫面
+      updateLeaveQuotaDisplay(records, data.quota || null);
       
       // 💡 V37-v31: 同步完最新 quota (含 correction) 之後，必須立刻重新執行出勤統計與頁面重繪！
       calcAttendance();
