@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0707</title>
+<title>TJCPM 員工系統071</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2017,6 +2017,18 @@ date: document.getElementById('leaveStart').value, startTime: document.getElemen
 endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
 reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
 };
+  // 💡 新增：補休時數不足檢查 —— 申請時數不可超過目前剩餘的補休額度
+if (record.subType === '補休') {
+  const requestedHours = calculateLeaveHoursLocal(record, currentUser?.holidayStrings || []);
+  const remainingHours = (currentUser?.quota?.compLeaveRemainingHours !== undefined && currentUser.quota.compLeaveRemainingHours !== null)
+    ? parseFloat(currentUser.quota.compLeaveRemainingHours)
+    : 0;
+  if (requestedHours > remainingHours) {
+    showToast(`⚠️ 時數不足：補休剩餘 ${remainingHours} 小時，本次申請 ${requestedHours} 小時`);
+    window.submitLeaveInFlight = false;
+    return;
+  }
+   }
 records.unshift(record);
 saveRecords();
 renderAllList();
@@ -3323,6 +3335,7 @@ let statusBadge = '';
 if (r.status === '待審') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
 else if (r.status === '同意') statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
 else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
+else if (r.status === '已撤回') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">🛑 已撤回</span>';
 
 // 🔒 隱私精簡：隱藏員工端 GPS 精準數值與打卡備註，僅保留 📍位置標記
 const showGPS = r.lat ? '📍 位置已驗證' : '';
