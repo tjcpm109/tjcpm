@@ -4751,7 +4751,7 @@ function calcAttendance() {
   let yOtHours = 0;
   let yMissedCount = 0;
   let yLateCount = 0;
-  let yEarlyCount = 0;
+  //let yEarlyCount = 0;
 
   if (currentUser && currentUser.settledAccumulated) {
     yOtHours = currentUser.settledAccumulated.yOtHours || 0;
@@ -4805,6 +4805,100 @@ showToast('⚠️ ' + (res.message || '舊密碼不正確'));
 } catch (e) {
 showToast('⚠️ 連線失敗，請確認網路後再試');
 }
+}
+  // 取得補休餘額
+async function getCompRestBalance(empId) {
+  try {
+    const res = await callGAS({
+      action: 'getCompRestBalance',
+      empId: empId
+    });
+    return res || { initialCompRest: 0, usedCompRest: 0, remainingCompRest: 0 };
+  } catch (e) {
+    console.error('讀取補休餘額失敗:', e);
+    return { initialCompRest: 0, usedCompRest: 0, remainingCompRest: 0 };
+  }
+}
+
+// 驗證補休申請
+async function validateCompRestRequest(empId, hours) {
+  try {
+    const res = await callGAS({
+      action: 'validateCompRestRequest',
+      empId: empId,
+      hours: hours
+    });
+    return res || { valid: false, remaining: 0, message: '無法驗證' };
+  } catch (e) {
+    console.error('驗證補休失敗:', e);
+    return { valid: false, remaining: 0, message: '連線失敗' };
+  }
+}
+
+// 顯示補休餘額
+async function showCompRestBalance() {
+  if (!currentUser) return;
+  
+  const balance = await getCompRestBalance(currentUser.empId);
+  const infoBox = document.getElementById('compRestInfo');
+  const remainingEl = document.getElementById('compRestRemaining');
+  const usedEl = document.getElementById('compRestUsed');
+  const initialEl = document.getElementById('compRestInitial');
+  
+  if (remainingEl && usedEl && initialEl) {
+    remainingEl.textContent = balance.remainingCompRest.toFixed(1);
+    usedEl.textContent = balance.usedCompRest.toFixed(1);
+    initialEl.textContent = balance.initialCompRest.toFixed(1);
+    if (infoBox) infoBox.style.display = 'block';
+  }
+}
+
+// 初始化補休驗證
+function initCompRestValidation() {
+  const hoursInput = document.getElementById('leaveHours');
+  const leaveTypeSelect = document.getElementById('leaveSubType');
+  const warning = document.getElementById('compRestWarning');
+  const submitBtn = document.getElementById('submitLeaveRequest');
+  
+  if (!hoursInput || !leaveTypeSelect) return;
+  
+  hoursInput.addEventListener('input', async function() {
+    if (!currentUser) return;
+    
+    const leaveType = leaveTypeSelect.value || '';
+    const hours = parseFloat(this.value) || 0;
+    
+    if (leaveType === '補休' && hours > 0) {
+      const validation = await validateCompRestRequest(currentUser.empId, hours);
+      
+      if (!validation.valid) {
+        if (warning) {
+          warning.style.display = 'block';
+          warning.textContent = `⚠️ ${validation.message}`;
+        }
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.style.opacity = '0.5';
+        }
+      } else {
+        if (warning) warning.style.display = 'none';
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+        }
+      }
+    } else {
+      if (warning) warning.style.display = 'none';
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+      }
+    }
+  });
+  
+  leaveTypeSelect.addEventListener('change', function() {
+    hoursInput.dispatchEvent(new Event('input'));
+  });
 }
 </script>
 </body>
