@@ -3324,6 +3324,9 @@ badge = `<span class="badge badge-orange">${subTypeLabel || '請假'}</span>`;
 } else if (r.type === '加班') {
 dotClass = 'dot-purple';
 badge = '<span class="badge badge-purple">加班</span>';
+if (r.holidayNoEvidence) {
+  badge += ' <span class="badge badge-red" style="margin-left:4px;">⚠️ 假日無佐證</span>';
+}
 } else if (r.type === '補打卡') {
 dotClass = 'dot-blue';
 badge = `<span class="badge badge-blue">補打卡${subTypeLabel ? '·'+subTypeLabel : ''}</span>`;
