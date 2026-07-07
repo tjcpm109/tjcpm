@@ -2952,6 +2952,17 @@ function renderCalendarTable() {
     month = now.getMonth() + 1;
   }
   const daysInMonth = new Date(year, month, 0).getDate();
+
+  // 💡 新增：查詢月份超出自己本年度區間(到職一年外)或系統尚未啟動(歷史校正日之前)時，直接擋畫面不渲染整張表
+  const myYearRange = getEmployeeCurrentYearRange(currentUser, currentUser ? currentUser.quota : null);
+  if (myYearRange) {
+    const queryMonthStart = new Date(year, month - 1, 1);
+    const queryMonthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    if (queryMonthEnd < myYearRange.start || queryMonthStart > myYearRange.end) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-text">🛡️ 非本年度區間或系統尚未啟動</div></div>`;
+      return;
+    }
+  }
   
   const minePunch = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
