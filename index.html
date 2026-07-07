@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統9</title>
+<title>TJCPM 員工系統0707</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1853,13 +1853,21 @@ el.style.color = 'var(--blue-light)';
 try {
 await fetch(GAS_URL, {
 method: 'POST',
-mode: 'no-cors',
-headers: { 'Content-Type': 'application/json' },
+// mode: 'no-cors',
+headers: { 'Content-Type':'text/plain;charset=utf-8' },
 body: JSON.stringify(record)
 });
+const data = await res.json();
+if (data.status === 'ok') {
 if (el) {
 el.textContent = '✅ 已同步雲端';
 el.style.color = 'var(--green-main)';
+}
+} else {
+if (el) {
+el.textContent = '⚠️ 同步失敗：' + (data.message || '未知錯誤');
+el.style.color = 'var(--accent-red)';
+}
 }
 setTimeout(() => { if (el) el.textContent = ''; }, 3000);
 } catch (e) {
