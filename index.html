@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0707</title>
+<title>TJCPM 員工系統0701</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4086,59 +4086,54 @@ syncProfileAndAccumulatedLeaves();
 // 💡 合併：本函式現為「我的紀錄」雲端同步的唯一入口，checkApprovalUpdates() 改為委派至此，避免兩處各自重複呼叫 getMyStatus 造成多餘的網路請求
 // 💡 修正：抽出「特休/補休賸餘卡片」的計算與 DOM 寫入邏輯為獨立函式，
 // 讓 Dirty Check 判斷資料無變化而提前 return 時，也能補寫一次畫面，避免「個人資料」特休數字停留在初始的「— 小時」不出來
+/**
+ * 修正版：更新特休與補休卡片顯示
+ * 移除硬編碼員工編號，改採「本地預估+雲端校準」
+ */
 function updateLeaveQuotaDisplay(sourceRecords, quotaData) {
   const annualLeaveEl = document.getElementById('profileAnnualLeave');
   const compLeaveEl = document.getElementById('profileCompensatoryLeave');
-  if (!annualLeaveEl || !compLeaveEl) return; // 尚未進入個人資料頁面，DOM 還不存在
+  if (!annualLeaveEl || !compLeaveEl) return;
 
   let annualLeaveUsed = 0;
   let compLeaveUsed = 0;
-  let sickLeaveUsed = 0;
-  let personalLeaveUsed = 0;
-  let officialLeaveUsed = 0;
-  let marriageLeaveUsed = 0;
-  let funeralLeaveUsed = 0;
 
+  // 1. 統計本地已有的「已同意」假單時數 [13]
   (sourceRecords || []).forEach(r => {
     if (r.type === '請假' && r.status === '同意') {
-      const leaveType = r.subType === '加班補休' ? '補休' : (r.subType || '');
       const hours = parseFloat(r.hours) || 0;
-      if (leaveType === '特休') annualLeaveUsed += hours;
-      else if (leaveType === '補休') compLeaveUsed += hours;
-      else if (leaveType === '病假') sickLeaveUsed += hours;
-      else if (leaveType === '事假') personalLeaveUsed += hours;
-      else if (leaveType === '公假') officialLeaveUsed += hours;
-      else if (leaveType === '婚假') marriageLeaveUsed += hours;
-      else if (leaveType === '喪假') funeralLeaveUsed += hours;
+      if (r.subType === '特休') annualLeaveUsed += hours;
+      else if (r.subType === '補休' || r.subType === '加班補休') compLeaveUsed += hours;
     }
   });
 
-  let annualRemaining = 24;
-  let compRemaining = 16;
+  let annualRemaining, compRemaining;
 
   if (quotaData) {
+    // 優先使用雲端回傳的精算數據 [12]
     annualRemaining = quotaData.specialLeaveRemainingHours;
     compRemaining = quotaData.compLeaveRemainingHours;
+    // 更新「今年已請」為雲端統計值，確保同步
     annualLeaveUsed = quotaData.specialLeaveUsedHours;
   } else {
-    // 舊版或無 quota 回傳時之手動估算
-    let annualBase = currentUser.empId === '115' ? 24 : (currentUser.empId === '111' ? 112 : 80);
-    let compBase = 16;
+    // 預估模式：使用登入時快取的初始額度減去本地統計值
+    // 💡 修正：不再寫死 115 或 111，改由 currentUser 屬性讀取 [12]
+    let annualBase = currentUser.initialSpecialLeave || 0; 
+    let compBase = currentUser.initialCompRest || 0;
+    
     annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
     compRemaining = Math.max(0, compBase - compLeaveUsed);
   }
 
-  annualLeaveEl.textContent = `${(annualRemaining === undefined || annualRemaining === null) ? '—' : annualRemaining} 小時`;
-  compLeaveEl.textContent = `${(compRemaining === undefined || compRemaining === null) ? '—' : compRemaining} 小時`;
+  // 2. 更新 DOM 顯示
+  annualLeaveEl.textContent = (annualRemaining === undefined || annualRemaining === null) ? '—' : `${annualRemaining} 小時`;
+  compLeaveEl.textContent = (compRemaining === undefined || compRemaining === null) ? '—' : `${compRemaining} 小時`;
 
-  // 寫入勞基法說明卡中的「今年已請」累計時數
-  document.getElementById('accumAnnual').textContent = `${annualLeaveUsed}h`;
-  document.getElementById('accumComp').textContent = `${compLeaveUsed}h`;
-  document.getElementById('accumSick').textContent = `${sickLeaveUsed}h`;
-  document.getElementById('accumPersonal').textContent = `${personalLeaveUsed}h`;
-  document.getElementById('accumOfficial').textContent = `${officialLeaveUsed}h`;
-  document.getElementById('accumMarriage').textContent = `${marriageLeaveUsed}h`;
-  document.getElementById('accumFuneral').textContent = `${funeralLeaveUsed}h`;
+  // 3. 同時更新勞基法說明卡中的「今年已請」累計時數 [14]
+  const accumAnnual = document.getElementById('accumAnnual');
+  const accumComp = document.getElementById('accumComp');
+  if (accumAnnual) accumAnnual.textContent = `${annualLeaveUsed.toFixed(1)}h`;
+  if (accumComp) accumComp.textContent = `${compLeaveUsed.toFixed(1)}h`;
 }
 
 async function syncProfileAndAccumulatedLeaves() {
