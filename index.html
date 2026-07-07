@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統8</title>
+<title>TJCPM 員工系統7</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -170,13 +170,13 @@ display:none;
 .header-left img { height:52px; transition: height 0.2s; } /* 置中加大 1.5 倍 */
 .header-right { display:flex; align-items:center; gap:10px; }
 .header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
-.header-user { font-size:var(--fs-label); color:var(--text-secondary); font-weight:500; }
+.header-user { font-size:var(--fs-label); color:#00BFFF; font-weight:500; }
 .logout-btn {
 font-size:var(--fs-label);
-color:var(--accent-red);
+color:#00BFFF;
 cursor:pointer;
 background:none;
-border:1px solid #5c2a2e;
+border:2px solid var(--blue-light);
 font-family:inherit;
 padding:6px 12px;
 border-radius:6px;
@@ -208,41 +208,40 @@ pointer-events:none;
       display: flex !important;
       width: 100% !important;
       overflow-x: hidden !important;
-      padding: 0 !important;
+      padding: 10px 14px !important;
+      gap: 8px !important;
       margin: 0 !important;
     }
     .nav::-webkit-scrollbar { display:none !important; }
     .nav-tab {
-      flex: 1 !important;
-      text-align: center !important;
-      padding: 13px 4px !important;
-      font-size: var(--fs-label) !important;
-      color: #94a3b8 !important; /* Changed from var(--text-secondary) to #94a3b8 for pure black background contrast */
-      cursor: pointer !important;
-      white-space: nowrap !important;
-      border-bottom: 3px solid transparent !important;
-      border-radius: 0 !important;
-      border: none !important;
-      transition: all 0.2s !important;
-      font-weight: 700 !important;
-      user-select: none !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
+  flex: 1 !important;
+  text-align: center !important;
+  padding: 9px 4px !important;
+  font-size: var(--fs-label) !important;
+  color: #94a3b8 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  border-bottom: none !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--card-border) !important;
+  transition: all 0.2s !important;
+  font-weight: 700 !important;
+  user-select: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+  .nav-tab.active {
+    color: #ffffff !important;
+    border: 1px solid var(--blue-light) !important;
+    background: var(--blue-light) !important;
     }
-    .nav-tab:hover {
-      color: var(--blue-light) !important;
-      background: var(--card-bg-hover) !important;
-    }
-    .nav-tab.active {
-      color: var(--blue-light) !important;
-      border-bottom: 3px solid var(--blue-light) !important;
-      background: transparent !important; /* Remove white background on pure black bar */
-    }
-    .nav-tab:hover {
-      color: var(--blue-light) !important;
-      background: rgba(255, 255, 255, 0.08) !important; /* Dark theme hover accent */
-    }
+.nav-tab:hover {
+  color: var(--blue-light) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--blue-light) !important;
+}
 
     /* ── Pages ── */
 .page { display:none; padding:20px; max-width:700px; margin:0 auto; }
@@ -808,7 +807,7 @@ display: inline-block;
 <div class="notif-bell" id="notifBell" style="display:none !important">
 🔔<span class="notif-badge" id="notifCount" style="display:none !important">!</span>
 </div>
-<span class="header-user" id="headerUser" style="display:none !important"></span>
+<span class="header-user" id="headerUser"></span>
 <span class="header-clock" id="headerClock" style="display:none !important">--:--:--</span>
 <button class="logout-btn" onclick="doLogout()">登出</button>
 </div>
@@ -1574,9 +1573,9 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v88.js')
-      .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
-      .catch(err => console.error('SW-v30 註冊失敗:', err));
+    navigator.serviceWorker.register('sw-v87.js')
+      .then(reg => console.log('SW-v88 註冊成功:', reg.scope))
+      .catch(err => console.error('SW-v88 註冊失敗:', err));
   });
 }
 
