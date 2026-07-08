@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統10</title>
+<title>TJCPM 員工系統11</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v89.js')
+    navigator.serviceWorker.register('sw-v88.js')
       .then(reg => console.log('SW-v88 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -3311,7 +3311,8 @@ let actionOrStatusHtml = '';
 
 if (!showApprove && r.status === '待審') {
   // 待審中顯示「撤回」按鈕
-  actionOrStatusHtml = `<span class="retract-btn" style="margin-left:auto;" onclick="retractRecord('${r.id}','${r.type}','${r.clientId}')">撤回</span>`;
+  actionOrStatusHtml = `<span class="retract-btn" style="margin-left:auto;" onclick="retractRecord('${r.id}','${r.type}','${r.clientId}')">撤回</span>
+  `;
 } else {
   // 已結束的單據顯示對應顏色的標籤，並統一放在右側
   let badgeClass = 'badge-gray';
@@ -3319,12 +3320,10 @@ if (!showApprove && r.status === '待審') {
   else if (r.status === '拒絕') badgeClass = 'badge-red';
   else if (r.status === '已撤回') badgeClass = 'badge-withdrawn'; // 套用剛才新增的 CSS
   
-  actionOrStatusHtml = `<span class="badge ${badgeClass}" style="margin-left:auto;">${r.status}</span>`;
+  actionOrStatusHtml = r.status
+    ? `<span class="badge ${badgeClass}" style="margin-left:auto;">${r.status}</span>`
+    : '';
 }
-  <div style="text-align: right; margin-top: 8px;">
-  <button class="approve-btn reject" onclick="retractApplication(${r.id})" style="padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 1.5px solid #5c2a2e;">🛑 撤回申請</button>
-</div>
-` : '';
 
 return `<div class="record-item">
   <div class="record-row" style="display:flex; align-items:center; width:100%; gap:12px;">
@@ -3334,14 +3333,18 @@ return `<div class="record-item">
       <div class="record-meta">${r.date} ${r.time || ''}</div>
     </div>
     
-    // 右側：這裡是整合後的位置，會根據狀態噴出「按鈕」或是「標籤」
     <div class="record-status-area">
       ${actionOrStatusHtml}
     </div>
   </div>
   
   //如果有簽核意見，顯示在下方
-  ${r.approveComment ? `<div class="record-meta" style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">💬 意見：${r.approveComment}</div>` : ''}
+  ${r.approveComment ? `
+  <div class="record-meta" style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">💬 意見：${r.approveComment}</div>` : ''}
+    </div>
+  ` : ''}
+
+  ${approveRow}
 </div>`;
 //return `<div class="record-item">
 //<div class="record-row">
