@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統3</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -168,7 +168,7 @@ display:none;
 }
 .header-left { display:flex; align-items:center; gap:10px; }
 .header-left img { height:52px; transition: height 0.2s; } /* 置中加大 1.5 倍 */
-.header-right { display:flex; align-items:center; gap:10px; }
+//.header-right { display:flex; align-items:center; gap:10px; }
 .header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
 .header-user { font-size:var(--fs-label); color:#00BFFF; font-weight:700; }
 background: rgba(0,191,255,0.12);  /* 淡淡底色，讓文字有個「區塊」感 */
@@ -1494,7 +1494,7 @@ function getYearRangeString(joinDateStr, quota) {
   }
   
   // 檢查是否有落在此週年區間內的歷史校正
-  let displayedStart = start;
+  let  = start;
   let noteText = '';
   if (quota && quota.correction && quota.correction.startDate) {
     const corrStart = safeNewDate(quota.correction.startDate);
@@ -1512,7 +1512,7 @@ function getYearRangeString(joinDateStr, quota) {
   if (displayedEnd > end) {
     displayedEnd = end;
   }
-  let displayedStart = start;
+    displayedStart = start;
 let noteText = '';
 if (quota && quota.correction && quota.correction.startDate) {
   const corrStart = safeNewDate(quota.correction.startDate);
@@ -1583,7 +1583,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v89.js')
+    navigator.serviceWorker.register('sw-v88.js')
       .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
