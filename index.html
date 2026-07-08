@@ -2763,7 +2763,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
-        <td>${remarksHTML}</td>  <!-- 新增備註列 0708-->
+        <td>${remarksHTML}</td> 
         <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
     `;
@@ -3308,8 +3308,8 @@ function recordHTML(r, showName = false, showApprove = false) {
 
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
 
-  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 =====
-  const approveRow = (showApprove && r.status === '待審') ? `
+  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 ===== const approveRow = (showApprove && r.status === '待審') ? `
+  
     <div class="approve-row" id="approveBtns-${r.id}">
       <button class="approve-btn ok" onclick="toggleApproveComment(${r.id}, '同意')">✓ 核准</button>
       <button class="approve-btn reject" onclick="toggleApproveComment(${r.id}, '拒絕')">✗ 拒絕</button>
