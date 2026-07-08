@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統9</title>
+<title>TJCPM 員工系統10</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,8 +1592,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v88.js')
-      .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
+    navigator.serviceWorker.register('sw-v89.js')
+      .then(reg => console.log('SW-v88 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
@@ -2424,7 +2424,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
               <th>📅 出勤日期</th>
               <th>🟢 上班簽到</th>
               <th>🏁 下班簽退</th>
-              <th>💬 外勤定位與請假備註</th>
+              <th>💬 備註</th>
             </tr>
           </thead>
           <tbody>
@@ -2582,7 +2582,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             <th>📅 日期</th>
             <th>🟢 上班簽到</th>
             <th>🏁 下班簽退</th>
-            <th>💬 外勤定位與請假備註</th>
+            <th>💬 備註</th>
           </tr>
         </thead>
         <tbody>
@@ -2853,12 +2853,30 @@ function renderCalendarTable() {
         
         const checkinHTML = item.in || '—';
         const checkoutHTML = item.out || '—';
-        
+         // 當天打卡備註
+        const dayPunches = minePunch.filter(r => {
+          const d = safeNewDate(r.date || r.timestamp);
+          return formatLocalDateStr(d) === key;
+        });
+
+        const remarkParts = dayPunches
+          .filter(p => p.remark && String(p.remark).trim() !== '')
+          .map(p => {
+            const badge = p.type === '上班'
+              ? '<span class="badge badge-green">上班</span>'
+              : '<span class="badge badge-red">下班</span>';
+            return `${badge} 💬 ${String(p.remark).trim()}`;
+          });
+
+        const remarksHTML = remarkParts.length > 0
+          ? `<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join('<br>')}</span>`
+          : '—';
         html += `
           <tr>
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
+            <td style="font-size:12px; line-height:1.5;">${remarksHTML}</td>
           </tr>
         `;
       });
@@ -2995,8 +3013,6 @@ function renderCalendarTable() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      /* local isTimeExempted removed */
-
       /* local isRangeExempted removed */
 
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
@@ -3022,7 +3038,24 @@ function renderCalendarTable() {
         }
       }
     }
+    // 第 4 欄：備註
+    const dayPunches = minePunch.filter(r => {
+      const d = safeNewDate(r.date || r.timestamp);
+      return d.getDate() === day;
+    });
 
+    const remarkParts = dayPunches
+      .filter(p => p.remark && String(p.remark).trim() !== '')
+      .map(p => {
+        const badge = p.type === '上班'
+          ? '<span class="badge badge-green">上班</span>'
+          : '<span class="badge badge-red">下班</span>';
+        return `${badge} 💬 ${String(p.remark).trim()}`;
+      });
+
+    const remarksHTML = remarkParts.length > 0
+      ? `<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join('<br>')}</span>`
+      : '—';
     const rowStyle = isToday ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
     const clickAttr = (punch.上班 === '—' || punch.下班 === '—') && !isWeekend && !leaveLabel && !isToday && !isFuture && !isBeforeJoin
       ? 'class="calendar-row-missed" title="點擊漏打卡一鍵補單"'
@@ -3033,6 +3066,7 @@ function renderCalendarTable() {
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
+        <td style="font-size:12px; line-height:1.5;">${remarksHTML}</td>
       </tr>
     `;
   }
@@ -3294,19 +3328,19 @@ if (!showApprove && r.status === '待審') {
 
 return `<div class="record-item">
   <div class="record-row" style="display:flex; align-items:center; width:100%; gap:12px;">
-    <!-- 左側資訊區 -->
+    // 左側資訊區
     <div class="record-info" style="flex:1;">
       <div class="record-type" style="font-weight:700;">${r.type}</div>
       <div class="record-meta">${r.date} ${r.time || ''}</div>
     </div>
     
-    <!-- 右側：這裡是整合後的位置，會根據狀態噴出「按鈕」或是「標籤」 -->
+    // 右側：這裡是整合後的位置，會根據狀態噴出「按鈕」或是「標籤」
     <div class="record-status-area">
       ${actionOrStatusHtml}
     </div>
   </div>
   
-  <!-- 如果有簽核意見，顯示在下方 -->
+  //如果有簽核意見，顯示在下方
   ${r.approveComment ? `<div class="record-meta" style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">💬 意見：${r.approveComment}</div>` : ''}
 </div>`;
 //return `<div class="record-item">
