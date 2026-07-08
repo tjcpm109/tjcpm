@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統9</title>
+<title>TJCPM 員工系統10</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v88.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -2202,7 +2202,27 @@ function submitAdminAgent() {
     showToast(`⚠️ 連線失敗，請檢查網路`);
   });
 }
-
+async function retractRecord(recordId, type, clientId) {
+  if (!confirm(`確認要撤回這筆 ${type} 記錄嗎？`)) return;
+  
+  try {
+    const res = await callGAS({
+      action: `retractRecord`,
+      recordId: recordId,
+      type: type,
+      clientId: clientId
+    });
+    
+    if (res.status === `ok`) {
+      showToast(`✅ 已撤回`);
+      location.reload(); // 重新加載頁面
+    } else {
+      showToast(`⚠️ ` + (res.message || `撤回失敗`));
+    }
+  } catch (e) {
+    showToast(`⚠️ 連線失敗`);
+  }
+}
 function submitAdminAdjust() {
   // 💡 V63: 前端按鈕點擊防重複防抖機制
   if (window.submitAdminAdjustInFlight) return;
@@ -2945,6 +2965,8 @@ function renderCalendarTable() {
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
+  // 🔍 加這行臨時調試
+console.log('專任打卡篩選結果:', minePunch.length, '筆');
 
   const mineLeave = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
