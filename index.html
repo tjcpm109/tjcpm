@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統12</title>
+<title>TJCPM 員工系統8</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v89.js')
+    navigator.serviceWorker.register('sw-v88.js')
       .then(reg => console.log('SW-v88 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -3258,114 +3258,128 @@ if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length >
 }
   
 function recordHTML(r, showName = false, showApprove = false) {
-let dotClass = 'dot-green', badge = '';
-const subTypeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '');
+  let dotClass = 'dot-green';
+  let badge = '';
+  const subTypeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '');
 
-if (r.type === '上班') {
-dotClass = 'dot-green';
-badge = '<span class="badge badge-green">上班</span>';
-} else if (r.type === '下班') {
-dotClass = 'dot-red';
-badge = '<span class="badge badge-red">下班</span>';
-} else if (r.type === '請假') {
-dotClass = 'dot-orange';
-badge = `<span class="badge badge-orange">${subTypeLabel || '請假'}</span>`;
-} else if (r.type === '加班') {
-dotClass = 'dot-purple';
-badge = '<span class="badge badge-purple">加班</span>';
-} else if (r.type === '補打卡') {
-dotClass = 'dot-blue';
-badge = `<span class="badge badge-blue">補打卡${subTypeLabel ? '·'+subTypeLabel : ''}</span>`;
-} else if (r.type === '班別調整') {
-dotClass = 'dot-orange';
-badge = `<span class="badge badge-orange">班別調整${r.subType ? '·'+r.subType : ''}</span>`;
-}
-let statusBadge = '';
-if (r.status === '待審') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
-else if (r.status === '同意') statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
-else if (r.status === '拒絕') statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
-else if (r.status === '已撤回') statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">🛑 已撤回</span>';
+  // ===== 類型 badge =====
+  if (r.type === '上班') {
+    dotClass = 'dot-green';
+    badge = '<span class="badge badge-green">上班</span>';
+  } else if (r.type === '下班') {
+    dotClass = 'dot-red';
+    badge = '<span class="badge badge-red">下班</span>';
+  } else if (r.type === '請假') {
+    dotClass = 'dot-orange';
+    badge = `<span class="badge badge-orange">${subTypeLabel || '請假'}</span>`;
+  } else if (r.type === '加班') {
+    dotClass = 'dot-purple';
+    badge = '<span class="badge badge-purple">加班</span>';
+  } else if (r.type === '補打卡') {
+    dotClass = 'dot-blue';
+    badge = `<span class="badge badge-blue">補打卡${subTypeLabel ? '·' + subTypeLabel : ''}</span>`;
+  } else if (r.type === '班別調整') {
+    dotClass = 'dot-orange';
+    badge = `<span class="badge badge-orange">班別調整${r.subType ? '·' + r.subType : ''}</span>`;
+  }
 
-// 🔒 隱私精簡：隱藏員工端 GPS 精準數值與打卡備註，僅保留 📍位置標記
-const showGPS = r.lat ? '📍 位置已驗證' : '';
+  // ===== 狀態 badge（顯示在標題旁）=====
+  let statusBadge = '';
+  if (r.status === '待審') {
+    statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
+  } else if (r.status === '同意') {
+    statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
+  } else if (r.status === '拒絕') {
+    statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
+  } else if (r.status === '已撤回') {
+    statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">🛑 已撤回</span>';
+  }
+
+  // ===== 員工端隱私精簡：GPS 不顯示經緯度，只顯示是否有定位 =====
+  const showGPS = r.lat ? '📍 位置已驗證' : '';
   const timeInfo = formatDateTimeRange(r);
+
   const meta = [
     timeInfo,
     showGPS,
-    (r.type === '上班' || r.type === '下班') ? '' : r.reason,
+    (r.type === '上班' || r.type === '下班') ? '' : (r.reason || ''),
     r.approveComment ? `💬 簽核意見：${r.approveComment}` : ''
   ].filter(Boolean).join(' · ');
 
+  const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
 
-const who = showName ? `${r.name || r.empId}（${r.empId}）` : '';
-const approveRow = showApprove && r.status === '待審' ? `
-<div class="approve-row" id="approveBtns-${r.id}">
-<button class="approve-btn ok" onclick="toggleApproveComment(${r.id},'同意')">✓ 核准</button>
-<button class="approve-btn reject" onclick="toggleApproveComment(${r.id},'拒絕')">✗ 拒絕</button>
-</div>
-<div class="approve-comment-area" id="approveArea-${r.id}">
-<textarea class="approve-comment-input" id="approveComment-${r.id}" placeholder="簽核意見（選填）"></textarea>
-<div class="approve-confirm-row">
-<button class="approve-btn ok" id="approveConfirmBtn-${r.id}" onclick="confirmApprove(${r.id})">確認送出</button>
-<button class="approve-btn reject" onclick="cancelApproveComment(${r.id})">取消</button>
-</div>
-</div>` : '';
+  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 =====
+  const approveRow = (showApprove && r.status === '待審') ? `
+    <div class="approve-row" id="approveBtns-${r.id}">
+      <button class="approve-btn ok" onclick="toggleApproveComment(${r.id}, '同意')">✓ 核准</button>
+      <button class="approve-btn reject" onclick="toggleApproveComment(${r.id}, '拒絕')">✗ 拒絕</button>
+    </div>
+    <div class="approve-comment-area" id="approveArea-${r.id}">
+      <textarea class="approve-comment-input" id="approveComment-${r.id}" placeholder="簽核意見（選填）"></textarea>
+      <div class="approve-confirm-row">
+        <button class="approve-btn ok" id="approveConfirmBtn-${r.id}" onclick="confirmApprove(${r.id})">確認送出</button>
+        <button class="approve-btn reject" onclick="cancelApproveComment(${r.id})">取消</button>
+      </div>
+    </div>
+  ` : '';
 
-//const retractButton = (!showApprove && r.status === '待審') ? `
-// 💡 替換原本的 const retractButton 邏輯
-let actionOrStatusHtml = '';
+  // ===== 右側區塊：員工端顯示撤回 / 已結束顯示狀態 =====
+  let actionOrStatusHtml = '';
 
-if (!showApprove && r.status === '待審') {
-  // 待審中顯示「撤回」按鈕
-  actionOrStatusHtml = `<span class="retract-btn" style="margin-left:auto;" onclick="retractRecord('${r.id}','${r.type}','${r.clientId}')">撤回</span>
+  if (!showApprove && r.status === '待審') {
+    // 員工端：待審可撤回
+    actionOrStatusHtml = `
+      <span class="retract-btn"
+            style="margin-left:auto;"
+            onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')">
+        撤回
+      </span>
+    `;
+  } else if (!showApprove && r.status) {
+    // 員工端：非待審顯示狀態 badge
+    let badgeClass = 'badge-gray';
+    if (r.status === '同意') badgeClass = 'badge-green';
+    else if (r.status === '拒絕') badgeClass = 'badge-red';
+    else if (r.status === '已撤回') badgeClass = 'badge-withdrawn';
+
+    actionOrStatusHtml = `
+      <span class="badge ${badgeClass}" style="margin-left:auto;">
+        ${r.status}
+      </span>
+    `;
+  }
+
+  // ===== 主畫面 HTML =====
+  return `
+    <div class="record-item">
+      <div class="record-row" style="display:flex; align-items:flex-start; width:100%; gap:12px;">
+        <div class="record-dot ${dotClass}"></div>
+
+        <div class="record-info" style="flex:1; min-width:0;">
+          <div class="record-type" style="font-weight:700;">
+            ${badge}${statusBadge}${who ? ' ' + who : ''}
+          </div>
+          <div class="record-meta">${meta || `${r.date || ''} ${r.time || ''}`}</div>
+        </div>
+
+        ${actionOrStatusHtml ? `
+          <div class="record-status-area" style="display:flex; align-items:center;">
+            ${actionOrStatusHtml}
+          </div>
+        ` : ''}
+      </div>
+
+      ${approveRow}
+
+      ${(!showApprove && r.approveComment) ? `
+        <div class="record-meta"
+             style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">
+          💬 意見：${r.approveComment}
+        </div>
+      ` : ''}
+    </div>
   `;
-} else {
-  // 已結束的單據顯示對應顏色的標籤，並統一放在右側
-  let badgeClass = 'badge-gray';
-  if (r.status === '同意') badgeClass = 'badge-green';
-  else if (r.status === '拒絕') badgeClass = 'badge-red';
-  else if (r.status === '已撤回') badgeClass = 'badge-withdrawn'; // 套用剛才新增的 CSS
-  
-  actionOrStatusHtml = r.status
-    ? `<span class="badge ${badgeClass}" style="margin-left:auto;">${r.status}</span>`
-    : '';
 }
-
-return `<div class="record-item">
-  <div class="record-row" style="display:flex; align-items:center; width:100%; gap:12px;">
-    // 左側資訊區
-    <div class="record-info" style="flex:1;">
-      <div class="record-type" style="font-weight:700;">${r.type}</div>
-      <div class="record-meta">${r.date} ${r.time || ''}</div>
-    </div>
-    
-    <div class="record-status-area">
-      ${actionOrStatusHtml}
-    </div>
-  </div>
-  
-  //如果有簽核意見，顯示在下方
-  ${r.approveComment ? `
-  <div class="record-meta" style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">💬 意見：${r.approveComment}</div>` : ''}
-    </div>
-  ` '}
-
-  ${approveRow}
-</div>`;
-//return `<div class="record-item">
-//<div class="record-row">
-//<div class="record-dot ${dotClass}"></div>
-//<div class="record-info">
-//<div class="record-type">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
-//<div class="record-meta">${meta}</div>
-//</div>
-//<div class="record-time">${r.time || ''}</div>
-//</div>
-//${approveRow}
-//${retractButton}
-//</div>`;
-}
-
 // ── Admin ───────────────────────────────────────────────────────
 async function loadAdminData() {
   window.adminOutOfOfficeStats = {};
