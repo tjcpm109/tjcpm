@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v88.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -3331,7 +3331,7 @@ function recordHTML(r, showName = false, showApprove = false) {
     actionOrStatusHtml = `
       <span class="retract-btn"
             style="margin-left:auto;"
-            onclick="retractRecord(`${r.id}`,`${r.type}`,`${r.clientId || ``}`)"> 撤回
+            onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')"> 撤回
       </span>
     `;
   } else if (!showApprove && r.status) {
@@ -3746,7 +3746,7 @@ function renderAdminEmployeeOverviewTable() {
         <td style="padding:8px; border-right:1.5px solid var(--card-border);">${checkinText}</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border);">${checkoutText}</td>
         <td style="padding:8px;">
-          <button class="pw-toggle-btn" onclick="triggerEmployeeQuery(`${emp.empId}`)">🔍 穿透對帳</button>
+          <button class="pw-toggle-btn" onclick="triggerEmployeeQuery('${emp.empId}')">🔍 穿透對帳</button>
         </td>
       </tr>
     `;
@@ -4357,13 +4357,13 @@ function renderYearlyIssues() {
         if (!punch.in && !punch.out) {
           isProblem = true;
           reason.push(`雙簽漏卡`);
-          checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`上班`,event)">⚠️ 漏上班</span>`;
-          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`下班`,event)">⚠️ 漏下班</span>`;
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
         } else {
           if (!punch.in) {
             isProblem = true;
             reason.push(`上班漏卡`);
-            checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`上班`,event)">⚠️ 漏上班</span>`;
+            checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
           } else {
             const punchInMin = timeToMin(punch.in);
             if (punchInMin > shift.start) {
@@ -4378,7 +4378,7 @@ function renderYearlyIssues() {
           if (!punch.out) {
             isProblem = true;
             reason.push(`下班漏卡`);
-            checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`下班`,event)">⚠️ 漏下班</span>`;
+            checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
           } else {
             const punchOutMin = timeToMin(punch.out);
             if (punchOutMin < shift.end) {
