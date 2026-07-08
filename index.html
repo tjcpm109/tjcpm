@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -70,7 +70,7 @@
 body {
 background:var(--bg-page);
 color:var(--page-text-primary);
-font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+font-family:-apple-system,`PingFang TC`,`Microsoft JhengHei`,sans-serif;
 min-height:100vh;
 font-size:var(--fs-body);
 }
@@ -776,7 +776,7 @@ display: inline-block;
 <!-- Login -->
 <div id="loginScreen">
 <div class="login-logo">
-<img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
+<img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display=`none`;document.getElementById(`logoTextLogin`).style.display=`block`" />
 <div id="logoTextLogin" class="logo-fallback">TJCPM</div>
 </div>
 <div class="login-title">TJCPM</div>
@@ -785,11 +785,11 @@ display: inline-block;
 <div class="login-err" id="loginErr"></div>
 <div class="input-group">
 <label class="input-label">員工編號</label>
-<input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
+<input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key===`Enter`)document.getElementById(`loginPw`).focus()" />
 </div>
 <div class="input-group">
 <label class="input-label">密碼</label>
-<input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
+<input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key===`Enter`)doLogin()" />
 </div>
 <button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
 </div>
@@ -799,7 +799,7 @@ display: inline-block;
 <div id="mainApp" style="display:none">
 <div class="header">
 <div class="header-left">
-<img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextHeader').style.display='inline-block'" />
+<img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display=`none`;document.getElementById(`logoTextHeader`).style.display=`inline-block`" />
 <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
 </div>
 <div class="header-right">
@@ -812,14 +812,14 @@ display: inline-block;
 </div>
 </div>
 <div class="nav" id="mainNav">
-<div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨💼 主管</div>
-<div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
-<div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
-<div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
-<div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
-<div class="nav-tab" data-tab="adjust" onclick="switchTab('adjust')">⚙️ 班別調整</div>
-<div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
-<div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
+<div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab(`admin`)">👨💼 主管</div>
+<div class="nav-tab active" data-tab="home" onclick="switchTab(`home`)">🏠 打卡</div>
+<div class="nav-tab" data-tab="leave" onclick="switchTab(`leave`)">📅 請假</div>
+<div class="nav-tab" data-tab="overtime" onclick="switchTab(`overtime`)">⏰ 加班</div>
+<div class="nav-tab" data-tab="supp" onclick="switchTab(`supp`)">🔄 補打卡</div>
+<div class="nav-tab" data-tab="adjust" onclick="switchTab(`adjust`)">⚙️ 班別調整</div>
+<div class="nav-tab" data-tab="records" onclick="switchTab(`records`)">📋 我的紀錄</div>
+<div class="nav-tab" data-tab="profile" onclick="switchTab(`profile`)">👤 個人資料</div>
 </div>
 
 <!-- 打卡 -->
@@ -850,12 +850,12 @@ display: inline-block;
 <span id="syncStatus" style="transition:color 0.3s;"></span>
 </div>
 <div class="action-grid">
-<div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
+<div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction(`上班`)">
 <span class="btn-icon">✅</span>
 <div class="btn-label">上班</div>
 <div class="btn-sub" id="checkinSub">打卡上班</div>
 </div>
-<div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction('下班')">
+<div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction(`下班`)">
 <span class="btn-icon">🏁</span>
 <div class="btn-label">下班</div>
 <div class="btn-sub" id="checkoutSub">打卡下班</div>
@@ -867,10 +867,10 @@ display: inline-block;
   <!-- 我的紀錄 -->
   <div class="page" id="page-records">
     <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
-      <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
-      <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab('apply')">申請單明細</div>
-      <div class="subtab-chip" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
-      <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab('year')">年度彙整</div>
+      <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab(`detail`)">本月打卡紀錄</div>
+      <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab(`apply`)">申請單明細</div>
+      <div class="subtab-chip" id="subtab-month" onclick="switchRecordSubTab(`month`)">本月考勤</div>
+      <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab(`year`)">年度彙整</div>
     </div>
     
     <!-- 本月考勤頁籤內容 (行列交換水平橫表) -->
@@ -946,10 +946,10 @@ display: inline-block;
     <div id="record-apply-content" style="display:none;">
       <p class="section-title">📋 申請單明細 <span id="apply-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
       <div class="filter-bar" style="margin-bottom: 16px;">
-        <div class="filter-chip active" onclick="filterApplyRecords('請假',this)">🌴 請假</div>
-        <div class="filter-chip" onclick="filterApplyRecords('加班',this)">⏰ 加班</div>
-        <div class="filter-chip" onclick="filterApplyRecords('補打卡',this)">🔄 補打卡</div>
-        <div class="filter-chip" onclick="filterApplyRecords('班別調整',this)">⚙️ 班別調整</div>
+        <div class="filter-chip active" onclick="filterApplyRecords(`請假`,this)">🌴 請假</div>
+        <div class="filter-chip" onclick="filterApplyRecords(`加班`,this)">⏰ 加班</div>
+        <div class="filter-chip" onclick="filterApplyRecords(`補打卡`,this)">🔄 補打卡</div>
+        <div class="filter-chip" onclick="filterApplyRecords(`班別調整`,this)">⚙️ 班別調整</div>
       </div>
       <div class="record-list" id="applyRecordsList"></div>
     </div>
@@ -1232,10 +1232,10 @@ display: inline-block;
 <div class="page" id="page-admin">
   <!-- 子分頁導覽列 -->
   <div class="filter-bar" style="margin-bottom: 20px;">
-    <div class="filter-chip active" id="adminSubTab-pending" onclick="switchAdminSubTab('pending')">⏳ 待審核</div>
-    <div class="filter-chip" id="adminSubTab-board" onclick="switchAdminSubTab('board')">📊 考勤與假別看板</div>
-    <div class="filter-chip" id="adminSubTab-adjust" onclick="switchAdminSubTab('adjust')">⚙️ 排班異動</div>
-    <div class="filter-chip" id="adminSubTab-agent" onclick="switchAdminSubTab('agent')">👥 代理人</div>
+    <div class="filter-chip active" id="adminSubTab-pending" onclick="switchAdminSubTab(`pending`)">⏳ 待審核</div>
+    <div class="filter-chip" id="adminSubTab-board" onclick="switchAdminSubTab(`board`)">📊 考勤與假別看板</div>
+    <div class="filter-chip" id="adminSubTab-adjust" onclick="switchAdminSubTab(`adjust`)">⚙️ 排班異動</div>
+    <div class="filter-chip" id="adminSubTab-agent" onclick="switchAdminSubTab(`agent`)">👥 代理人</div>
   </div>
 
   <!-- 1. 待審核 子頁面 -->
@@ -1392,7 +1392,7 @@ display: inline-block;
 <!-- Modals -->
 <div class="modal-overlay" id="modal-leave">
 <div class="modal">
-<div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal('leave')">×</button></div>
+<div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal(`leave`)">×</button></div>
 <div class="input-group">
 <label class="input-label">假別</label>
 <select class="select-field" id="modalLeaveType">
@@ -1413,7 +1413,7 @@ display: inline-block;
 
 <div class="modal-overlay" id="modal-overtime">
 <div class="modal">
-<div class="modal-title">🌙 加班申請<button class="modal-close" onclick="closeModal('overtime')">×</button></div>
+<div class="modal-title">🌙 加班申請<button class="modal-close" onclick="closeModal(`overtime`)">×</button></div>
 <div class="input-group">
 <label class="input-label">加班時數</label>
 <select class="select-field" id="modalOTHours">
@@ -1455,13 +1455,13 @@ function isRangeExempted(s, e, leaves) {
   return true;
 }
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec';
-// 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 'yyyy-mm-dd' (無補零) 格式導致 Invalid Date 的相容性問題
+const GAS_URL = `https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec`;
+// 💡 V37-v24: 解決 Safari/iOS 瀏覽器不支援 `yyyy-mm-dd` (無補零) 格式導致 Invalid Date 的相容性問題
 function parseLocalDate(d) { return safeNewDate(d); }
 
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
 function getYearRangeString(joinDateStr, quota) {
-  if (!joinDateStr) return '';
+  if (!joinDateStr) return ``;
   const joinParts = joinDateStr.split(/[-/]/);
   const jYear = parseInt(joinParts[0], 10);
   const jMonth = parseInt(joinParts[1], 10) - 1; // JS Month is 0-indexed
@@ -1504,7 +1504,7 @@ function getYearRangeString(joinDateStr, quota) {
   // 檢查是否有落在此週年區間內的歷史校正
   let displayedStart = start;
   let displayedEnd = new Date(prevMonthEnd);
-  let noteText = '';
+  let noteText = ``;
   
   // 限制 displayedEnd 不超過週年結束日
   if (displayedEnd > end) {
@@ -1533,7 +1533,7 @@ function getYearRangeString(joinDateStr, quota) {
       else if (corrStart > displayedEnd && corrStart <= end) {
         // 保持 displayedStart = start，不改變起始日
         // 並顯示待生效提示
-        noteText = '⏳ 校正將於 ${corrStart.getFullYear()}.${String(corrStart.getMonth() + 1)}.${String(corrStart.getDate())} 生效（本月尚未結算）';
+        noteText = `⏳ 校正將於 ${corrStart.getFullYear()}.${String(corrStart.getMonth() + 1)}.${String(corrStart.getDate())} 生效（本月尚未結算）`;
       }
     }
   }
@@ -1544,8 +1544,8 @@ function getYearRangeString(joinDateStr, quota) {
   const em = String(displayedEnd.getMonth() + 1);   // 智慧去補零：使用原字
   const ed = String(displayedEnd.getDate());        // 智慧去補零：使用原字
   
-  const appendNote = noteText ? ' (${noteText})' : '';
-  return '年度區間: ${sy}.${sm}.${sd} ~ ${ey}.${em}.${ed}${appendNote}';
+  const appendNote = noteText ? ` (${noteText})` : ``;
+  return `年度區間: ${sy}.${sm}.${sd} ~ ${ey}.${em}.${ed}${appendNote}`;
 }
 
 // 💡 V37-v29: 實時更新所有頁面的年度考勤區間顯示
@@ -1553,61 +1553,61 @@ function updateAllYearRanges() {
   if (!currentUser || !currentUser.joinDate) return;
   const rangeStr = getYearRangeString(currentUser.joinDate, currentUser.quota);
   
-  const yRangeEl = document.getElementById('y-range-span');
-  if (yRangeEl) yRangeEl.textContent = '(${rangeStr})';
+  const yRangeEl = document.getElementById(`y-range-span`);
+  if (yRangeEl) yRangeEl.textContent = `(${rangeStr})`;
   
-  const applyRangeEl = document.getElementById('apply-range-span');
-  if (applyRangeEl) applyRangeEl.textContent = '(${rangeStr})';
+  const applyRangeEl = document.getElementById(`apply-range-span`);
+  if (applyRangeEl) applyRangeEl.textContent = `(${rangeStr})`;
   
-  const profileRangeEl = document.getElementById('profile-range-span');
-  if (profileRangeEl) profileRangeEl.textContent = '(${rangeStr})';
+  const profileRangeEl = document.getElementById(`profile-range-span`);
+  if (profileRangeEl) profileRangeEl.textContent = `(${rangeStr})`;
 }
 
 function safeNewDate(str) {
   if (!str) return new Date();
   if (str instanceof Date) return str;
-  if (typeof str === 'number') return new Date(str);
-  if (String(str).includes('T')) return new Date(str);
+  if (typeof str === `number`) return new Date(str);
+  if (String(str).includes(`T`)) return new Date(str);
   
   // 將所有 - 替換為 / (Safari 完美解析)
-  const clean = String(str).replace(/-/g, '/');
+  const clean = String(str).replace(/-/g, `/`);
   return new Date(clean);
 }
  // V37-v20
-let currentUser = JSON.parse(sessionStorage.getItem('tjcpm_user') || 'null');
-let records = JSON.parse(localStorage.getItem('tjcpm_records') || '[]');
-let notifications = JSON.parse(localStorage.getItem('tjcpm_notif') || '[]');
+let currentUser = JSON.parse(sessionStorage.getItem(`tjcpm_user`) || `null`);
+let records = JSON.parse(localStorage.getItem(`tjcpm_records`) || `[]`);
+let notifications = JSON.parse(localStorage.getItem(`tjcpm_notif`) || `[]`);
 let adminPendingCache = [];
 let pendingApproveDecision = {};
 let gpsLat = null, gpsLng = null;
-let currentFilter = '打卡';
-  let currentRecordSubTab = 'detail';
-let currentApplyFilter = '請假';
+let currentFilter = `打卡`;
+  let currentRecordSubTab = `detail`;
+let currentApplyFilter = `請假`;
 const localNow = new Date();
 const localYear = localNow.getFullYear();
-const localMonth = String(localNow.getMonth() + 1).padStart(2, '0');
-const localDay = String(localNow.getDate()).padStart(2, '0');
-const todayStr = '${localYear}-${localMonth}-${localDay}';
+const localMonth = String(localNow.getMonth() + 1).padStart(2, `0`);
+const localDay = String(localNow.getDate()).padStart(2, `0`);
+const todayStr = `${localYear}-${localMonth}-${localDay}`;
 
 // ── Service Worker 註冊 ──────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v89.js')
-      .then(reg => console.log('SW-v88 註冊成功:', reg.scope))
-      .catch(err => console.error('SW-v30 註冊失敗:', err));
+if (`serviceWorker` in navigator) {
+  window.addEventListener(`load`, () => {
+    navigator.serviceWorker.register(`sw-v89.js`)
+      .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
+      .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
 }
 
 // ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
 return new Promise((resolve, reject) => {
-const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-const url = GAS_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
-const script = document.createElement('script');
+const cbName = `cb_` + Date.now() + `_` + Math.random().toString(36).slice(2);
+const url = GAS_URL + `?callback=` + cbName + `&data=` + encodeURIComponent(JSON.stringify(params));
+const script = document.createElement(`script`);
 const timer = setTimeout(() => {
 delete window[cbName];
 script.remove();
-reject(new Error('timeout'));
+reject(new Error(`timeout`));
 }, timeoutMs);
 window[cbName] = (res) => {
 clearTimeout(timer);
@@ -1619,7 +1619,7 @@ script.onerror = () => {
 clearTimeout(timer);
 delete window[cbName];
 script.remove();
-reject(new Error('network'));
+reject(new Error(`network`));
 };
 script.src = url;
 document.head.appendChild(script);
@@ -1631,34 +1631,34 @@ let isOnline = navigator.onLine;
 let isGpsLocked = false;
 let connectivityCheckInFlight = false;
 function updateActionButtonsState() {
-const btnCheckin = document.getElementById('btnCheckin');
-const btnCheckout = document.getElementById('btnCheckout');
-const banner = document.getElementById('offlineBanner');
-const checkinSub = document.getElementById('checkinSub');
-const checkoutSub = document.getElementById('checkoutSub');
+const btnCheckin = document.getElementById(`btnCheckin`);
+const btnCheckout = document.getElementById(`btnCheckout`);
+const banner = document.getElementById(`offlineBanner`);
+const checkinSub = document.getElementById(`checkinSub`);
+const checkoutSub = document.getElementById(`checkoutSub`);
 if (!btnCheckin || !btnCheckout) return;
 const canPunch = isGpsLocked; // 💡 離線打卡：只要有 GPS 鎖定即可打卡
-btnCheckin.classList.toggle('disabled', !canPunch);
-btnCheckout.classList.toggle('disabled', !canPunch);
-let reason = '';
-if (!isOnline) reason = '☁️ 離線打卡已就緒';
-else if (!isGpsLocked) reason = '⚠️ 無 GPS 定位';
+btnCheckin.classList.toggle(`disabled`, !canPunch);
+btnCheckout.classList.toggle(`disabled`, !canPunch);
+let reason = ``;
+if (!isOnline) reason = `☁️ 離線打卡已就緒`;
+else if (!isGpsLocked) reason = `⚠️ 無 GPS 定位`;
 if (banner) {
-banner.classList.toggle('show', !isOnline || !isGpsLocked);
+banner.classList.toggle(`show`, !isOnline || !isGpsLocked);
 if (!isOnline) {
-banner.textContent = '☁️ 離線狀態已啟用：您目前處於離線狀態，系統已為您開啟「離線打卡」保護，您的打卡資料將暫存於手機中，並於連線恢復時自動完成雲端同步！';
-banner.style.backgroundColor = 'var(--accent-orange-pale)';
-banner.style.color = 'var(--accent-orange)';
-banner.style.borderColor = 'var(--accent-orange)';
+banner.textContent = `☁️ 離線狀態已啟用：您目前處於離線狀態，系統已為您開啟「離線打卡」保護，您的打卡資料將暫存於手機中，並於連線恢復時自動完成雲端同步！`;
+banner.style.backgroundColor = `var(--accent-orange-pale)`;
+banner.style.color = `var(--accent-orange)`;
+banner.style.borderColor = `var(--accent-orange)`;
 } else if (!isGpsLocked) {
-banner.textContent = '⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試';
-banner.style.backgroundColor = 'var(--accent-red-pale)';
-banner.style.color = 'var(--accent-red)';
-banner.style.borderColor = 'var(--accent-red)';
+banner.textContent = `⚠️ 目前無法取得 GPS 定位，暫時無法打卡，請允許位置存取後再試`;
+banner.style.backgroundColor = `var(--accent-red-pale)`;
+banner.style.color = `var(--accent-red)`;
+banner.style.borderColor = `var(--accent-red)`;
 }
 }
-if (checkinSub) checkinSub.textContent = canPunch ? (isOnline ? '打卡上班' : '離線打卡') : reason;
-if (checkoutSub) checkoutSub.textContent = canPunch ? (isOnline ? '打卡下班' : '離線打卡') : reason;
+if (checkinSub) checkinSub.textContent = canPunch ? (isOnline ? `打卡上班` : `離線打卡`) : reason;
+if (checkoutSub) checkoutSub.textContent = canPunch ? (isOnline ? `打卡下班` : `離線打卡`) : reason;
 }
 
 function setOnlineStatus(online) {
@@ -1683,38 +1683,38 @@ setOnlineStatus(false);
 connectivityCheckInFlight = false;
 }
 }
-window.addEventListener('online', () => { checkConnectivity(); });
-window.addEventListener('offline', () => { setOnlineStatus(false); });
+window.addEventListener(`online`, () => { checkConnectivity(); });
+window.addEventListener(`offline`, () => { setOnlineStatus(false); });
 
 // ── Boot ────────────────────────────────────────────────────────
 if (currentUser) showApp();
 else showLogin();
 
 function showLogin() {
-document.getElementById('loginScreen').style.display = 'flex';
-document.getElementById('mainApp').style.display = 'none';
+document.getElementById(`loginScreen`).style.display = `flex`;
+document.getElementById(`mainApp`).style.display = `none`;
 }
 
 function showApp() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById(`loginScreen`).style.display = `none`;
+  document.getElementById(`mainApp`).style.display = `block`;
   
-  const isAdmin = currentUser.role === 'admin' || currentUser.role === 'admin1' || currentUser.role === 'admin2';
+  const isAdmin = currentUser.role === `admin` || currentUser.role === `admin1` || currentUser.role === `admin2`;
   
   // 動態過濾頁籤實體顯示 (主管只看 admin、profile；員工看除了 admin 以外的 6 個頁籤)
-  document.querySelectorAll('.nav-tab').forEach(tab => {
+  document.querySelectorAll(`.nav-tab`).forEach(tab => {
     const tName = tab.dataset.tab;
     if (isAdmin) {
-      if (tName === 'admin' || tName === 'profile') {
-        tab.style.setProperty('display', 'inline-flex', 'important');
+      if (tName === `admin` || tName === `profile`) {
+        tab.style.setProperty(`display`, `inline-flex`, `important`);
       } else {
-        tab.style.setProperty('display', 'none', 'important');
+        tab.style.setProperty(`display`, `none`, `important`);
       }
     } else {
-      if (tName === 'admin') {
-        tab.style.setProperty('display', 'none', 'important');
+      if (tName === `admin`) {
+        tab.style.setProperty(`display`, `none`, `important`);
       } else {
-        tab.style.setProperty('display', 'inline-flex', 'important');
+        tab.style.setProperty(`display`, `inline-flex`, `important`);
       }
     }
   });
@@ -1723,16 +1723,16 @@ function showApp() {
   rebuildAdminDropdownsAndTable();
 
   if (!isAdmin) {
-    const adminPage = document.getElementById('page-admin');
-    if (adminPage.classList.contains('active')) switchTab('home');
-    switchTab('home');
+    const adminPage = document.getElementById(`page-admin`);
+    if (adminPage.classList.contains(`active`)) switchTab(`home`);
+    switchTab(`home`);
   } else {
-    switchTab('admin');
+    switchTab(`admin`);
   }
 
-  document.getElementById('headerUser').textContent = currentUser.name;
-  document.getElementById('clockUser').innerHTML = '👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>';
-  ['leaveStart','leaveEnd','otDate','suppDate','modalLeaveDate','adjustDate','adminAdjustDate'].forEach(id => {
+  document.getElementById(`headerUser`).textContent = currentUser.name;
+  document.getElementById(`clockUser`).innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
+  [`leaveStart`,`leaveEnd`,`otDate`,`suppDate`,`modalLeaveDate`,`adjustDate`,`adminAdjustDate`].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = todayStr;
   });
@@ -1742,16 +1742,16 @@ function showApp() {
   updateNotifBadge();
   
   // 💡 V50: 如果是次要主管 admin2，則隱藏「代理人」子分頁頁籤，只有主要主管 admin1 或系統 admin 可以設定代理人
-  const agentTab = document.getElementById('adminSubTab-agent');
+  const agentTab = document.getElementById(`adminSubTab-agent`);
   if (agentTab) {
-    if (currentUser.role === 'admin2') {
-      agentTab.style.setProperty('display', 'none', 'important');
+    if (currentUser.role === `admin2`) {
+      agentTab.style.setProperty(`display`, `none`, `important`);
     } else {
-      agentTab.style.setProperty('display', 'inline-flex', 'important');
+      agentTab.style.setProperty(`display`, `inline-flex`, `important`);
     }
   }
   
-  if (currentUser.role !== 'admin') {
+  if (currentUser.role !== `admin`) {
     setInterval(checkApprovalUpdates, 60000);
   }
   checkConnectivity();
@@ -1760,71 +1760,71 @@ function showApp() {
 
 // ── Login / Logout ─────────────────────────────────────────────
 async function doLogin() {
-const empId = document.getElementById('loginId').value.trim();
-const password = document.getElementById('loginPw').value;
+const empId = document.getElementById(`loginId`).value.trim();
+const password = document.getElementById(`loginPw`).value;
 if (!empId || !password) {
-showLoginErr('請輸入員工編號和密碼');
+showLoginErr(`請輸入員工編號和密碼`);
 return;
 }
-const btn = document.getElementById('loginBtn');
-btn.innerHTML = '<span class="spinner"></span>驗證中…';
+const btn = document.getElementById(`loginBtn`);
+btn.innerHTML = `<span class="spinner"></span>驗證中…`;
 btn.disabled = true;
-document.getElementById('loginErr').style.display = 'none';
+document.getElementById(`loginErr`).style.display = `none`;
 try {
-const data = await callGAS({ action: 'login', empId, password });
-if (data.status === 'ok') {
-currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || '專任', defaultShift: data.defaultShift || '09:00-18:00', quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false };
+const data = await callGAS({ action: `login`, empId, password });
+if (data.status === `ok`) {
+currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || `專任`, defaultShift: data.defaultShift || `09:00-18:00`, quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false };
 // 💡 用本地快取的年度已結算數據回填，避免每次登入都要等同步才有畫面
 try {
-  const cachedSettled = localStorage.getItem('tjcpm_settledAccumulated');
+  const cachedSettled = localStorage.getItem(`tjcpm_settledAccumulated`);
   if (cachedSettled) currentUser.settledAccumulated = JSON.parse(cachedSettled);
 } catch (e) {}
-sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
 showApp();
 } else {
-showLoginErr(data.message || '帳號或密碼錯誤，請再試一次');
+showLoginErr(data.message || `帳號或密碼錯誤，請再試一次`);
 }
 } catch (e) {
-showLoginErr('連線失敗，請確認網路後再試');
+showLoginErr(`連線失敗，請確認網路後再試`);
 }
-btn.innerHTML = '登入';
+btn.innerHTML = `登入`;
 btn.disabled = false;
 }
 function showLoginErr(msg) {
-const el = document.getElementById('loginErr');
+const el = document.getElementById(`loginErr`);
 el.textContent = msg;
-el.style.display = 'block';
+el.style.display = `block`;
 }
 function doLogout() {
-  sessionStorage.removeItem('tjcpm_user');
+  sessionStorage.removeItem(`tjcpm_user`);
   currentUser = null;
   isOnline = true;
   isGpsLocked = false;
   
   // 登出時回復頁籤顯示設定
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.style.setProperty('display', 'inline-flex', 'important');
+  document.querySelectorAll(`.nav-tab`).forEach(tab => {
+    tab.style.setProperty(`display`, `inline-flex`, `important`);
   });
-document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-document.getElementById('page-home').classList.add('active');
-document.querySelectorAll('.nav-tab').forEach(t => {
-t.classList.toggle('active', t.dataset.tab === 'home');
+document.querySelectorAll(`.page`).forEach(p => p.classList.remove(`active`));
+document.getElementById(`page-home`).classList.add(`active`);
+document.querySelectorAll(`.nav-tab`).forEach(t => {
+t.classList.toggle(`active`, t.dataset.tab === `home`);
 });
-document.getElementById('notifCount').style.display = 'none';
-document.getElementById('loginScreen').style.display = 'flex';
-document.getElementById('mainApp').style.display = 'none';
-document.getElementById('loginId').value = '';
-document.getElementById('loginPw').value = '';
-document.getElementById('loginErr').style.display = 'none';
-setTimeout(() => document.getElementById('loginId').focus(), 100);
+document.getElementById(`notifCount`).style.display = `none`;
+document.getElementById(`loginScreen`).style.display = `flex`;
+document.getElementById(`mainApp`).style.display = `none`;
+document.getElementById(`loginId`).value = ``;
+document.getElementById(`loginPw`).value = ``;
+document.getElementById(`loginErr`).style.display = `none`;
+setTimeout(() => document.getElementById(`loginId`).focus(), 100);
 }
 
 // ── Clock ───────────────────────────────────────────────────────
 function updateClock() {
 const now = new Date();
-document.getElementById('mainClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
-document.getElementById('mainDate').textContent = now.toLocaleDateString('zh-TW', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
-document.getElementById('headerClock').textContent = now.toLocaleTimeString('zh-TW', { hour12: false });
+document.getElementById(`mainClock`).textContent = now.toLocaleTimeString(`zh-TW`, { hour12: false });
+document.getElementById(`mainDate`).textContent = now.toLocaleDateString(`zh-TW`, { year:`numeric`, month:`long`, day:`numeric`, weekday:`long` });
+document.getElementById(`headerClock`).textContent = now.toLocaleTimeString(`zh-TW`, { hour12: false });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -1832,7 +1832,7 @@ updateClock();
 // ── GPS ─────────────────────────────────────────────────────────
 function initGPS() {
 if (!navigator.geolocation) {
-setGPS('error','不支援 GPS','');
+setGPS(`error`,`不支援 GPS`,``);
 setGpsLocked(false);
 return;
 }
@@ -1840,102 +1840,102 @@ navigator.geolocation.watchPosition(
 p => {
 gpsLat = p.coords.latitude.toFixed(5);
 gpsLng = p.coords.longitude.toFixed(5);
-setGPS('active', 'GPS 已定位', '${gpsLat}, ${gpsLng}');
+setGPS(`active`, `GPS 已定位`, `${gpsLat}, ${gpsLng}`);
 setGpsLocked(true);
 },
 () => {
-setGPS('error', 'GPS 定位失敗', '請允許位置存取');
+setGPS(`error`, `GPS 定位失敗`, `請允許位置存取`);
 setGpsLocked(false);
 }
 );
 }
 function setGPS(state, text, coords) {
-document.getElementById('gpsDot').className = 'gps-dot' + (state === 'active' ? ' active' : state === 'error' ? ' error' : '');
-document.getElementById('gpsText').textContent = text;
-document.getElementById('gpsCoords').textContent = coords;
+document.getElementById(`gpsDot`).className = `gps-dot` + (state === `active` ? ` active` : state === `error` ? ` error` : ``);
+document.getElementById(`gpsText`).textContent = text;
+document.getElementById(`gpsCoords`).textContent = coords;
 }
 
 // ── Sync ──
 async function syncToSheet(record) {
-const el = document.getElementById('syncStatus');
+const el = document.getElementById(`syncStatus`);
 if (el) {
-el.textContent = '☁️ 同步中…';
-el.style.color = 'var(--blue-light)';
+el.textContent = `☁️ 同步中…`;
+el.style.color = `var(--blue-light)`;
 }
 try {
 await fetch(GAS_URL, {
-method: 'POST',
-mode: 'no-cors',
-headers: { 'Content-Type': 'application/json' },
+method: `POST`,
+mode: `no-cors`,
+headers: { `Content-Type`: `application/json` },
 body: JSON.stringify(record)
 });
 if (el) {
-el.textContent = '✅ 已同步雲端';
-el.style.color = 'var(--green-main)';
+el.textContent = `✅ 已同步雲端`;
+el.style.color = `var(--green-main)`;
 }
-setTimeout(() => { if (el) el.textContent = ''; }, 3000);
+setTimeout(() => { if (el) el.textContent = ``; }, 3000);
 } catch (e) {
 if (el) {
-el.textContent = '⚠️ 離線（本機已儲存）';
-el.style.color = 'var(--accent-orange)';
+el.textContent = `⚠️ 離線（本機已儲存）`;
+el.style.color = `var(--accent-orange)`;
 }
-setTimeout(() => { if (el) el.textContent = ''; }, 4000);
+setTimeout(() => { if (el) el.textContent = ``; }, 4000);
 }
 }
 
 // ── Push / Notification ──
 async function requestPush() {
-if (!('Notification' in window)) {
-showToast('此裝置不支援通知');
+if (!(`Notification` in window)) {
+showToast(`此裝置不支援通知`);
 return;
 }
 const perm = await Notification.requestPermission();
-document.getElementById('pushBanner').style.display = 'none';
-if (perm === 'granted') {
-showToast('✅ 推播通知已開啟');
-addNotif('system', '🔔 通知已開啟，審批結果將即時通知您');
+document.getElementById(`pushBanner`).style.display = `none`;
+if (perm === `granted`) {
+showToast(`✅ 推播通知已開啟`);
+addNotif(`system`, `🔔 通知已開啟，審批結果將即時通知您`);
 } else {
-showToast('⚠️ 未允許通知權限');
+showToast(`⚠️ 未允許通知權限`);
 }
 }
 function sendPush(title, body) {
-if (Notification && Notification.permission === 'granted') new Notification(title, { body });
+if (Notification && Notification.permission === `granted`) new Notification(title, { body });
 }
 function addNotif(type, message) {
 notifications.unshift({ id: Date.now(), type, message, time: new Date().toISOString(), read: false });
 if (notifications.length > 50) notifications = notifications.slice(0, 50);
-localStorage.setItem('tjcpm_notif', JSON.stringify(notifications));
+localStorage.setItem(`tjcpm_notif`, JSON.stringify(notifications));
 updateNotifBadge();
 }
 function updateNotifBadge() {
 const unread = notifications.filter(n => !n.read).length;
 let hasPending = false;
-if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'admin1' || currentUser.role === 'admin2')) {
-hasPending = records.some(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡' || r.type === '班別調整'));
+if (currentUser && (currentUser.role === `admin` || currentUser.role === `admin1` || currentUser.role === `admin2`)) {
+hasPending = records.some(r => r.status === `待審` && (r.type === `請假` || r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`));
 }
-const badge = document.getElementById('notifCount');
+const badge = document.getElementById(`notifCount`);
 const showBadge = unread > 0 || hasPending;
 if (showBadge) {
-badge.textContent = '!';
-badge.style.display = 'flex';
+badge.textContent = `!`;
+badge.style.display = `flex`;
 } else {
-badge.style.display = 'none';
+badge.style.display = `none`;
 }
 }
 
 // ── Poll approval status ───────────────────────────────────────
 async function checkApprovalUpdates() {
 try {
-const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-if (data.status === 'ok' && data.updates) {
+const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
+if (data.status === `ok` && data.updates) {
 data.updates.forEach(u => {
 const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
 if (existing && existing.status !== u.status) {
 existing.status = u.status;
-const approved = u.status === '同意';
-const msg = '您的${u.type}申請（${u.date}）已 '${approved ? '核准' : '拒絕'}';
-addNotif(approved ? 'approve' : 'reject', msg);
-sendPush('TJCPM 審批結果', msg);
+const approved = u.status === `同意`;
+const msg = `您的${u.type}申請（${u.date}）已 ${approved ? `核准` : `拒絕`}`;
+addNotif(approved ? `approve` : `reject`, msg);
+sendPush(`TJCPM 審批結果`, msg);
 saveRecords();
 renderAllList();
 }
@@ -1947,17 +1947,17 @@ renderAllList();
 // ── Actions ─────────────────────────────────────────────────────
 function handleAction(type) {
 if (!currentUser) return;
-if (!isGpsLocked) { showToast('⚠️ 無法取得 GPS 定位，請允許位置存取後再試'); return; }
+if (!isGpsLocked) { showToast(`⚠️ 無法取得 GPS 定位，請允許位置存取後再試`); return; }
 const now = new Date();
-const remarkEl = document.getElementById('punchRemark');
-const remark = remarkEl ? remarkEl.value.trim() : '';
+const remarkEl = document.getElementById(`punchRemark`);
+const remark = remarkEl ? remarkEl.value.trim() : ``;
 const year = now.getFullYear();
-const month = String(now.getMonth() + 1).padStart(2, '0');
-const day = String(now.getDate()).padStart(2, '0');
-const dateFormatted = '${year}-${month}-${day}';
-const hours = String(now.getHours()).padStart(2, '0');
-const minutes = String(now.getMinutes()).padStart(2, '0');
-const timeFormatted = '${hours}:${minutes}';
+const month = String(now.getMonth() + 1).padStart(2, `0`);
+const day = String(now.getDate()).padStart(2, `0`);
+const dateFormatted = `${year}-${month}-${day}`;
+const hours = String(now.getHours()).padStart(2, `0`);
+const minutes = String(now.getMinutes()).padStart(2, `0`);
+const timeFormatted = `${hours}:${minutes}`;
 const record = {
 id: Date.now(), type, empId: currentUser.empId, name: currentUser.name,
 time: timeFormatted,
@@ -1968,56 +1968,56 @@ remark: remark
 records.unshift(record);
 saveRecords();
 renderAllList();
-if (remarkEl) remarkEl.value = ''; // 成功後清空打卡備註說明
+if (remarkEl) remarkEl.value = ``; // 成功後清空打卡備註說明
 
 if (!isOnline) {
-  let offlineQueue = JSON.parse(localStorage.getItem('tjcpm_offline_queue') || '[]');
+  let offlineQueue = JSON.parse(localStorage.getItem(`tjcpm_offline_queue`) || `[]`);
   offlineQueue.push(record);
-  localStorage.setItem('tjcpm_offline_queue', JSON.stringify(offlineQueue));
-  addNotif('system', '${type}離線打卡成功 ${record.time} 📍 (待同步)');
-  showToast('✅ 離線${type}打卡成功！已加入補傳佇列');
+  localStorage.setItem(`tjcpm_offline_queue`, JSON.stringify(offlineQueue));
+  addNotif(`system`, `${type}離線打卡成功 ${record.time} 📍 (待同步)`);
+  showToast(`✅ 離線${type}打卡成功！已加入補傳佇列`);
 } else {
   syncToSheet(record);
-  addNotif('system', '${type}打卡成功 ${record.time} 📍');
-  showToast(type === '上班' ? '✅ 上班打卡成功' : '👋 下班打卡成功');
+  addNotif(`system`, `${type}打卡成功 ${record.time} 📍`);
+  showToast(type === `上班` ? `✅ 上班打卡成功` : `👋 下班打卡成功`);
 }
 }
 
 async function processOfflineQueue() {
-  let offlineQueue = JSON.parse(localStorage.getItem('tjcpm_offline_queue') || '[]');
+  let offlineQueue = JSON.parse(localStorage.getItem(`tjcpm_offline_queue`) || `[]`);
   if (offlineQueue.length === 0) return;
-  console.log('[Sync] 偵測到 ${offlineQueue.length} 筆離線打卡，開始背景補傳...');
+  console.log(`[Sync] 偵測到 ${offlineQueue.length} 筆離線打卡，開始背景補傳...`);
   const remaining = [];
-  const statusEl = document.getElementById('syncStatus');
+  const statusEl = document.getElementById(`syncStatus`);
   if (statusEl) {
-    statusEl.textContent = '🔄 正在自動同步離線打卡 ${offlineQueue.length} 筆…';
-    statusEl.style.color = 'var(--accent-orange)';
+    statusEl.textContent = `🔄 正在自動同步離線打卡 ${offlineQueue.length} 筆…`;
+    statusEl.style.color = `var(--accent-orange)`;
   }
   for (let i = 0; i < offlineQueue.length; i++) {
     const record = offlineQueue[i];
     try {
       await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
+        method: `POST`,
+        mode: `no-cors`,
+        headers: { `Content-Type`: `application/json` },
         body: JSON.stringify(record)
       });
-      console.log('[Sync] id=${record.id} 補傳成功！');
-      addNotif('system', '☁️ 離線打卡 (${record.date} ${record.time} ${record.type}) 已成功自動補傳同步！');
+      console.log(`[Sync] id=${record.id} 補傳成功！`);
+      addNotif(`system`, `☁️ 離線打卡 (${record.date} ${record.time} ${record.type}) 已成功自動補傳同步！`);
     } catch (err) {
-      console.error('[Sync] id=${record.id} 補傳失敗:', err);
+      console.error(`[Sync] id=${record.id} 補傳失敗:`, err);
       remaining.push(record);
     }
   }
-  localStorage.setItem('tjcpm_offline_queue', JSON.stringify(remaining));
+  localStorage.setItem(`tjcpm_offline_queue`, JSON.stringify(remaining));
   if (statusEl) {
     if (remaining.length === 0) {
-      statusEl.textContent = '✅ 所有離線打卡已同步雲端';
-      statusEl.style.color = 'var(--green-main)';
-      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      statusEl.textContent = `✅ 所有離線打卡已同步雲端`;
+      statusEl.style.color = `var(--green-main)`;
+      setTimeout(() => { statusEl.textContent = ``; }, 3000);
     } else {
-      statusEl.textContent = '⚠️ 賸餘 ${remaining.length} 筆離線打卡待同步';
-      statusEl.style.color = 'var(--accent-orange)';
+      statusEl.textContent = `⚠️ 賸餘 ${remaining.length} 筆離線打卡待同步`;
+      statusEl.style.color = `var(--accent-orange)`;
     }
   }
 }
@@ -2029,18 +2029,18 @@ function submitLeave() {
   setTimeout(() => { window.submitLeaveInFlight = false; }, 3000);
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '請假', subType: document.getElementById('leaveType').value,
+id, clientId: String(id), type: `請假`, subType: document.getElementById(`leaveType`).value,
 empId: currentUser.empId, name: currentUser.name,
-date: document.getElementById('leaveStart').value, startTime: document.getElementById('leaveStartTime').value,
-endDate: document.getElementById('leaveEnd').value, endTime: document.getElementById('leaveEndTime').value,
-reason: document.getElementById('leaveReason').value, status: '待審', timestamp: new Date().toISOString()
+date: document.getElementById(`leaveStart`).value, startTime: document.getElementById(`leaveStartTime`).value,
+endDate: document.getElementById(`leaveEnd`).value, endTime: document.getElementById(`leaveEndTime`).value,
+reason: document.getElementById(`leaveReason`).value, status: `待審`, timestamp: new Date().toISOString()
 };
 records.unshift(record);
 saveRecords();
 renderAllList();
 syncToSheet(record);
-addNotif('pending', '請假申請已送出（${record.subType} ${record.date}），等待主管審核');
-showToast('📝 請假申請已送出');
+addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
+showToast(`📝 請假申請已送出`);
 }
 
 function submitOvertime() {
@@ -2050,17 +2050,17 @@ function submitOvertime() {
   setTimeout(() => { window.submitOvertimeInFlight = false; }, 3000);
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
-date: document.getElementById('otDate').value, startTime: document.getElementById('otStart').value,
-endTime: document.getElementById('otEnd').value, reason: document.getElementById('otReason').value,
-status: '待審', timestamp: new Date().toISOString()
+id, clientId: String(id), type: `加班`, empId: currentUser.empId, name: currentUser.name,
+date: document.getElementById(`otDate`).value, startTime: document.getElementById(`otStart`).value,
+endTime: document.getElementById(`otEnd`).value, reason: document.getElementById(`otReason`).value,
+status: `待審`, timestamp: new Date().toISOString()
 };
 records.unshift(record);
 saveRecords();
 renderAllList();
 syncToSheet(record);
-addNotif('pending', '加班申請已送出（${record.date}），等待主管審核');
-showToast('🌙 加班申請已送出');
+addNotif(`pending`, `加班申請已送出（${record.date}），等待主管審核`);
+showToast(`🌙 加班申請已送出`);
 }
 
 function submitSupp() {
@@ -2070,17 +2070,17 @@ function submitSupp() {
   setTimeout(() => { window.submitSuppInFlight = false; }, 3000);
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '補打卡', subType: document.getElementById('suppType').value,
+id, clientId: String(id), type: `補打卡`, subType: document.getElementById(`suppType`).value,
 empId: currentUser.empId, name: currentUser.name,
-date: document.getElementById('suppDate').value, time: document.getElementById('suppTime').value,
-reason: document.getElementById('suppReason').value, status: '待審', timestamp: new Date().toISOString()
+date: document.getElementById(`suppDate`).value, time: document.getElementById(`suppTime`).value,
+reason: document.getElementById(`suppReason`).value, status: `待審`, timestamp: new Date().toISOString()
 };
 records.unshift(record);
 saveRecords();
 renderAllList();
 syncToSheet(record);
-addNotif('pending', '補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核');
-showToast('🔄 補打卡申請已送出');
+addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
+showToast(`🔄 補打卡申請已送出`);
 }
 
 function submitAdjust() {
@@ -2089,32 +2089,32 @@ function submitAdjust() {
   window.submitAdjustInFlight = true;
   setTimeout(() => { window.submitAdjustInFlight = false; }, 3000);
   
-  const adjustDateVal = document.getElementById('adjustDate').value;
-  const adjustShiftVal = document.getElementById('adjustShiftType').value;
+  const adjustDateVal = document.getElementById(`adjustDate`).value;
+  const adjustShiftVal = document.getElementById(`adjustShiftType`).value;
   if (!adjustDateVal) {
-    showToast('⚠️ 請選擇調整日期');
+    showToast(`⚠️ 請選擇調整日期`);
     window.submitAdjustInFlight = false;
     return;
   }
   if (!adjustShiftVal) {
-    showToast('⚠️ 請選擇調整班別');
+    showToast(`⚠️ 請選擇調整班別`);
     window.submitAdjustInFlight = false;
     return;
   }
   
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '班別調整', subType: adjustShiftVal,
+id, clientId: String(id), type: `班別調整`, subType: adjustShiftVal,
 empId: currentUser.empId, name: currentUser.name,
 date: adjustDateVal,
-reason: document.getElementById('adjustReason').value, status: '待審', timestamp: new Date().toISOString()
+reason: document.getElementById(`adjustReason`).value, status: `待審`, timestamp: new Date().toISOString()
 };
 records.unshift(record);
 saveRecords();
 renderAllList();
 syncToSheet(record);
-addNotif('pending', '班別調整申請已送出（${record.date} ${record.subType}），等待主管審核');
-showToast('⚙️ 班別調整申請已送出');
+addNotif(`pending`, `班別調整申請已送出（${record.date} ${record.subType}），等待主管審核`);
+showToast(`⚙️ 班別調整申請已送出`);
 }
 
 function submitAdminAgent() {
@@ -2122,24 +2122,24 @@ function submitAdminAgent() {
   if (window.submitAdminAgentInFlight) return;
   window.submitAdminAgentInFlight = true;
   setTimeout(() => { window.submitAdminAgentInFlight = false; }, 3000);
-  const empSelect = document.getElementById('adminAgentEmpId');
+  const empSelect = document.getElementById(`adminAgentEmpId`);
   const agentId = empSelect.value;
   if (!agentId) {
-    showToast('⚠️ 請選擇要指定的代理人');
+    showToast(`⚠️ 請選擇要指定的代理人`);
     return;
   }
-  const agentName = empSelect.options[empSelect.selectedIndex].textContent.split(' - ')[1] || '';
-  const startDate = document.getElementById('adminAgentStartDate').value;
-  const endDate = document.getElementById('adminAgentEndDate').value;
+  const agentName = empSelect.options[empSelect.selectedIndex].textContent.split(` - `)[1] || ``;
+  const startDate = document.getElementById(`adminAgentStartDate`).value;
+  const endDate = document.getElementById(`adminAgentEndDate`).value;
   if (!startDate || !endDate) {
-    showToast('⚠️ 請選擇完整的代理起迄日期');
+    showToast(`⚠️ 請選擇完整的代理起迄日期`);
     return;
   }
-  const status = document.getElementById('adminAgentStatus').value;
+  const status = document.getElementById(`adminAgentStatus`).value;
   
   showLoading();
   callGAS({
-    action: 'setAgent',
+    action: `setAgent`,
     managerId: currentUser.empId,
     agentId: agentId,
     agentName: agentName,
@@ -2148,16 +2148,16 @@ function submitAdminAgent() {
     status: status
   }).then(res => {
     hideLoading();
-    if (res.status === 'ok') {
-      showToast('👥 主管代理人設定儲存成功！');
-      document.getElementById('adminAgentStartDate').value = '';
-      document.getElementById('adminAgentEndDate').value = '';
+    if (res.status === `ok`) {
+      showToast(`👥 主管代理人設定儲存成功！`);
+      document.getElementById(`adminAgentStartDate`).value = ``;
+      document.getElementById(`adminAgentEndDate`).value = ``;
     } else {
-      showToast('⚠️ 儲存失敗：' + (res.message || '未知錯誤'));
+      showToast(`⚠️ 儲存失敗：` + (res.message || `未知錯誤`));
     }
   }).catch(e => {
     hideLoading();
-    showToast('⚠️ 連線失敗，請檢查網路');
+    showToast(`⚠️ 連線失敗，請檢查網路`);
   });
 }
 
@@ -2166,32 +2166,32 @@ function submitAdminAdjust() {
   if (window.submitAdminAdjustInFlight) return;
   window.submitAdminAdjustInFlight = true;
   setTimeout(() => { window.submitAdminAdjustInFlight = false; }, 3000);
-  const empSelect = document.getElementById('adminAdjustEmpId');
+  const empSelect = document.getElementById(`adminAdjustEmpId`);
   const empId = empSelect.value;
   if (!empId) {
-    showToast('⚠️ 請選擇要調整班別的同仁');
+    showToast(`⚠️ 請選擇要調整班別的同仁`);
     return;
   }
-  const empName = empSelect.options[empSelect.selectedIndex].textContent.split(' - ')[1] || '';
-  const dateVal = document.getElementById('adminAdjustDate').value;
+  const empName = empSelect.options[empSelect.selectedIndex].textContent.split(` - `)[1] || ``;
+  const dateVal = document.getElementById(`adminAdjustDate`).value;
   if (!dateVal) {
-    showToast('⚠️ 請選擇調整日期');
+    showToast(`⚠️ 請選擇調整日期`);
     return;
   }
-  const shiftType = document.getElementById('adminAdjustShiftType').value;
-  const reason = document.getElementById('adminAdjustReason').value.trim();
+  const shiftType = document.getElementById(`adminAdjustShiftType`).value;
+  const reason = document.getElementById(`adminAdjustReason`).value.trim();
   
   const id = Date.now();
   const record = {
     id: id,
     clientId: String(id),
-    type: '班別調整',
+    type: `班別調整`,
     subType: shiftType,
     empId: empId,
     name: empName,
     date: dateVal,
-    reason: reason || '主管直接指派',
-    status: '同意', // Directly approved!
+    reason: reason || `主管直接指派`,
+    status: `同意`, // Directly approved!
     approverName: currentUser.name,
     approverId: currentUser.empId,
     timestamp: new Date().toISOString()
@@ -2202,65 +2202,65 @@ function submitAdminAdjust() {
   renderAllList();
   syncToSheet(record);
   
-  showToast('✓ 班別異動指派成功並已直接生效！');
-  document.getElementById('adminAdjustReason').value = '';
+  showToast(`✓ 班別異動指派成功並已直接生效！`);
+  document.getElementById(`adminAdjustReason`).value = ``;
 }
 
 function quickLeave() {
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '請假', subType: document.getElementById('modalLeaveType').value,
-empId: currentUser.empId, name: currentUser.name, date: document.getElementById('modalLeaveDate').value,
-status: '待審', timestamp: new Date().toISOString()
+id, clientId: String(id), type: `請假`, subType: document.getElementById(`modalLeaveType`).value,
+empId: currentUser.empId, name: currentUser.name, date: document.getElementById(`modalLeaveDate`).value,
+status: `待審`, timestamp: new Date().toISOString()
 };
 records.unshift(record);
 saveRecords();
 renderAllList();
 syncToSheet(record);
-addNotif('pending', '請假申請已送出（${record.subType} ${record.date}），等待主管審核');
-closeModal('leave');
-showToast('📝 請假申請已送出');
+addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
+closeModal(`leave`);
+showToast(`📝 請假申請已送出`);
 }
 
 function quickOvertime() {
 const id = Date.now();
 const record = {
-id, clientId: String(id), type: '加班', empId: currentUser.empId, name: currentUser.name,
-hours: document.getElementById('modalOTHours').value, reason: document.getElementById('modalOTReason').value,
-date: todayStr, status: '待審', timestamp: new Date().toISOString()
+id, clientId: String(id), type: `加班`, empId: currentUser.empId, name: currentUser.name,
+hours: document.getElementById(`modalOTHours`).value, reason: document.getElementById(`modalOTReason`).value,
+date: todayStr, status: `待審`, timestamp: new Date().toISOString()
 };
 records.unshift(record);
 saveRecords();
 renderAllList();
 syncToSheet(record);
-addNotif('pending', '加班申請已送出（${record.date} ${record.hours}），等待主管審核');
-closeModal('overtime');
-showToast('🌙 加班申請已送出');
+addNotif(`pending`, `加班申請已送出（${record.date} ${record.hours}），等待主管審核`);
+closeModal(`overtime`);
+showToast(`🌙 加班申請已送出`);
 }
 
 // ── Render / Filtering ──────────────────────────────────────────
 function switchRecordSubTab(sub) {
   currentRecordSubTab = sub;
-  ['month', 'year', 'detail', 'apply'].forEach(s => {
-    const elTab = document.getElementById('subtab-' + s);
-    const elCont = document.getElementById('record-' + s + '-content');
-    if (elTab) elTab.classList.toggle('active', s === sub);
-    if (elCont) elCont.style.display = s === sub ? 'block' : 'none';
+  [`month`, `year`, `detail`, `apply`].forEach(s => {
+    const elTab = document.getElementById(`subtab-` + s);
+    const elCont = document.getElementById(`record-` + s + `-content`);
+    if (elTab) elTab.classList.toggle(`active`, s === sub);
+    if (elCont) elCont.style.display = s === sub ? `block` : `none`;
   });
   renderAllList();
 }
 
 function filterRecords(type, chip) {
 currentFilter = type;
-document.querySelectorAll('#record-detail-content .filter-chip').forEach(c => c.classList.remove('active'));
-chip.classList.add('active');
+document.querySelectorAll(`#record-detail-content .filter-chip`).forEach(c => c.classList.remove(`active`));
+chip.classList.add(`active`);
 renderAllList();
 }
 
 function filterApplyRecords(type, chip) {
   currentApplyFilter = type;
-  document.querySelectorAll('#record-apply-content .filter-chip').forEach(c => c.classList.remove('active'));
-  if (chip) chip.classList.add('active');
+  document.querySelectorAll(`#record-apply-content .filter-chip`).forEach(c => c.classList.remove(`active`));
+  if (chip) chip.classList.add(`active`);
   renderAllList();
 }
 
@@ -2325,12 +2325,12 @@ function renderAllList() {
   calcAttendance();
   updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
   
-  if (currentRecordSubTab === 'detail') {
+  if (currentRecordSubTab === `detail`) {
     // 1) 渲染日曆式對帳表
     renderCalendarTable();
-  } else if (currentRecordSubTab === 'apply') {
+  } else if (currentRecordSubTab === `apply`) {
     // 2) 篩選出目前同仁特定類型的請假/加班/補打卡歷史紀錄並以卡片格式渲染！
-    const el = document.getElementById('applyRecordsList');
+    const el = document.getElementById(`applyRecordsList`);
     if (!el) return;
     let mine = records.filter(r => matchEmpId(r.empId, currentUser?.empId));
     mine = mine.filter(r => r.type === currentApplyFilter);
@@ -2345,17 +2345,17 @@ function renderAllList() {
     });
     
     el.innerHTML = mine.length 
-      ? mine.map(r => recordHTML(r)).join('') 
-      : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無${currentApplyFilter}紀錄</div></div>';
+      ? mine.map(r => recordHTML(r)).join(``) 
+      : `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無${currentApplyFilter}紀錄</div></div>`;
   }
 }
 
 // ── 核心升級：三欄日曆式對帳表格（請假核可豁免，點選自動補卡） ──
 function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
-  const container = document.getElementById('aq-calendar-container');
+  const container = document.getElementById(`aq-calendar-container`);
   if (!container) return;
 
-  const empType = empInfo ? (empInfo.empType || '專任') : '專任';
+  const empType = empInfo ? (empInfo.empType || `專任`) : `專任`;
   const holidayStrings = res.holidayStrings || [];
   const specialShifts = res.specialShifts || [];
 
@@ -2373,22 +2373,22 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   };
 
   // 💡 兼任人員專屬：整年度打卡收折呈現 (只列出有打卡的日期)
-  if (empType === '兼任') {
+  if (empType === `兼任`) {
     const currentYear = new Date().getFullYear();
     const minePunch = empRecords.filter(r => {
-      if (r.type !== '上班' && r.type !== '下班') return false;
+      if (r.type !== `上班` && r.type !== `下班`) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
 
     const mineSupp = empRecords.filter(r => {
-      if (r.type !== '補打卡' || r.status !== '同意') return false;
+      if (r.type !== `補打卡` || r.status !== `同意`) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
 
     const mineLeave = empRecords.filter(r => {
-      if (r.type !== '請假' || r.status !== '同意') return false;
+      if (r.type !== `請假` || r.status !== `同意`) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
@@ -2399,9 +2399,9 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       const d = safeNewDate(r.date || r.timestamp);
       const key = formatLocalDateStr(d);
       if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
-      if (r.type === '上班') {
+      if (r.type === `上班`) {
         if (!dailyMap[key].in || r.time < dailyMap[key].in) dailyMap[key].in = r.time;
-      } else if (r.type === '下班') {
+      } else if (r.type === `下班`) {
         if (!dailyMap[key].out || r.time > dailyMap[key].out) dailyMap[key].out = r.time;
       }
     });
@@ -2410,13 +2410,13 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       const d = safeNewDate(r.date || r.timestamp);
       const key = formatLocalDateStr(d);
       if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
-      if (r.subType === '上班') dailyMap[key].in = r.time;
-      if (r.subType === '下班') dailyMap[key].out = r.time;
+      if (r.subType === `上班`) dailyMap[key].in = r.time;
+      if (r.subType === `下班`) dailyMap[key].out = r.time;
     });
 
     const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
 
-    let html = '
+    let html = `
       <div class="calendar-table-container">
         <table class="calendar-table">
           <thead>
@@ -2428,26 +2428,26 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             </tr>
           </thead>
           <tbody>
-    ';
+    `;
 
     if (sortedKeys.length === 0) {
-      html += '
+      html += `
         <tr>
           <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">
             尚無年度打卡紀錄
           </td>
         </tr>
-      ';
+      `;
     } else {
       sortedKeys.forEach(key => {
         const item = dailyMap[key];
         const dateObj = item.dateObj;
-        const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+        const weekdayStr = [`日`, `一`, `二`, `三`, `四`, `五`, `六`][dateObj.getDay()];
         const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-        const formattedDate = '${key.slice(5)} (${weekdayStr})'; // MM-DD (W)
+        const formattedDate = `${key.slice(5)} (${weekdayStr})`; // MM-DD (W)
         
-        const checkinHTML = item.in || '—';
-        const checkoutHTML = item.out || '—';
+        const checkinHTML = item.in || `—`;
+        const checkoutHTML = item.out || `—`;
 
         // Gather leaves covering dateObj
         const dayLeavesForDay = mineLeave.filter(r => {
@@ -2457,20 +2457,20 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         });
 
         const leaveStrings = dayLeavesForDay.map(r => {
-          const hoursLabel = r.hours ? '${r.hours}h' : '';
-          return '<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}</span>';
+          const hoursLabel = r.hours ? `${r.hours}h` : ``;
+          return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || `請假`}${hoursLabel ? ` (`+hoursLabel+`)` : ``}</span>`;
         });
 
         // Gather punches for that day
         const dayPunches = empRecords.filter(r => {
-          if (r.type !== '上班' && r.type !== '下班') return false;
+          if (r.type !== `上班` && r.type !== `下班`) return false;
           const d = safeNewDate(r.date || r.timestamp);
           return formatLocalDateStr(d) === key;
         });
 
         const outOfOfficeStrings = [];
         dayPunches.forEach(p => {
-          const hasRemark = p.remark && String(p.remark).trim() !== '';
+          const hasRemark = p.remark && String(p.remark).trim() !== ``;
           let isOutsideShuangho = false;
           let distShuangho = 0;
           let distChongqing = 0;
@@ -2485,52 +2485,52 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           }
           
           if (hasRemark || isOutsideShuangho) {
-            let typeBadge = p.type === '上班' ? '<span class="badge badge-green">上班</span>' : '<span class="badge badge-red">下班</span>';
-            let locationText = '';
+            let typeBadge = p.type === `上班` ? `<span class="badge badge-green">上班</span>` : `<span class="badge badge-red">下班</span>`;
+            let locationText = ``;
             if (!isNaN(latVal) && !isNaN(lngVal)) {
               if (isOutsideShuangho) {
                 const isAtChongqing = distChongqing <= 100;
                 const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
-                locationText = '距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})';
+                locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
               } else {
-                locationText = '距雙和 ${distShuangho.toFixed(0)}米 (院內)';
+                locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
               }
             } else {
-              locationText = '無GPS定位';
+              locationText = `無GPS定位`;
             }
             
-            let remarkText = p.remark ? ' · 💬 備註: ${p.remark}' : '';
-            outOfOfficeStrings.push('<div style="margin-top:2px;">${typeBadge} 異地: ${locationText}${remarkText}</div>');
+            let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : ``;
+            outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地: ${locationText}${remarkText}</div>`);
           }
         });
 
         const col4Items = [];
         if (leaveStrings.length > 0) {
-          col4Items.push(leaveStrings.join('<br>'));
+          col4Items.push(leaveStrings.join(`<br>`));
         }
         if (outOfOfficeStrings.length > 0) {
-          col4Items.push(outOfOfficeStrings.join(''));
+          col4Items.push(outOfOfficeStrings.join(``));
         }
         
-        const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
+        const col4HTML = col4Items.length > 0 ? col4Items.join(`<br>`) : `—`;
         
-        html += '
+        html += `
           <tr>
-            <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+            <td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
             <td style="font-size:12px; line-height:1.5;">${remarksHTML}</td>
             <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
-        ';
+        `;
       });
     }
 
-    html += '
+    html += `
           </tbody>
         </table>
       </div>
-    ';
+    `;
     container.innerHTML = html;
     return;
   }
@@ -2542,13 +2542,13 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   const daysInMonth = new Date(year, month, 0).getDate();
   
   const minePunch = empRecords.filter(r => {
-    if (r.type !== '上班' && r.type !== '下班') return false;
+    if (r.type !== `上班` && r.type !== `下班`) return false;
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
 
   const mineLeave = empRecords.filter(r => {
-    if (r.type !== '請假' || r.status !== '同意') return false;
+    if (r.type !== `請假` || r.status !== `同意`) return false;
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
@@ -2557,9 +2557,9 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   minePunch.forEach(r => {
     const d = safeNewDate(r.date || r.timestamp);
     const dayKey = d.getDate();
-    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: '—', 下班: '—' };
-    if (r.type === '上班') punchMap[dayKey].上班 = r.time || '—';
-    if (r.type === '下班') punchMap[dayKey].下班 = r.time || '—';
+    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: `—`, 下班: `—` };
+    if (r.type === `上班`) punchMap[dayKey].上班 = r.time || `—`;
+    if (r.type === `下班`) punchMap[dayKey].下班 = r.time || `—`;
   });
 
   const leaveMap = {};
@@ -2568,13 +2568,13 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const dEnd = safeNewDate(r.endDate || r.date);
     const sDay = dStart.getDate();
     const eDay = dEnd.getDate();
-    const typeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '請假');
+    const typeLabel = r.subType === `加班補休` ? `補休` : (r.subType || `請假`);
     for (let day = sDay; day <= eDay; day++) {
-      leaveMap[day] = '🌴 已${typeLabel}';
+      leaveMap[day] = `🌴 已${typeLabel}`;
     }
   });
 
-  let html = '
+  let html = `
     <div class="calendar-table-container">
       <table class="calendar-table">
         <thead>
@@ -2586,7 +2586,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
           </tr>
         </thead>
         <tbody>
-  ';
+  `;
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateObj = new Date(year, month - 1, day);
@@ -2598,30 +2598,30 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       curD.setHours(0,0,0,0);
       if (curD < earliestD) isBeforeJoin = true;
     }
-    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
-    const dateStr = '${year}/${String(month).padStart(2,'0')}/${String(day).padStart(2,'0')}';
-    const dateStrHyphen = '${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}';
-    const formattedDate = '${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})';
+    const weekdayStr = [`日`, `一`, `二`, `三`, `四`, `五`, `六`][dateObj.getDay()];
+    const dateStr = `${year}/${String(month).padStart(2,`0`)}/${String(day).padStart(2,`0`)}`;
+    const dateStrHyphen = `${year}-${String(month).padStart(2,`0`)}-${String(day).padStart(2,`0`)}`;
+    const formattedDate = `${String(month).padStart(2,`0`)}-${String(day).padStart(2,`0`)} (${weekdayStr})`;
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     const isHoliday = holidayStrings.includes(dateStrHyphen) && !isWeekend;
 
-    let punch = punchMap[day] || { 上班: '—', 下班: '—' };
+    let punch = punchMap[day] || { 上班: `—`, 下班: `—` };
     let leaveLabel = leaveMap[day];
 
     let checkinHTML = punch.上班;
     let checkoutHTML = punch.下班;
 
     if (isBeforeJoin) {
-      checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
-      checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+      checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
+      checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
     }
 
     if (day > now.getDate()) {
-      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
-      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
+      if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
+      if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
     } else if (isWeekend || isHoliday) {
-      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>';
-      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>';
+      if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? `國定假日` : `休假日`}</span>`;
+      if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? `國定假日` : `休假日`}</span>`;
     } else {
       const dayLeaves = mineLeave.filter(r => {
         const startD = safeNewDate(r.date);
@@ -2638,14 +2638,14 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
         
         if (isStart && isEnd) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else if (isStart) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
           leaveEndMin = 1080;
         } else if (isEnd) {
           leaveStartMin = 540;
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else {
           leaveStartMin = 540;
           leaveEndMin = 1080;
@@ -2657,36 +2657,36 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, shift.end, dayLeaves);
 
-      if (punch.上班 === '—') {
+      if (punch.上班 === `—`) {
         if (isMorningExempted) {
-          checkinHTML = '<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>';
+          checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || `🌴 已請假`}</span>`;
         } else if (day !== now.getDate()) {
-          checkinHTML = '<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>';
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
         } else {
-          checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+          checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
         }
       } else {
         const punchInMin = timeToMin(punch.上班);
         if (punchInMin > shift.start) {
           if (!isRangeExempted(shift.start, punchInMin, dayLeaves)) {
-            checkinHTML = '<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>';
+            checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
           }
         }
       }
       
-      if (punch.下班 === '—') {
+      if (punch.下班 === `—`) {
         if (isAfternoonExempted) {
-          checkoutHTML = '<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>';
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || `🌴 已請假`}</span>`;
         } else if (day !== now.getDate()) {
-          checkoutHTML = '<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>';
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;">⚠️ 漏打卡</span>`;
         } else {
-          checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
         }
       } else {
         const punchOutMin = timeToMin(punch.下班);
         if (punchOutMin < shift.end) {
           if (!isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
-            checkoutHTML = '<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>';
+            checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>`;
           }
         }
       }
@@ -2700,19 +2700,19 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     });
 
     const leaveStrings = dayLeavesForDay.map(r => {
-      const hoursLabel = r.hours ? '${r.hours}h' : '';
-      return '<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'}${hoursLabel ? ' ('+hoursLabel+')' : ''}</span>';
+      const hoursLabel = r.hours ? `${r.hours}h` : ``;
+      return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || `請假`}${hoursLabel ? ` (`+hoursLabel+`)` : ``}</span>`;
     });
 
     const dayPunches = empRecords.filter(r => {
-      if (r.type !== '上班' && r.type !== '下班') return false;
+      if (r.type !== `上班` && r.type !== `下班`) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getDate() === day && (d.getMonth() + 1) === month && d.getFullYear() === year;
     });
 
     const outOfOfficeStrings = [];
     dayPunches.forEach(p => {
-      const hasRemark = p.remark && String(p.remark).trim() !== '';
+      const hasRemark = p.remark && String(p.remark).trim() !== ``;
       let isOutsideShuangho = false;
       let distShuangho = 0;
       let distChongqing = 0;
@@ -2727,73 +2727,73 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       }
       
       if (hasRemark || isOutsideShuangho) {
-        let typeBadge = p.type === '上班' ? '<span class="badge badge-green">上班</span>' : '<span class="badge badge-red">下班</span>';
-        let locationText = '';
+        let typeBadge = p.type === `上班` ? `<span class="badge badge-green">上班</span>` : `<span class="badge badge-red">下班</span>`;
+        let locationText = ``;
         if (!isNaN(latVal) && !isNaN(lngVal)) {
           if (isOutsideShuangho) {
             const isAtChongqing = distChongqing <= 300;
             const chongqingLabel = isAtChongqing ? "重慶南路" : "異地";
-            locationText = '距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})';
+            locationText = `距雙和 ${distShuangho.toFixed(0)}米 (${chongqingLabel})`;
           } else {
-            locationText = '距雙和 ${distShuangho.toFixed(0)}米 (院內)';
+            locationText = `距雙和 ${distShuangho.toFixed(0)}米 (院內)`;
           }
         } else {
-          locationText = '無GPS定位';
+          locationText = `無GPS定位`;
         }
         
-        let remarkText = p.remark ? ' · 💬 備註: ${p.remark}' : '';
-        outOfOfficeStrings.push('<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>');
+        let remarkText = p.remark ? ` · 💬 備註: ${p.remark}` : ``;
+        outOfOfficeStrings.push(`<div style="margin-top:2px;">${typeBadge} 異地打卡: ${locationText}${remarkText}</div>`);
       }
     });
 
     const col4Items = [];
     if (leaveStrings.length > 0) {
-      col4Items.push(leaveStrings.join('<br>'));
+      col4Items.push(leaveStrings.join(`<br>`));
     }
     if (outOfOfficeStrings.length > 0) {
-      col4Items.push(outOfOfficeStrings.join(''));
+      col4Items.push(outOfOfficeStrings.join(``));
     }
     
-    const col4HTML = col4Items.length > 0 ? col4Items.join('<br>') : '—';
+    const col4HTML = col4Items.length > 0 ? col4Items.join(`<br>`) : `—`;
 
-    const rowStyle = day === now.getDate() ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
+    const rowStyle = day === now.getDate() ? `style="background:var(--card-bg-soft);font-weight:bold;"` : ``;
 
-    html += '
+    html += `
       <tr ${rowStyle}>
-        <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+        <td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
         <td>${remarksHTML}</td> 
         <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
-    ';
+    `;
   }
 
-  html += '
+  html += `
         </tbody>
       </table>
     </div>
-  ';
+  `;
   container.innerHTML = html;
 }
 
 function renderCalendarTable() {
-  const el = document.getElementById('allRecordsList');
+  const el = document.getElementById(`allRecordsList`);
   if (!el) return;
 
   // 💡 V37-v41: 兼任人員專屬：整年度打卡收折呈現 (2026-01-01 至 2026-12-31)，格式與專任相同，但只列出有打卡的日期
-  if (currentUser && currentUser.empType === '兼任') {
+  if (currentUser && currentUser.empType === `兼任`) {
     const currentYear = new Date().getFullYear();
     const minePunch = records.filter(r => {
       if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-      if (r.type !== '上班' && r.type !== '下班') return false;
+      if (r.type !== `上班` && r.type !== `下班`) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
 
     const mineSupp = records.filter(r => {
       if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-      if (r.type !== '補打卡' || r.status !== '同意') return false;
+      if (r.type !== `補打卡` || r.status !== `同意`) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
@@ -2804,9 +2804,9 @@ function renderCalendarTable() {
       const d = safeNewDate(r.date || r.timestamp);
       const key = formatLocalDateStr(d);
       if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
-      if (r.type === '上班') {
+      if (r.type === `上班`) {
         if (!dailyMap[key].in || r.time < dailyMap[key].in) dailyMap[key].in = r.time;
-      } else if (r.type === '下班') {
+      } else if (r.type === `下班`) {
         if (!dailyMap[key].out || r.time > dailyMap[key].out) dailyMap[key].out = r.time;
       }
     });
@@ -2815,13 +2815,13 @@ function renderCalendarTable() {
       const d = safeNewDate(r.date || r.timestamp);
       const key = formatLocalDateStr(d);
       if (!dailyMap[key]) dailyMap[key] = { in: null, out: null, dateObj: d };
-      if (r.subType === '上班') dailyMap[key].in = r.time;
-      if (r.subType === '下班') dailyMap[key].out = r.time;
+      if (r.subType === `上班`) dailyMap[key].in = r.time;
+      if (r.subType === `下班`) dailyMap[key].out = r.time;
     });
 
     const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
 
-    let html = '
+    let html = `
       <div class="calendar-table-container">
         <table class="calendar-table">
           <thead>
@@ -2833,26 +2833,26 @@ function renderCalendarTable() {
             </tr>
           </thead>
           <tbody>
-    ';
+    `;
 
     if (sortedKeys.length === 0) {
-      html += '
+      html += `
         <tr>
           <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">
             尚無年度打卡紀錄
           </td>
         </tr>
-      ';
+      `;
     } else {
       sortedKeys.forEach(key => {
         const item = dailyMap[key];
         const dateObj = item.dateObj;
-        const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+        const weekdayStr = [`日`, `一`, `二`, `三`, `四`, `五`, `六`][dateObj.getDay()];
         const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-        const formattedDate = '${key.slice(5)} (${weekdayStr})'; // MM-DD (W)
+        const formattedDate = `${key.slice(5)} (${weekdayStr})`; // MM-DD (W)
         
-        const checkinHTML = item.in || '—';
-        const checkoutHTML = item.out || '—';
+        const checkinHTML = item.in || `—`;
+        const checkoutHTML = item.out || `—`;
          // 當天打卡備註
         const dayPunches = minePunch.filter(r => {
           const d = safeNewDate(r.date || r.timestamp);
@@ -2860,33 +2860,33 @@ function renderCalendarTable() {
         });
 
         const remarkParts = dayPunches
-          .filter(p => p.remark && String(p.remark).trim() !== '')
+          .filter(p => p.remark && String(p.remark).trim() !== ``)
           .map(p => {
-            const badge = p.type === '上班'
-              ? '<span class="badge badge-green">上班</span>'
-              : '<span class="badge badge-red">下班</span>';
-            return '${badge} 💬 ${String(p.remark).trim()}';
+            const badge = p.type === `上班`
+              ? `<span class="badge badge-green">上班</span>`
+              : `<span class="badge badge-red">下班</span>`;
+            return `${badge} 💬 ${String(p.remark).trim()}`;
           });
 
         const remarksHTML = remarkParts.length > 0
-          ? '<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join('<br>')}</span>'
-          : '—';
-        html += '
+          ? `<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join(`<br>`)}</span>`
+          : `—`;
+        html += `
           <tr>
-            <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+            <td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
             <td style="font-size:12px; line-height:1.5;">${remarksHTML}</td>
           </tr>
-        ';
+        `;
       });
     }
 
-    html += '
+    html += `
           </tbody>
         </table>
       </div>
-    ';
+    `;
     el.innerHTML = html;
     return;
   }
@@ -2899,14 +2899,14 @@ function renderCalendarTable() {
   
   const minePunch = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    if (r.type !== '上班' && r.type !== '下班') return false;
+    if (r.type !== `上班` && r.type !== `下班`) return false;
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
 
   const mineLeave = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    if (r.type !== '請假' || r.status !== '同意') return false;
+    if (r.type !== `請假` || r.status !== `同意`) return false;
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
@@ -2915,9 +2915,9 @@ function renderCalendarTable() {
   minePunch.forEach(r => {
     const d = safeNewDate(r.date || r.timestamp);
     const dayKey = d.getDate();
-    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: '—', 下班: '—' };
-    if (r.type === '上班') punchMap[dayKey].上班 = r.time || '—';
-    if (r.type === '下班') punchMap[dayKey].下班 = r.time || '—';
+    if (!punchMap[dayKey]) punchMap[dayKey] = { 上班: `—`, 下班: `—` };
+    if (r.type === `上班`) punchMap[dayKey].上班 = r.time || `—`;
+    if (r.type === `下班`) punchMap[dayKey].下班 = r.time || `—`;
   });
 
   const leaveMap = {};
@@ -2926,13 +2926,13 @@ function renderCalendarTable() {
     const dEnd = safeNewDate(r.endDate || r.date);
     const sDay = dStart.getDate();
     const eDay = dEnd.getDate();
-    const typeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '請假');
+    const typeLabel = r.subType === `加班補休` ? `補休` : (r.subType || `請假`);
     for (let day = sDay; day <= eDay; day++) {
-      leaveMap[day] = '🌴 已${typeLabel}';
+      leaveMap[day] = `🌴 已${typeLabel}`;
     }
   });
 
-  let html = '
+  let html = `
     <div class="calendar-table-container">
       <table class="calendar-table">
         <thead>
@@ -2944,7 +2944,7 @@ function renderCalendarTable() {
           </tr>
         </thead>
         <tbody>
-  ';
+  `;
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateObj = new Date(year, month - 1, day);
@@ -2956,32 +2956,32 @@ function renderCalendarTable() {
       curD.setHours(0,0,0,0);
       if (curD < earliestD) isBeforeJoin = true;
     }
-    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][dateObj.getDay()];
+    const weekdayStr = [`日`, `一`, `二`, `三`, `四`, `五`, `六`][dateObj.getDay()];
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     const isToday = day === now.getDate();
     const isFuture = day > now.getDate();
     
-    const formattedDate = '${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} (${weekdayStr})';
-    const dateQueryStr = '${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}';
+    const formattedDate = `${String(month).padStart(2,`0`)}-${String(day).padStart(2,`0`)} (${weekdayStr})`;
+    const dateQueryStr = `${year}-${String(month).padStart(2,`0`)}-${String(day).padStart(2,`0`)}`;
     
-    let punch = punchMap[day] || { 上班: '—', 下班: '—' };
+    let punch = punchMap[day] || { 上班: `—`, 下班: `—` };
     let leaveLabel = leaveMap[day];
 
     let checkinHTML = punch.上班;
     let checkoutHTML = punch.下班;
 
     if (isBeforeJoin) {
-      checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
-      checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+      checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
+      checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
     }
 
     const isHoliday = currentUser?.holidayStrings && currentUser.holidayStrings.includes(dateQueryStr) && !isWeekend;
     if (isFuture) {
-      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
-      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">-</span>';
+      if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
+      if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
     } else if (isWeekend || isHoliday) {
-      if (punch.上班 === '—') checkinHTML = '<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>';
-      if (punch.下班 === '—') checkoutHTML = '<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? '國定假日' : '休假日'}</span>';
+      if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? `國定假日` : `休假日`}</span>`;
+      if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? `國定假日` : `休假日`}</span>`;
     } else {
       const dayLeaves = mineLeave.filter(r => {
         const startD = safeNewDate(r.date);
@@ -2998,14 +2998,14 @@ function renderCalendarTable() {
         const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
         
         if (isStart && isEnd) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else if (isStart) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
           leaveEndMin = 1080;
         } else if (isEnd) {
           leaveStartMin = 540;
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else {
           leaveStartMin = 540;
           leaveEndMin = 1080;
@@ -3018,23 +3018,23 @@ function renderCalendarTable() {
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, 1080, dayLeaves);
 
-      if (punch.上班 === '—') {
+      if (punch.上班 === `—`) {
         if (isMorningExempted) {
-          checkinHTML = '<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>';
+          checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || `🌴 已請假`}</span>`;
         } else if (!isToday) {
-          checkinHTML = '<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp('${dateQueryStr}','上班',event)">⚠️ 漏打卡</span>';
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp(`${dateQueryStr}`,`上班`,event)">⚠️ 漏打卡</span>`;
         } else {
-          checkinHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+          checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
         }
       }
       
-      if (punch.下班 === '—') {
+      if (punch.下班 === `—`) {
         if (isAfternoonExempted) {
-          checkoutHTML = '<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || '🌴 已請假'}</span>';
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || `🌴 已請假`}</span>`;
         } else if (!isToday) {
-          checkoutHTML = '<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp('${dateQueryStr}','下班',event)">⚠️ 漏打卡</span>';
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp(`${dateQueryStr}`,`下班`,event)">⚠️ 漏打卡</span>`;
         } else {
-          checkoutHTML = '<span style="color:var(--text-muted);font-size:14px;">—</span>';
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
         }
       }
     }
@@ -3045,87 +3045,87 @@ function renderCalendarTable() {
     });
 
     const remarkParts = dayPunches
-      .filter(p => p.remark && String(p.remark).trim() !== '')
+      .filter(p => p.remark && String(p.remark).trim() !== ``)
       .map(p => {
-        const badge = p.type === '上班'
-          ? '<span class="badge badge-green">上班</span>'
-          : '<span class="badge badge-red">下班</span>';
-        return '${badge} 💬 ${String(p.remark).trim()}';
+        const badge = p.type === `上班`
+          ? `<span class="badge badge-green">上班</span>`
+          : `<span class="badge badge-red">下班</span>`;
+        return `${badge} 💬 ${String(p.remark).trim()}`;
       });
 
     const remarksHTML = remarkParts.length > 0
-      ? '<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join('<br>')}</span>'
-      : '—';
-    const rowStyle = isToday ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : '';
-    const clickAttr = (punch.上班 === '—' || punch.下班 === '—') && !isWeekend && !leaveLabel && !isToday && !isFuture && !isBeforeJoin
-      ? 'class="calendar-row-missed" title="點擊漏打卡一鍵補單"'
-      : '';
+      ? `<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join(`<br>`)}</span>`
+      : `—`;
+    const rowStyle = isToday ? `style="background:var(--card-bg-soft);font-weight:bold;"` : ``;
+    const clickAttr = (punch.上班 === `—` || punch.下班 === `—`) && !isWeekend && !leaveLabel && !isToday && !isFuture && !isBeforeJoin
+      ? `class="calendar-row-missed" title="點擊漏打卡一鍵補單"`
+      : ``;
 
-    html += '
+    html += `
       <tr ${rowStyle} ${clickAttr}>
-        <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
+        <td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
         <td style="font-size:12px; line-height:1.5;">${remarksHTML}</td>
       </tr>
-    ';
+    `;
   }
 
-  html += '
+  html += `
         </tbody>
       </table>
     </div>
-  ';
+  `;
   el.innerHTML = html;
 }
 
 // 🎯 UX 爆棚：漏卡自動跳轉並填入日期類型
 window.autoFillSupp = function(dateStr, type, event) {
   event.stopPropagation();
-  switchTab('supp');
-  document.getElementById('suppType').value = type;
-  document.getElementById('suppDate').value = dateStr;
-  document.getElementById('suppReason').placeholder = '請說明 ${dateStr} 漏打${type}卡原因';
-  showToast('🔄 已為您自動填入 ${dateStr} ${type} 漏卡資訊！');
+  switchTab(`supp`);
+  document.getElementById(`suppType`).value = type;
+  document.getElementById(`suppDate`).value = dateStr;
+  document.getElementById(`suppReason`).placeholder = `請說明 ${dateStr} 漏打${type}卡原因`;
+  showToast(`🔄 已為您自動填入 ${dateStr} ${type} 漏卡資訊！`);
 }
 
 function getConciseDateText(dateStr) {
-  if (!dateStr) return '';
+  if (!dateStr) return ``;
   const d = safeNewDate(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dateVal = String(d.getDate()).padStart(2, '0');
-  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const m = String(d.getMonth() + 1).padStart(2, `0`);
+  const dateVal = String(d.getDate()).padStart(2, `0`);
+  const weekdays = [`日`, `一`, `二`, `三`, `四`, `五`, `六`];
   const w = weekdays[d.getDay()];
-  return '${m}/${dateVal} (${w})';
+  return `${m}/${dateVal} (${w})`;
 }
 
 async function retractApplication(id) {
   const rec = records.find(r => r.id === id);
   if (!rec) return;
-  if (!confirm('確定要撤回此筆 ${rec.type} 申請嗎？')) return;
+  if (!confirm(`確定要撤回此筆 ${rec.type} 申請嗎？`)) return;
 
-  // Optimistically set to '已撤回'
-  rec.status = '已撤回';
+  // Optimistically set to `已撤回`
+  rec.status = `已撤回`;
   saveRecords();
   renderAllList();
   
   try {
     const res = await callGAS({
-      action: 'cancel',
+      action: `cancel`,
       clientId: rec.clientId || String(rec.id),
       empId: rec.empId,
       type: rec.type
     });
-    if (res.status === 'ok') {
-      showToast('🛑 申請已成功撤回並同步');
+    if (res.status === `ok`) {
+      showToast(`🛑 申請已成功撤回並同步`);
     } else {
-      showToast('⚠️ 撤回同步失敗，請確認後台');
+      showToast(`⚠️ 撤回同步失敗，請確認後台`);
     }
   } catch (e) {
-    showToast('🛑 申請已在本地撤回（離線）');
+    showToast(`🛑 申請已在本地撤回（離線）`);
   }
-  if (typeof syncProfileAndAccumulatedLeaves === 'function') {
+  if (typeof syncProfileAndAccumulatedLeaves === `function`) {
     syncProfileAndAccumulatedLeaves();
   } else {
     renderAllList();
@@ -3155,7 +3155,7 @@ function getShiftMinutesForDate(dateStr, empId, shiftsList) {
   let defaultStart = 540; // 09:00
   let defaultEnd = 1080;  // 18:00
   if (currentUser && currentUser.defaultShift) {
-    const parts = currentUser.defaultShift.split('-');
+    const parts = currentUser.defaultShift.split(`-`);
     if (parts.length === 2) {
       defaultStart = timeToMin(parts[0].trim());
       defaultEnd = timeToMin(parts[1].trim());
@@ -3167,9 +3167,9 @@ function getShiftMinutesForDate(dateStr, empId, shiftsList) {
 
 // 💡 V37-v40: 支援包含前導零（如 002 與 2）以及非數字（如 acls2000）的魯棒員工編號比對大腦
 function isApproveCommentBoxOpen() {
-  const textareas = document.querySelectorAll('.approve-comment-input');
+  const textareas = document.querySelectorAll(`.approve-comment-input`);
   for (let i = 0; i < textareas.length; i++) {
-    if (textareas[i].parentElement.style.display === 'block') {
+    if (textareas[i].parentElement.style.display === `block`) {
       return true;
     }
   }
@@ -3189,54 +3189,54 @@ function matchEmpId(id1, id2) {
 }
 
 function formatLocalDateStr(str) {
-  if (!str) return '';
+  if (!str) return ``;
   const d = safeNewDate(str);
   if (isNaN(d.getTime())) return String(str);
   const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return '${y}-${m}-${day}';
+  const m = String(d.getMonth() + 1).padStart(2, `0`);
+  const day = String(d.getDate()).padStart(2, `0`);
+  return `${y}-${m}-${day}`;
 }
 function formatLocalTimeStr(str) {
-  if (!str) return '';
-  if (typeof str === 'string' && str.match(/^\d{2}:\d{2}/)) return str.slice(0,5);
+  if (!str) return ``;
+  if (typeof str === `string` && str.match(/^\d{2}:\d{2}/)) return str.slice(0,5);
   const d = safeNewDate(str);
   if (isNaN(d.getTime())) return String(str).slice(0,5);
-  const h = String(d.getHours()).padStart(2, '0');
-  const m = String(d.getMinutes()).padStart(2, '0');
-  return '${h}:${m}';
+  const h = String(d.getHours()).padStart(2, `0`);
+  const m = String(d.getMinutes()).padStart(2, `0`);
+  return `${h}:${m}`;
 }
 
 function formatDateTimeRange(r) {
   const dateStr = formatLocalDateStr(r.date);
   const endDateStr = r.endDate ? formatLocalDateStr(r.endDate) : dateStr;
-  const startT = formatLocalTimeStr(r.startTime || r.time || '');
-  const endT = formatLocalTimeStr(r.endTime || '');
+  const startT = formatLocalTimeStr(r.startTime || r.time || ``);
+  const endT = formatLocalTimeStr(r.endTime || ``);
 
-  let hoursVal = '';
+  let hoursVal = ``;
   if (r.hours) {
     const h = parseFloat(r.hours);
-    hoursVal = isNaN(h) ? r.hours : String(h).replace(/\.0$/, '');
+    hoursVal = isNaN(h) ? r.hours : String(h).replace(/\.0$/, ``);
   }
-  const hoursText = hoursVal ? ' (${hoursVal}h)' : '';
+  const hoursText = hoursVal ? ` (${hoursVal}h)` : ``;
 
-  if (r.type === '請假' || r.type === '加班') {
+  if (r.type === `請假` || r.type === `加班`) {
     if (dateStr === endDateStr || !r.endDate) {
-      return '${dateStr} ${startT}～${endT}${hoursText}';
+      return `${dateStr} ${startT}～${endT}${hoursText}`;
     } else {
-      return '${dateStr} ${startT}～${endDateStr} ${endT}${hoursText}';
+      return `${dateStr} ${startT}～${endDateStr} ${endT}${hoursText}`;
     }
-  } else if (r.type === '補打卡') {
-    return '${dateStr} ${formatLocalTimeStr(r.time || '')}';
-  } else if (r.type === '班別調整') {
-    return '${dateStr} ${r.subType || ''}';
+  } else if (r.type === `補打卡`) {
+    return `${dateStr} ${formatLocalTimeStr(r.time || ``)}`;
+  } else if (r.type === `班別調整`) {
+    return `${dateStr} ${r.subType || ``}`;
   } else {
     // 上班 / 下班 (打卡)
-    return '${dateStr} ${r.time || ''}';
+    return `${dateStr} ${r.time || ``}`;
   }
 }
 // 💡 V89: 構建備註欄，顯示該日期的所有請假詳情（時間段+假別）0708
-let remarksHTML = '';
+let remarksHTML = ``;
 if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length > 0) {
   const dayLeaveDetails = mineLeave.filter(r => {
     const startD = safeNewDate(r.date);
@@ -3247,72 +3247,72 @@ if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length >
   if (dayLeaveDetails.length > 0) {
     const remarkParts = dayLeaveDetails.map(r => {
       const remarkParts = dayLeaveDetails.map(r => {
-      const start = r.startTime || '09:00';
-      const end = r.endTime || '18:00';
-      const leaveType = r.subType === '加班補休' ? '補休' : (r.subType || '請假');
-      return '${start}-${end} [${leaveType}]';
-    }).join(' / ');
+      const start = r.startTime || `09:00`;
+      const end = r.endTime || `18:00`;
+      const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || `請假`);
+      return `${start}-${end} [${leaveType}]`;
+    }).join(` / `);
     
-    remarksHTML = '<span style="color:var(--green-main);font-size:12px;font-weight:600;">${remarkParts}</span>';
+    remarksHTML = `<span style="color:var(--green-main);font-size:12px;font-weight:600;">${remarkParts}</span>`;
   }
 }
   
 function recordHTML(r, showName = false, showApprove = false) {
-  let dotClass = 'dot-green';
-  let badge = '';
-  const subTypeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '');
+  let dotClass = `dot-green`;
+  let badge = ``;
+  const subTypeLabel = r.subType === `加班補休` ? `補休` : (r.subType || ``);
 
   // ===== 類型 badge =====
-  if (r.type === '上班') {
-    dotClass = 'dot-green';
-    badge = '<span class="badge badge-green">上班</span>';
-  } else if (r.type === '下班') {
-    dotClass = 'dot-red';
-    badge = '<span class="badge badge-red">下班</span>';
-  } else if (r.type === '請假') {
-    dotClass = 'dot-orange';
-    badge = '<span class="badge badge-orange">${subTypeLabel || '請假'}</span>';
-  } else if (r.type === '加班') {
-    dotClass = 'dot-purple';
-    badge = '<span class="badge badge-purple">加班</span>';
-  } else if (r.type === '補打卡') {
-    dotClass = 'dot-blue';
-    badge = '<span class="badge badge-blue">補打卡${subTypeLabel ? '·' + subTypeLabel : ''}</span>';
-  } else if (r.type === '班別調整') {
-    dotClass = 'dot-orange';
-    badge = '<span class="badge badge-orange">班別調整${r.subType ? '·' + r.subType : ''}</span>';
+  if (r.type === `上班`) {
+    dotClass = `dot-green`;
+    badge = `<span class="badge badge-green">上班</span>`;
+  } else if (r.type === `下班`) {
+    dotClass = `dot-red`;
+    badge = `<span class="badge badge-red">下班</span>`;
+  } else if (r.type === `請假`) {
+    dotClass = `dot-orange`;
+    badge = `<span class="badge badge-orange">${subTypeLabel || `請假`}</span>`;
+  } else if (r.type === `加班`) {
+    dotClass = `dot-purple`;
+    badge = `<span class="badge badge-purple">加班</span>`;
+  } else if (r.type === `補打卡`) {
+    dotClass = `dot-blue`;
+    badge = `<span class="badge badge-blue">補打卡${subTypeLabel ? `·` + subTypeLabel : ``}</span>`;
+  } else if (r.type === `班別調整`) {
+    dotClass = `dot-orange`;
+    badge = `<span class="badge badge-orange">班別調整${r.subType ? `·` + r.subType : ``}</span>`;
   }
 
   // ===== 狀態 badge（顯示在標題旁）=====
-  let statusBadge = '';
-  if (r.status === '待審') {
-    statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">待審</span>';
-  } else if (r.status === '同意') {
-    statusBadge = '<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>';
-  } else if (r.status === '拒絕') {
-    statusBadge = '<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>';
-  } else if (r.status === '已撤回') {
-    statusBadge = '<span class="badge badge-gray" style="margin-left:4px;">🛑 已撤回</span>';
+  let statusBadge = ``;
+  if (r.status === `待審`) {
+    statusBadge = `<span class="badge badge-gray" style="margin-left:4px;">待審</span>`;
+  } else if (r.status === `同意`) {
+    statusBadge = `<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>`;
+  } else if (r.status === `拒絕`) {
+    statusBadge = `<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>`;
+  } else if (r.status === `已撤回`) {
+    statusBadge = `<span class="badge badge-gray" style="margin-left:4px;">🛑 已撤回</span>`;
   }
 
   // ===== 員工端隱私精簡：GPS 不顯示經緯度，只顯示是否有定位 =====
-  const showGPS = r.lat ? '📍 位置已驗證' : '';
+  const showGPS = r.lat ? `📍 位置已驗證` : ``;
   const timeInfo = formatDateTimeRange(r);
 
   const meta = [
     timeInfo,
     showGPS,
-    (r.type === '上班' || r.type === '下班') ? '' : (r.reason || ''),
-    r.approveComment ? '💬 簽核意見：${r.approveComment}' : ''
-  ].filter(Boolean).join(' · ');
+    (r.type === `上班` || r.type === `下班`) ? `` : (r.reason || ``),
+    r.approveComment ? `💬 簽核意見：${r.approveComment}` : ``
+  ].filter(Boolean).join(` · `);
 
-  const who = showName ? '${r.name || r.empId}（${r.empId}）' : '';
+  const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
 
-  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 ===== const approveRow = (showApprove && r.status === '待審') ? '
+  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 ===== const approveRow = (showApprove && r.status === `待審`) ? `
   
     <div class="approve-row" id="approveBtns-${r.id}">
-      <button class="approve-btn ok" onclick="toggleApproveComment(${r.id}, '同意')">✓ 核准</button>
-      <button class="approve-btn reject" onclick="toggleApproveComment(${r.id}, '拒絕')">✗ 拒絕</button>
+      <button class="approve-btn ok" onclick="toggleApproveComment(${r.id}, `同意`)">✓ 核准</button>
+      <button class="approve-btn reject" onclick="toggleApproveComment(${r.id}, `拒絕`)">✗ 拒絕</button>
     </div>
     <div class="approve-comment-area" id="approveArea-${r.id}">
       <textarea class="approve-comment-input" id="approveComment-${r.id}" placeholder="簽核意見（選填）"></textarea>
@@ -3321,89 +3321,89 @@ function recordHTML(r, showName = false, showApprove = false) {
         <button class="approve-btn reject" onclick="cancelApproveComment(${r.id})">取消</button>
       </div>
     </div>
-  ' : '';
+  ` : ``;
 
   // ===== 右側區塊：員工端顯示撤回 / 已結束顯示狀態 =====
-  let actionOrStatusHtml = '';
+  let actionOrStatusHtml = ``;
 
-  if (!showApprove && r.status === '待審') {
+  if (!showApprove && r.status === `待審`) {
     // 員工端：待審可撤回
-    actionOrStatusHtml = '
+    actionOrStatusHtml = `
       <span class="retract-btn"
             style="margin-left:auto;"
-            onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')"> 撤回
+            onclick="retractRecord(`${r.id}`,`${r.type}`,`${r.clientId || ``}`)"> 撤回
       </span>
-    ';
+    `;
   } else if (!showApprove && r.status) {
     // 員工端：非待審顯示狀態 badge
-    let badgeClass = 'badge-gray';
-    if (r.status === '同意') badgeClass = 'badge-green';
-    else if (r.status === '拒絕') badgeClass = 'badge-red';
-    else if (r.status === '已撤回') badgeClass = 'badge-withdrawn';
+    let badgeClass = `badge-gray`;
+    if (r.status === `同意`) badgeClass = `badge-green`;
+    else if (r.status === `拒絕`) badgeClass = `badge-red`;
+    else if (r.status === `已撤回`) badgeClass = `badge-withdrawn`;
 
-    actionOrStatusHtml = '
+    actionOrStatusHtml = `
       <span class="badge ${badgeClass}" style="margin-left:auto;">
         ${r.status}
       </span>
-    ';
+    `;
   }
 
   // ===== 主畫面 HTML =====
-  return '
+  return `
     <div class="record-item">
       <div class="record-row" style="display:flex; align-items:flex-start; width:100%; gap:12px;">
         <div class="record-dot ${dotClass}"></div>
 
         <div class="record-info" style="flex:1; min-width:0;">
           <div class="record-type" style="font-weight:700;">
-            ${badge}${statusBadge}${who ? ' ' + who : ''}
+            ${badge}${statusBadge}${who ? ` ` + who : ``}
           </div>
-          <div class="record-meta">${meta || '${r.date || ''} ${r.time || ''}'}</div>
+          <div class="record-meta">${meta || `${r.date || ``} ${r.time || ``}`}</div>
         </div>
 
-        ${actionOrStatusHtml ? '
+        ${actionOrStatusHtml ? `
           <div class="record-status-area" style="display:flex; align-items:center;">
             ${actionOrStatusHtml}
           </div>
-        ' : ''}
+        ` : ``}
       </div>
 
       ${approveRow}
 
-      ${(!showApprove && r.approveComment) ? '
+      ${(!showApprove && r.approveComment) ? `
         <div class="record-meta"
              style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">
           💬 意見：${r.approveComment}
         </div>
-      ' : ''}
+      ` : ``}
     </div>
-  ';
+  `;
 }
 // ── Admin ───────────────────────────────────────────────────────
 async function loadAdminData() {
   window.adminOutOfOfficeStats = {};
-  if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && currentUser.role !== 'admin2')) return;
+  if (!currentUser || (currentUser.role !== `admin` && currentUser.role !== `admin1` && currentUser.role !== `admin2`)) return;
   applyAdminSubTabVisibility();
-  if (currentUser.role === 'admin2' && !currentUser.isActiveProxy) {
-    switchAdminSubTab('board');
+  if (currentUser.role === `admin2` && !currentUser.isActiveProxy) {
+    switchAdminSubTab(`board`);
   }
   rebuildAdminDropdownsAndTable(); // 💡 V58: 立即渲染本機快取的主管穿透下拉選單與假別看板！
-  document.getElementById('pendingLoading').textContent = '載入中…';
+  document.getElementById(`pendingLoading`).textContent = `載入中…`;
   
   // 💡 V37-v28: 本地快取降級顯示
-  let pending = records.filter(r => r.status === '待審' && (r.type === '請假' || r.type === '加班' || r.type === '補打卡'));
+  let pending = records.filter(r => r.status === `待審` && (r.type === `請假` || r.type === `加班` || r.type === `補打卡`));
   adminPendingCache = pending; // 🔧 修復：快取起來，供 approveRecord() 查找
-  document.getElementById('statLeave').innerHTML = records.filter(r => r.type === '請假' && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('statOT').innerHTML = records.filter(r => (r.type === '加班' || r.type === '補打卡' || r.type === '班別調整') && r.status === '待審').length + '<span>筆</span>';
-  document.getElementById('pendingList').innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join('') : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+  document.getElementById(`statLeave`).innerHTML = records.filter(r => r.type === `請假` && r.status === `待審`).length + `<span>筆</span>`;
+  document.getElementById(`statOT`).innerHTML = records.filter(r => (r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`) && r.status === `待審`).length + `<span>筆</span>`;
+  document.getElementById(`pendingList`).innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join(``) : `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>`;
   
   try {
-    const data = await callGAS({ action: 'getAll' });
-    document.getElementById('pendingLoading').textContent = '';
-    if (data && data.status === 'ok') {
+    const data = await callGAS({ action: `getAll` });
+    document.getElementById(`pendingLoading`).textContent = ``;
+    if (data && data.status === `ok`) {
       if (data.employeeList) {
         currentUser.employeeList = data.employeeList;
-        sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+        sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
         rebuildAdminDropdownsAndTable(); // 💡 V58: 核心修復！重新建立主管穿透下拉選單與看板，達到即時同步！
       }
     }
@@ -3412,20 +3412,20 @@ async function loadAdminData() {
     if (data && data.pending) {
       const pendingList = data.pending;
       adminPendingCache = pendingList; // 🔧 修復：以伺服器最新待審清單更新快取
-      const leavePendingCount = pendingList.filter(r => r.type === '請假').length;
-      const otPendingCount = pendingList.filter(r => r.type === '加班' || r.type === '補打卡').length;
+      const leavePendingCount = pendingList.filter(r => r.type === `請假`).length;
+      const otPendingCount = pendingList.filter(r => r.type === `加班` || r.type === `補打卡`).length;
       
-      document.getElementById('statLeave').innerHTML = leavePendingCount + '<span>筆</span>';
-      document.getElementById('statOT').innerHTML = otPendingCount + '<span>筆</span>';
-      document.getElementById('statSupp').innerHTML = pendingList.filter(r => r.type === '補打卡').length + '<span>筆</span>';
-      document.getElementById('statAdjust').innerHTML = pendingList.filter(r => r.type === '班別調整').length + '<span>筆</span>';
+      document.getElementById(`statLeave`).innerHTML = leavePendingCount + `<span>筆</span>`;
+      document.getElementById(`statOT`).innerHTML = otPendingCount + `<span>筆</span>`;
+      document.getElementById(`statSupp`).innerHTML = pendingList.filter(r => r.type === `補打卡`).length + `<span>筆</span>`;
+      document.getElementById(`statAdjust`).innerHTML = pendingList.filter(r => r.type === `班別調整`).length + `<span>筆</span>`;
       if (!isApproveCommentBoxOpen()) {
-        document.getElementById('pendingList').innerHTML = pendingList.length 
-          ? pendingList.map(r => recordHTML(r, true, true)).join('') 
-          : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>';
+        document.getElementById(`pendingList`).innerHTML = pendingList.length 
+          ? pendingList.map(r => recordHTML(r, true, true)).join(``) 
+          : `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>`;
       }
     }
-    document.getElementById('pendingLoading').textContent = '';
+    document.getElementById(`pendingLoading`).textContent = ``;
     if (data.data && data.data.length > 1) {
       const allRows = data.data.slice(1).reverse();
       const today = new Date();
@@ -3441,41 +3441,41 @@ async function loadAdminData() {
       }
       function fmtDate(val) {
         const d = parseSheetDate(val);
-        if (!d) return '—';
+        if (!d) return `—`;
         const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return '${y}-${m}-${day}';
+        const m = String(d.getMonth() + 1).padStart(2, `0`);
+        const day = String(d.getDate()).padStart(2, `0`);
+        return `${y}-${m}-${day}`;
       }
       function fmtTime(val) {
-        if (!val) return '—';
-        if (typeof val === 'string' && val.match(/^\d{2}:\d{2}/)) return val.slice(0,5);
+        if (!val) return `—`;
+        if (typeof val === `string` && val.match(/^\d{2}:\d{2}/)) return val.slice(0,5);
         const d = safeNewDate(val);
-        if (isNaN(d.getTime())) return String(val).slice(0,5) || '—';
-        const h = String(d.getHours()).padStart(2, '0');
-        const m = String(d.getMinutes()).padStart(2, '0');
-        return '${h}:${m}';
+        if (isNaN(d.getTime())) return String(val).slice(0,5) || `—`;
+        const h = String(d.getHours()).padStart(2, `0`);
+        const m = String(d.getMinutes()).padStart(2, `0`);
+        return `${h}:${m}`;
       }
 
       const rows = allRows.filter(r => {
         const d = parseSheetDate(r[0]);
         return d && d >= oneWeekAgo;
       });
-      const tStr = '${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}';
-      const ciEl = document.getElementById('statCheckin');
-      const coEl = document.getElementById('statCheckout');
-      if (ciEl) ciEl.innerHTML = rows.filter(r => r[3] === '上班' && fmtDate(r[0]) === tStr).length + '<span>人</span>';
-      if (coEl) coEl.innerHTML = rows.filter(r => r[3] === '下班' && fmtDate(r[0]) === tStr).length + '<span>人</span>';
+      const tStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,`0`)}-${String(today.getDate()).padStart(2,`0`)}`;
+      const ciEl = document.getElementById(`statCheckin`);
+      const coEl = document.getElementById(`statCheckout`);
+      if (ciEl) ciEl.innerHTML = rows.filter(r => r[3] === `上班` && fmtDate(r[0]) === tStr).length + `<span>人</span>`;
+      if (coEl) coEl.innerHTML = rows.filter(r => r[3] === `下班` && fmtDate(r[0]) === tStr).length + `<span>人</span>`;
 
       // 📊 當月非院內外勤打卡即時穿透 (加上 J 欄資訊 & 雙和300米外打卡判定)
       const currentMonthPunches = allRows.filter(r => {
-        if (r[3] !== '上班' && r[3] !== '下班') return false;
+        if (r[3] !== `上班` && r[3] !== `下班`) return false;
         const d = parseSheetDate(r[4] || r[0]);
         if (!d) return false;
         const now = new Date();
         const isCurrentM = d.getFullYear() === now.getFullYear() && (d.getMonth() + 1) === (now.getMonth() + 1);
         
-        const hasRemark = r[8] && String(r[8]).trim() !== '';
+        const hasRemark = r[8] && String(r[8]).trim() !== ``;
         let isOutsideShuangho = false;
         const latVal = parseFloat(r[6]);
         const lngVal = parseFloat(r[7]);
@@ -3520,7 +3520,7 @@ async function loadAdminData() {
             };
             const distShuangho = getDistance(latVal, lngVal, 24.99230, 121.49410);
             const distChongqing = getDistance(latVal, lngVal, 25.04459, 121.51373);
-            const hasRemark = r[8] && String(r[8]).trim() !== '';
+            const hasRemark = r[8] && String(r[8]).trim() !== ``;
             if (hasRemark) {
               const isAtChongqing = distChongqing <= 300;
               jVal = (isAtChongqing ? "在重慶南路書局範圍內" : "不在重慶南路書局範圍內") + 
@@ -3533,15 +3533,15 @@ async function loadAdminData() {
           }
         }
         const remarkText = r[8] ? String(r[8]).trim() : "無";
-        const jDisplay = jVal ? '📍 <strong>J欄定位分析：${jVal}</strong>' : "📍 <strong>J欄定位分析：無GPS定位</strong>";
-        return '
+        const jDisplay = jVal ? `📍 <strong>J欄定位分析：${jVal}</strong>` : "📍 <strong>J欄定位分析：無GPS定位</strong>";
+        return `
         <div class="record-item" style="border-left: 4px solid var(--accent-orange);">
           <div class="record-row">
-            <div class="record-dot ${r[3]==='上班'?'dot-green':'dot-red'}"></div>
+            <div class="record-dot ${r[3]===`上班`?`dot-green`:`dot-red`}"></div>
             <div class="record-info">
               <div class="record-type" style="font-weight: bold; color: var(--text-primary);">
-                <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
-                ${r[2]||''}（${r[1]}）
+                <span class="badge ${r[3]===`上班`?`badge-green`:`badge-red`}">${r[3]}</span>
+                ${r[2]||``}（${r[1]}）
               </div>
               <div class="record-meta" style="color: var(--text-secondary); margin-top: 4px; line-height: 1.6;">
                 📅 ${fmtDate(r[4] || r[0])} · ⏰ ${fmtTime(r[5])} · 💬 外勤備註：${remarkText}<br>
@@ -3550,10 +3550,10 @@ async function loadAdminData() {
             </div>
           </div>
         </div>
-        ';
-      }).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">當月尚無異地外勤打卡紀錄</div></div>';
+        `;
+      }).join(``) : `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">當月尚無異地外勤打卡紀錄</div></div>`;
       
-      document.getElementById('adminFieldPunches').innerHTML = fieldPunchesHtml;
+      document.getElementById(`adminFieldPunches`).innerHTML = fieldPunchesHtml;
 
       // 💡 V85: 統計當月每個員工的外勤打卡次數
       const stats = {};
@@ -3562,9 +3562,9 @@ async function loadAdminData() {
         if (!stats[empId]) {
           stats[empId] = { checkin: 0, checkout: 0 };
         }
-        if (r[3] === '上班') {
+        if (r[3] === `上班`) {
           stats[empId].checkin++;
-        } else if (r[3] === '下班') {
+        } else if (r[3] === `下班`) {
           stats[empId].checkout++;
         }
       });
@@ -3572,57 +3572,57 @@ async function loadAdminData() {
       renderAdminEmployeeOverviewTable(); // 即時刷上看盤畫面
 
       // 主管端依然完整保留 GPS 數字與備註
-      document.getElementById('adminRecords').innerHTML = rows.length ? rows.map(r => '
+      document.getElementById(`adminRecords`).innerHTML = rows.length ? rows.map(r => `
         <div class="record-item">
           <div class="record-row">
-            <div class="record-dot ${r[3]==='上班'?'dot-green':'dot-red'}"></div>
+            <div class="record-dot ${r[3]===`上班`?`dot-green`:`dot-red`}"></div>
             <div class="record-info">
               <div class="record-type">
-                <span class="badge ${r[3]==='上班'?'badge-green':'badge-red'}">${r[3]}</span>
-                ${r[2]||''}（${r[1]}）
+                <span class="badge ${r[3]===`上班`?`badge-green`:`badge-red`}">${r[3]}</span>
+                ${r[2]||``}（${r[1]}）
               </div>
-              <div class="record-meta">${fmtDate(r[0])}${r[6]?' 📍'+r[6]+','+r[7]:''}${r[8]?' · 💬 '+r[8]:''}</div>
+              <div class="record-meta">${fmtDate(r[0])}${r[6]?` 📍`+r[6]+`,`+r[7]:``}${r[8]?` · 💬 `+r[8]:``}</div>
             </div>
             <div class="record-time">${fmtTime(r[5])}</div>
           </div>
-        </div>').join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
+        </div>`).join(``) : `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>`;
     }
   } catch (e) {
-    document.getElementById('pendingLoading').textContent = '（離線）';
+    document.getElementById(`pendingLoading`).textContent = `（離線）`;
     const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const recentRecords = records.filter(r => safeNewDate(r.timestamp) >= oneWeekAgo);
-    document.getElementById('adminRecords').innerHTML = recentRecords.map(r => recordHTML(r, true)).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>';
-    const todayStr = '${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}';
-    const ciEl2 = document.getElementById('statCheckin'); if (ciEl2) ciEl2.innerHTML = records.filter(r => r.type === '上班' && r.date === todayStr).length + '<span>人</span>';
-    const coEl2 = document.getElementById('statCheckout'); if (coEl2) coEl2.innerHTML = records.filter(r => r.type === '下班' && r.date === todayStr).length + '<span>人</span>';
+    document.getElementById(`adminRecords`).innerHTML = recentRecords.map(r => recordHTML(r, true)).join(``) || `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">近一週無打卡紀錄</div></div>`;
+    const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,`0`)}-${String(new Date().getDate()).padStart(2,`0`)}`;
+    const ciEl2 = document.getElementById(`statCheckin`); if (ciEl2) ciEl2.innerHTML = records.filter(r => r.type === `上班` && r.date === todayStr).length + `<span>人</span>`;
+    const coEl2 = document.getElementById(`statCheckout`); if (coEl2) coEl2.innerHTML = records.filter(r => r.type === `下班` && r.date === todayStr).length + `<span>人</span>`;
   }
 }
 
 // 👨‍💼 主管：員工考勤多維度穿透查詢
 async function handleAdminQueryChange() {
-  const empId = document.getElementById('adminQueryUserSelect').value;
-  const resultsDiv = document.getElementById('adminQueryResults');
+  const empId = document.getElementById(`adminQueryUserSelect`).value;
+  const resultsDiv = document.getElementById(`adminQueryResults`);
   if (!empId) {
-    resultsDiv.style.display = 'none';
+    resultsDiv.style.display = `none`;
     return;
   }
   
   // 顯示加載
-  resultsDiv.style.display = 'block';
-  document.getElementById('aq-y-ot').textContent = '計算中…';
-  document.getElementById('aq-y-miss').textContent = '計算中…';
-  document.getElementById('aq-y-late').textContent = '計算中…';
+  resultsDiv.style.display = `block`;
+  document.getElementById(`aq-y-ot`).textContent = `計算中…`;
+  document.getElementById(`aq-y-miss`).textContent = `計算中…`;
+  document.getElementById(`aq-y-late`).textContent = `計算中…`;
   
   try {
-    const res = await callGAS({ action: 'getMyStatus', empId: empId });
-    if (res.status === 'ok') {
+    const res = await callGAS({ action: `getMyStatus`, empId: empId });
+    if (res.status === `ok`) {
       const empInfo = currentUser.employeeList.find(e => matchEmpId(e.empId, empId));
-      const queryJoinDateStr = empInfo ? empInfo.joinDate : '2025/12/01';
+      const queryJoinDateStr = empInfo ? empInfo.joinDate : `2025/12/01`;
       let joinDate = parseLocalDate(queryJoinDateStr);
       const today = new Date();
       
       // 💡 V37-v29: 主管穿透查詢同仁時，動態渲染其專屬年度區間
-      const aqIntervalEl = document.getElementById('aq-interval');
+      const aqIntervalEl = document.getElementById(`aq-interval`);
       if (aqIntervalEl) {
         aqIntervalEl.textContent = getYearRangeString(queryJoinDateStr, res.quota);
       }
@@ -3641,33 +3641,33 @@ async function handleAdminQueryChange() {
         lateEarlyCount = res.settledAccumulated.yLateEarlyCount || 0;
       }
       
-      document.getElementById('aq-y-ot').textContent = otHoursAcc.toFixed(1) + ' h';
-      document.getElementById('aq-y-miss').textContent = missedCount + ' 次';
-      document.getElementById('aq-y-late').textContent = lateEarlyCount + ' 次';
+      document.getElementById(`aq-y-ot`).textContent = otHoursAcc.toFixed(1) + ` h`;
+      document.getElementById(`aq-y-miss`).textContent = missedCount + ` 次`;
+      document.getElementById(`aq-y-late`).textContent = lateEarlyCount + ` 次`;
 
       // 每月明細表格已依照主管需求移除
       // 📅 V56: 動態渲染該同仁本月的打卡對帳日曆！
       renderAdminQueryCalendarTable(empId, empRecords, res, empInfo);
     }
     } catch (e) {
-    console.error('handleAdminQueryChange 失敗: ', e);
-    document.getElementById('aq-y-ot').textContent = '⚠️ 錯誤';
-    document.getElementById('aq-y-miss').textContent = '⚠️ 錯誤';
-    document.getElementById('aq-y-late').textContent = '⚠️ 錯誤';
+    console.error(`handleAdminQueryChange 失敗: `, e);
+    document.getElementById(`aq-y-ot`).textContent = `⚠️ 錯誤`;
+    document.getElementById(`aq-y-miss`).textContent = `⚠️ 錯誤`;
+    document.getElementById(`aq-y-late`).textContent = `⚠️ 錯誤`;
   }
 }
 
 // ── V49 新增：主管子分頁切換大腦 ──
 function switchAdminSubTab(subTab) {
-  const subTabs = ['pending', 'board', 'adjust', 'agent'];
+  const subTabs = [`pending`, `board`, `adjust`, `agent`];
   subTabs.forEach(tab => {
-    const chip = document.getElementById('adminSubTab-' + tab);
-    const subPage = document.getElementById('adminSubPage-' + tab);
+    const chip = document.getElementById(`adminSubTab-` + tab);
+    const subPage = document.getElementById(`adminSubPage-` + tab);
     if (chip) {
-      chip.classList.toggle('active', tab === subTab);
+      chip.classList.toggle(`active`, tab === subTab);
     }
     if (subPage) {
-      subPage.style.display = tab === subTab ? 'block' : 'none';
+      subPage.style.display = tab === subTab ? `block` : `none`;
     }
   });
 }
@@ -3676,36 +3676,36 @@ function switchAdminSubTab(subTab) {
 
 
 function rebuildAdminDropdownsAndTable() {
-  const selectEl = document.getElementById('adminQueryUserSelect');
-  const adjustSelectEl = document.getElementById('adminAdjustEmpId');
-  const agentSelectEl = document.getElementById('adminAgentEmpId');
+  const selectEl = document.getElementById(`adminQueryUserSelect`);
+  const adjustSelectEl = document.getElementById(`adminAdjustEmpId`);
+  const agentSelectEl = document.getElementById(`adminAgentEmpId`);
   if (currentUser && currentUser.employeeList) {
-    if (selectEl) selectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
-    if (adjustSelectEl) adjustSelectEl.innerHTML = '<option value="">-- 請選擇員工 --</option>';
-    if (agentSelectEl) agentSelectEl.innerHTML = '<option value="">-- 請選擇代理主管 --</option>';
+    if (selectEl) selectEl.innerHTML = `<option value="">-- 請選擇員工 --</option>`;
+    if (adjustSelectEl) adjustSelectEl.innerHTML = `<option value="">-- 請選擇員工 --</option>`;
+    if (agentSelectEl) agentSelectEl.innerHTML = `<option value="">-- 請選擇代理主管 --</option>`;
     currentUser.employeeList.forEach(emp => {
       // 穿透查詢 與 排班異動：只限非 Admin 員工
-      if (emp.role !== 'admin' && emp.role !== 'admin1' && emp.role !== 'admin2') {
+      if (emp.role !== `admin` && emp.role !== `admin1` && emp.role !== `admin2`) {
         if (selectEl) {
-          const option = document.createElement('option');
+          const option = document.createElement(`option`);
           option.value = emp.empId;
-          option.textContent = '${emp.empId} - ${emp.name}';
+          option.textContent = `${emp.empId} - ${emp.name}`;
           selectEl.appendChild(option);
         }
         if (adjustSelectEl) {
-          const opt2 = document.createElement('option');
+          const opt2 = document.createElement(`option`);
           opt2.value = emp.empId;
-          opt2.textContent = '${emp.empId} - ${emp.name}';
+          opt2.textContent = `${emp.empId} - ${emp.name}`;
           adjustSelectEl.appendChild(opt2);
         }
       }
       // 👥 代理主管：主要主管（admin1）只能選次要主管（admin2）作為代理人
-      const isAgentOptionAllowed = (currentUser.role === 'admin1' && emp.role === 'admin2') || (currentUser.role === 'admin' && (emp.role === 'admin' || emp.role === 'admin1' || emp.role === 'admin2') && String(emp.empId) !== String(currentUser.empId));
+      const isAgentOptionAllowed = (currentUser.role === `admin1` && emp.role === `admin2`) || (currentUser.role === `admin` && (emp.role === `admin` || emp.role === `admin1` || emp.role === `admin2`) && String(emp.empId) !== String(currentUser.empId));
       if (isAgentOptionAllowed) {
         if (agentSelectEl) {
-          const opt3 = document.createElement('option');
+          const opt3 = document.createElement(`option`);
           opt3.value = emp.empId;
-          opt3.textContent = '${emp.empId} - ${emp.name}';
+          opt3.textContent = `${emp.empId} - ${emp.name}`;
           agentSelectEl.appendChild(opt3);
         }
       }
@@ -3716,29 +3716,29 @@ function rebuildAdminDropdownsAndTable() {
 
 
 function renderAdminEmployeeOverviewTable() {
-  const body = document.getElementById('adminEmployeeOverviewBody');
+  const body = document.getElementById(`adminEmployeeOverviewBody`);
   if (!body) return;
   if (!currentUser || !currentUser.employeeList || currentUser.employeeList.length === 0) {
-    body.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">無資料</td></tr>';
+    body.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">無資料</td></tr>`;
     return;
   }
-  // Filter out admin and show only '專任'
-  const ftEmployees = currentUser.employeeList.filter(emp => emp.role !== 'admin' && emp.empType === '專任');
+  // Filter out admin and show only `專任`
+  const ftEmployees = currentUser.employeeList.filter(emp => emp.role !== `admin` && emp.empType === `專任`);
   if (ftEmployees.length === 0) {
-    body.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">尚無專任員工資料</td></tr>';
+    body.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">尚無專任員工資料</td></tr>`;
     return;
   }
   body.innerHTML = ftEmployees.map(emp => {
     const stats = (window.adminOutOfOfficeStats && window.adminOutOfOfficeStats[String(emp.empId).trim()]) || { checkin: 0, checkout: 0 };
-    const checkinText = stats.checkin > 0 ? '<span style="color:var(--green-light);font-weight:bold;">🟢 ${stats.checkin} 次</span>' : '<span style="color:var(--text-muted);">—</span>';
-    const checkoutText = stats.checkout > 0 ? '<span style="color:var(--accent-red);font-weight:bold;">🏁 ${stats.checkout} 次</span>' : '<span style="color:var(--text-muted);">—</span>';
+    const checkinText = stats.checkin > 0 ? `<span style="color:var(--green-light);font-weight:bold;">🟢 ${stats.checkin} 次</span>` : `<span style="color:var(--text-muted);">—</span>`;
+    const checkoutText = stats.checkout > 0 ? `<span style="color:var(--accent-red);font-weight:bold;">🏁 ${stats.checkout} 次</span>` : `<span style="color:var(--text-muted);">—</span>`;
 
-    return '
+    return `
       <tr style="border-bottom:1px solid var(--card-border); text-align:center;">
         <td style="padding:8px; border-right:1.5px solid var(--card-border); font-weight:bold; color:var(--text-primary);">${emp.empId}</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border); font-weight:bold; color:var(--blue-light);">${emp.name}</td>
-        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.joinDate || '—'}</td>
-        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.seniorityText || '—'}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.joinDate || `—`}</td>
+        <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.seniorityText || `—`}</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--text-secondary);">${emp.specialLeaveTotalHours || 0} h</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--accent-orange); font-weight:bold;">${emp.specialLeaveUsedHours || 0} h</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border); color:var(--green-light); font-weight:bold;">${emp.specialLeaveRemainingHours || 0} h</td>
@@ -3746,21 +3746,21 @@ function renderAdminEmployeeOverviewTable() {
         <td style="padding:8px; border-right:1.5px solid var(--card-border);">${checkinText}</td>
         <td style="padding:8px; border-right:1.5px solid var(--card-border);">${checkoutText}</td>
         <td style="padding:8px;">
-          <button class="pw-toggle-btn" onclick="triggerEmployeeQuery('${emp.empId}')">🔍 穿透對帳</button>
+          <button class="pw-toggle-btn" onclick="triggerEmployeeQuery(`${emp.empId}`)">🔍 穿透對帳</button>
         </td>
       </tr>
-    ';
-  }).join('');
+    `;
+  }).join(``);
 }
 
 window.triggerEmployeeQuery = function(empId) {
-  const selectEl = document.getElementById('adminQueryUserSelect');
+  const selectEl = document.getElementById(`adminQueryUserSelect`);
   if (selectEl) {
     selectEl.value = empId;
     handleAdminQueryChange();
-    const resultDiv = document.getElementById('adminQueryResults');
+    const resultDiv = document.getElementById(`adminQueryResults`);
     if (resultDiv) {
-      resultDiv.scrollIntoView({ behavior: 'smooth' });
+      resultDiv.scrollIntoView({ behavior: `smooth` });
     }
   }
 };
@@ -3768,180 +3768,180 @@ window.triggerEmployeeQuery = function(empId) {
 
 function applyAdminSubTabVisibility() {
   if (!currentUser) return;
-  const agentTab = document.getElementById('adminSubTab-agent');
+  const agentTab = document.getElementById(`adminSubTab-agent`);
   if (agentTab) {
-    if (currentUser.role === 'admin2') {
-      agentTab.style.setProperty('display', 'none', 'important');
+    if (currentUser.role === `admin2`) {
+      agentTab.style.setProperty(`display`, `none`, `important`);
     } else {
-      agentTab.style.setProperty('display', 'inline-flex', 'important');
+      agentTab.style.setProperty(`display`, `inline-flex`, `important`);
     }
   }
   
-  const pendingTab = document.getElementById('adminSubTab-pending');
+  const pendingTab = document.getElementById(`adminSubTab-pending`);
   if (pendingTab) {
-    if (currentUser.role === 'admin2' && !currentUser.isActiveProxy) {
-      pendingTab.style.setProperty('display', 'none', 'important');
+    if (currentUser.role === `admin2` && !currentUser.isActiveProxy) {
+      pendingTab.style.setProperty(`display`, `none`, `important`);
     } else {
-      pendingTab.style.setProperty('display', 'inline-flex', 'important');
+      pendingTab.style.setProperty(`display`, `inline-flex`, `important`);
     }
   }
 }
 
 function saveRecords() {
-localStorage.setItem('tjcpm_records', JSON.stringify(records));
+localStorage.setItem(`tjcpm_records`, JSON.stringify(records));
 }
 
 function switchTab(tab) {
-if (tab === 'admin' && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && currentUser.role !== 'admin2'))) {
+if (tab === `admin` && (!currentUser || (currentUser.role !== `admin` && currentUser.role !== `admin1` && currentUser.role !== `admin2`))) {
 return;
 }
-document.querySelectorAll('.nav-tab').forEach(t => {
-t.classList.toggle('active', t.dataset.tab === tab);
+document.querySelectorAll(`.nav-tab`).forEach(t => {
+t.classList.toggle(`active`, t.dataset.tab === tab);
 });
-document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-document.getElementById('page-' + tab).classList.add('active');
-if (tab === 'records') renderAllList();
-if (tab === 'admin') loadAdminData();
-if (tab === 'profile') renderProfile();
+document.querySelectorAll(`.page`).forEach(p => p.classList.remove(`active`));
+document.getElementById(`page-` + tab).classList.add(`active`);
+if (tab === `records`) renderAllList();
+if (tab === `admin`) loadAdminData();
+if (tab === `profile`) renderProfile();
 }
 
 function openModal(type) {
-document.getElementById('modal-' + type).classList.add('open');
+document.getElementById(`modal-` + type).classList.add(`open`);
 }
 function closeModal(type) {
-document.getElementById('modal-' + type).classList.remove('open');
+document.getElementById(`modal-` + type).classList.remove(`open`);
 }
 
 let toastTimer;
 function showToast(msg) {
-const el = document.getElementById('toast');
+const el = document.getElementById(`toast`);
 el.textContent = msg;
-el.classList.add('show');
+el.classList.add(`show`);
 clearTimeout(toastTimer);
-toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+toastTimer = setTimeout(() => el.classList.remove(`show`), 2800);
 }
 
 // 💡 V74: 定義全域讀取遮罩，防止 ReferenceError: showLoading is not defined 報錯
 function showLoading() {
-  let el = document.getElementById('globalLoadingOverlay');
+  let el = document.getElementById(`globalLoadingOverlay`);
   if (!el) {
-    el = document.createElement('div');
-    el.id = 'globalLoadingOverlay';
-    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;';
-    el.innerHTML = '<div style="background:var(--card-bg,#fff);padding:16px 22px;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-primary,#0f172a);box-shadow:0 4px 16px rgba(0,0,0,0.15);"><span class="spinner" style="border-top-color:var(--blue-main,#1a6fc4);border-color:rgba(26,111,196,0.25);"></span>處理中…</div>';
+    el = document.createElement(`div`);
+    el.id = `globalLoadingOverlay`;
+    el.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.35);display:flex;align-items:center;justify-content:center;`;
+    el.innerHTML = `<div style="background:var(--card-bg,#fff);padding:16px 22px;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-primary,#0f172a);box-shadow:0 4px 16px rgba(0,0,0,0.15);"><span class="spinner" style="border-top-color:var(--blue-main,#1a6fc4);border-color:rgba(26,111,196,0.25);"></span>處理中…</div>`;
     document.body.appendChild(el);
   }
-  el.style.display = 'flex';
+  el.style.display = `flex`;
 }
 
 function hideLoading() {
-  const el = document.getElementById('globalLoadingOverlay');
-  if (el) el.style.display = 'none';
+  const el = document.getElementById(`globalLoadingOverlay`);
+  if (el) el.style.display = `none`;
 }
-document.querySelectorAll('.modal-overlay').forEach(o => {
-o.addEventListener('click', e => {
-if (e.target === o) o.classList.remove('open');
+document.querySelectorAll(`.modal-overlay`).forEach(o => {
+o.addEventListener(`click`, e => {
+if (e.target === o) o.classList.remove(`open`);
 });
 });
 
 // ── 時間下拉選單：只允許 :00 和 :30 ────────────────────────────
 (function initTimeSelects() {
-const ids = ['leaveStartTime', 'leaveEndTime', 'otStart', 'otEnd', 'suppTime'];
+const ids = [`leaveStartTime`, `leaveEndTime`, `otStart`, `otEnd`, `suppTime`];
 const options = [];
 for (let h = 0; h < 24; h++) {
-const hh = String(h).padStart(2, '0');
-options.push('<option value="' + hh + ':00">' + hh + ':00</option>');
-options.push('<option value="' + hh + ':30">' + hh + ':30</option>');
+const hh = String(h).padStart(2, `0`);
+options.push(`<option value="` + hh + `:00">` + hh + `:00</option>`);
+options.push(`<option value="` + hh + `:30">` + hh + `:30</option>`);
 }
-const html = options.join('');
+const html = options.join(``);
 ids.forEach(id => {
 const el = document.getElementById(id);
 if (el) el.innerHTML = html;
 });
-['leaveStartTime','otStart'].forEach(id => {
+[`leaveStartTime`,`otStart`].forEach(id => {
 const el = document.getElementById(id);
-if (el) el.value = '08:00';
+if (el) el.value = `08:00`;
 });
-['leaveEndTime','otEnd'].forEach(id => {
+[`leaveEndTime`,`otEnd`].forEach(id => {
 const el = document.getElementById(id);
-if (el) el.value = '17:00';
+if (el) el.value = `17:00`;
 });
-const suppEl = document.getElementById('suppTime');
-if (suppEl) suppEl.value = '08:00';
+const suppEl = document.getElementById(`suppTime`);
+if (suppEl) suppEl.value = `08:00`;
 })();
 
 // ── 主管簽核 ──
 /* let pendingApproveDecision = {}; declared at the top */
 function toggleApproveComment(id, decision) {
-document.querySelectorAll('.approve-comment-area.open').forEach(el => {
-const rid = el.id.replace('approveArea-','');
+document.querySelectorAll(`.approve-comment-area.open`).forEach(el => {
+const rid = el.id.replace(`approveArea-`,``);
 if (String(rid) !== String(id)) {
-el.classList.remove('open');
-const btns = document.getElementById('approveBtns-' + rid);
-if (btns) btns.style.display = 'flex';
+el.classList.remove(`open`);
+const btns = document.getElementById(`approveBtns-` + rid);
+if (btns) btns.style.display = `flex`;
 }
 });
-const area = document.getElementById('approveArea-' + id);
-const btns = document.getElementById('approveBtns-' + id);
+const area = document.getElementById(`approveArea-` + id);
+const btns = document.getElementById(`approveBtns-` + id);
 if (!area) { approveRecord(id, decision); return; }
 pendingApproveDecision[id] = decision;
-area.classList.add('open');
-if (btns) btns.style.display = 'none';
-const confirmBtn = document.getElementById('approveConfirmBtn-' + id);
+area.classList.add(`open`);
+if (btns) btns.style.display = `none`;
+const confirmBtn = document.getElementById(`approveConfirmBtn-` + id);
 if (confirmBtn) {
-confirmBtn.textContent = decision === '同意' ? '✓ 確認核准' : '✗ 確認拒絕';
-confirmBtn.className = 'approve-btn ' + (decision === '同意' ? 'ok' : 'reject');
+confirmBtn.textContent = decision === `同意` ? `✓ 確認核准` : `✗ 確認拒絕`;
+confirmBtn.className = `approve-btn ` + (decision === `同意` ? `ok` : `reject`);
 }
-const ta = document.getElementById('approveComment-' + id);
+const ta = document.getElementById(`approveComment-` + id);
 if (ta) setTimeout(() => ta.focus(), 100);
 }
 
 function cancelApproveComment(id) {
-const area = document.getElementById('approveArea-' + id);
-if (area) area.classList.remove('open');
-const btns = document.getElementById('approveBtns-' + id);
-if (btns) btns.style.display = 'flex';
+const area = document.getElementById(`approveArea-` + id);
+if (area) area.classList.remove(`open`);
+const btns = document.getElementById(`approveBtns-` + id);
+if (btns) btns.style.display = `flex`;
 delete pendingApproveDecision[id];
 }
 
 function confirmApprove(id) {
 const decision = pendingApproveDecision[id];
 if (!decision) return;
-const commentEl = document.getElementById('approveComment-' + id);
-const comment = commentEl ? commentEl.value.trim() : '';
+const commentEl = document.getElementById(`approveComment-` + id);
+const comment = commentEl ? commentEl.value.trim() : ``;
 approveRecord(id, decision, comment);
 delete pendingApproveDecision[id];
 }
 
 async function approveRecord(id, decision, comment) {
-if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'admin1' && currentUser.role !== 'admin2')) {
-showToast('⚠️ 您沒有審核權限');
+if (!currentUser || (currentUser.role !== `admin` && currentUser.role !== `admin1` && currentUser.role !== `admin2`)) {
+showToast(`⚠️ 您沒有審核權限`);
 return;
 }
 const rec = adminPendingCache.find(r => r.id === id) || records.find(r => r.id === id);
 if (!rec) {
-  showToast('⚠️ 找不到此筆申請資料，請重新整理後再試');
+  showToast(`⚠️ 找不到此筆申請資料，請重新整理後再試`);
   return;
 }
 rec.status = decision;
 if (comment) rec.approveComment = comment;
 saveRecords();
-const msg = '已${decision}：${rec.name}（${rec.empId}）的${rec.type}申請（${rec.date}）${comment ? '，意見：' + comment : ''}';
-addNotif(decision === '同意' ? 'approve' : 'reject', msg);
-sendPush('TJCPM 審批', msg);
+const msg = `已${decision}：${rec.name}（${rec.empId}）的${rec.type}申請（${rec.date}）${comment ? `，意見：` + comment : ``}`;
+addNotif(decision === `同意` ? `approve` : `reject`, msg);
+sendPush(`TJCPM 審批`, msg);
 try {
 const res = await callGAS({
-action: 'approve', clientId: rec.clientId || String(rec.id),
+action: `approve`, clientId: rec.clientId || String(rec.id),
 empId: rec.empId, type: rec.type, date: rec.date, decision,
 approverName: currentUser.name, approverId: currentUser.empId,
-comment: comment || ''
+comment: comment || ``
 });
-const synced = res.status === 'ok' && res.found !== false;
-showToast(decision === '同意'
-? (synced ? '✅ 已核准並同步' : '✅ 已核准（Sheet 未找到對應列）')
-: (synced ? '❌ 已拒絕並同步' : '❌ 已拒絕（Sheet 未找到對應列）'));
+const synced = res.status === `ok` && res.found !== false;
+showToast(decision === `同意`
+? (synced ? `✅ 已核准並同步` : `✅ 已核准（Sheet 未找到對應列）`)
+: (synced ? `❌ 已拒絕並同步` : `❌ 已拒絕（Sheet 未找到對應列）`));
 } catch (e) {
-showToast(decision === '同意' ? '✅ 已核准（離線）' : '❌ 已拒絕（離線）');
+showToast(decision === `同意` ? `✅ 已核准（離線）` : `❌ 已拒絕（離線）`);
 }
 loadAdminData();
   renderAdminEmployeeOverviewTable();
@@ -3950,24 +3950,24 @@ loadAdminData();
 // ── 個人資料頁 ────────────────────────────────────────────────
 function renderProfile() {
 if (!currentUser) return;
-const name = currentUser.name || '—';
-const empId = currentUser.empId || '—';
-const initial = name.charAt(0) || '?';
+const name = currentUser.name || `—`;
+const empId = currentUser.empId || `—`;
+const initial = name.charAt(0) || `?`;
 // 已移除重複的大頭貼與姓名欄位更新
-document.getElementById('profileNameVal').textContent = name;
-document.getElementById('profileEmpIdVal').textContent = empId;
-document.getElementById('profileJoinDate').textContent = currentUser.joinDate || '—';
-const empTypeEl = document.getElementById('profileEmpType');
+document.getElementById(`profileNameVal`).textContent = name;
+document.getElementById(`profileEmpIdVal`).textContent = empId;
+document.getElementById(`profileJoinDate`).textContent = currentUser.joinDate || `—`;
+const empTypeEl = document.getElementById(`profileEmpType`);
 if (empTypeEl) {
-  empTypeEl.textContent = currentUser.empType || '專任';
+  empTypeEl.textContent = currentUser.empType || `專任`;
 }
-const defaultShiftEl = document.getElementById('profileDefaultShift');
+const defaultShiftEl = document.getElementById(`profileDefaultShift`);
 if (defaultShiftEl) {
-  defaultShiftEl.textContent = currentUser.defaultShift || '09:00-18:00';
+  defaultShiftEl.textContent = currentUser.defaultShift || `09:00-18:00`;
 }
-const emailEl = document.getElementById('profileEmailVal');
+const emailEl = document.getElementById(`profileEmailVal`);
 if (emailEl) {
-  emailEl.textContent = currentUser.email || '—';
+  emailEl.textContent = currentUser.email || `—`;
 }
 
 calcAttendance(); // 先用本地快取立即顯示，避免畫面空白
@@ -3982,56 +3982,56 @@ updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
 // 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
 function getMonthKey(d) {
   const now = d || new Date();
-  return '${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}';
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, `0`)}`;
 }
 
 function shouldAutoSyncYearlyIssues() {
-  const lastMonth = localStorage.getItem('tjcpm_yearIssueLastSyncMonth');
+  const lastMonth = localStorage.getItem(`tjcpm_yearIssueLastSyncMonth`);
   return lastMonth !== getMonthKey();
 }
 
 function markYearlyIssuesSynced() {
   const now = new Date();
-  localStorage.setItem('tjcpm_yearIssueLastSyncMonth', getMonthKey(now));
-  localStorage.setItem('tjcpm_yearIssueLastSyncTime', now.toISOString());
+  localStorage.setItem(`tjcpm_yearIssueLastSyncMonth`, getMonthKey(now));
+  localStorage.setItem(`tjcpm_yearIssueLastSyncTime`, now.toISOString());
   updateYearIssueLastSyncLabel();
 }
 
 function updateYearIssueLastSyncLabel() {
-  const el = document.getElementById('yearIssueLastSync');
+  const el = document.getElementById(`yearIssueLastSync`);
   if (!el) return;
-  const t = localStorage.getItem('tjcpm_yearIssueLastSyncTime');
-  if (!t) { el.textContent = '尚未同步'; return; }
+  const t = localStorage.getItem(`tjcpm_yearIssueLastSyncTime`);
+  if (!t) { el.textContent = `尚未同步`; return; }
   const d = new Date(t);
-  el.textContent = '上次更新: ${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}';
+  el.textContent = `上次更新: ${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, `0`)}:${String(d.getMinutes()).padStart(2, `0`)}`;
 }
 
 // 手動按下 🔄 按鈕：強制重新同步，不管本月是否已同步過
 window.manualRefreshYearlyIssues = async function() {
-  const btn = document.getElementById('yearIssueRefreshBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ 更新中…'; }
+  const btn = document.getElementById(`yearIssueRefreshBtn`);
+  if (btn) { btn.disabled = true; btn.textContent = `⏳ 更新中…`; }
   const result = await syncProfileAndAccumulatedLeaves();
   if (result && result.ok) {
     markYearlyIssuesSynced();
-    showToast(result.changed ? '✅ 已更新最新出勤異常資料' : 'ℹ️ 資料沒有變動，已是最新');
+    showToast(result.changed ? `✅ 已更新最新出勤異常資料` : `ℹ️ 資料沒有變動，已是最新`);
   } else {
-    showToast('⚠️ 更新失敗，請確認網路連線');
+    showToast(`⚠️ 更新失敗，請確認網路連線`);
   }
-  if (btn) { btn.disabled = false; btn.textContent = '🔄 更新'; }
+  if (btn) { btn.disabled = false; btn.textContent = `🔄 更新`; }
 };
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
 async function syncProfileAndAccumulatedLeaves() {
   try {
-    const data = await callGAS({ action: 'getMyStatus', empId: currentUser.empId });
-    if (data.status === 'ok' && data.updates) {
+    const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
+    if (data.status === `ok` && data.updates) {
       // 💡 V63: 實裝高階髒檢查 (Dirty Check) 機制！比對本次拉取到的 updates 與原本本地快取的 records
-      const oldRecordsStr = localStorage.getItem('tjcpm_records') || '[]';
+      const oldRecordsStr = localStorage.getItem(`tjcpm_records`) || `[]`;
       const newRecordsStr = JSON.stringify(data.updates);
       const isRecordsChanged = oldRecordsStr !== newRecordsStr;
       
       let isQuotaChanged = false;
       if (data.quota) {
-        const oldUserStr = sessionStorage.getItem('tjcpm_user') || '{}';
+        const oldUserStr = sessionStorage.getItem(`tjcpm_user`) || `{}`;
         const oldUserObj = JSON.parse(oldUserStr);
         const oldQuotaStr = JSON.stringify(oldUserObj.quota || {});
         const newQuotaStr = JSON.stringify(data.quota);
@@ -4039,7 +4039,7 @@ async function syncProfileAndAccumulatedLeaves() {
       }
       
       if (!isRecordsChanged && !isQuotaChanged) {
-        console.log('[V63 Dirty Check] 偵測到雲端資料與本機完全一致，自動免除重繪，大幅省電與降低耗能！');
+        console.log(`[V63 Dirty Check] 偵測到雲端資料與本機完全一致，自動免除重繪，大幅省電與降低耗能！`);
         return { ok: true, changed: false }; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
       }
 
@@ -4057,16 +4057,16 @@ async function syncProfileAndAccumulatedLeaves() {
       let funeralLeaveUsed = 0;
 
       records.forEach(r => {
-        if (r.type === '請假' && r.status === '同意') {
-          const leaveType = r.subType === '加班補休' ? '補休' : (r.subType || '');
+        if (r.type === `請假` && r.status === `同意`) {
+          const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
           const hours = parseFloat(r.hours) || 0;
-          if (leaveType === '特休') annualLeaveUsed += hours;
-          else if (leaveType === '補休') compLeaveUsed += hours;
-          else if (leaveType === '病假') sickLeaveUsed += hours;
-          else if (leaveType === '事假') personalLeaveUsed += hours;
-          else if (leaveType === '公假') officialLeaveUsed += hours;
-          else if (leaveType === '婚假') marriageLeaveUsed += hours;
-          else if (leaveType === '喪假') funeralLeaveUsed += hours;
+          if (leaveType === `特休`) annualLeaveUsed += hours;
+          else if (leaveType === `補休`) compLeaveUsed += hours;
+          else if (leaveType === `病假`) sickLeaveUsed += hours;
+          else if (leaveType === `事假`) personalLeaveUsed += hours;
+          else if (leaveType === `公假`) officialLeaveUsed += hours;
+          else if (leaveType === `婚假`) marriageLeaveUsed += hours;
+          else if (leaveType === `喪假`) funeralLeaveUsed += hours;
         }
       });
 
@@ -4091,32 +4091,32 @@ async function syncProfileAndAccumulatedLeaves() {
         }
         if (data.settledAccumulated) {
           currentUser.settledAccumulated = data.settledAccumulated;
-          localStorage.setItem('tjcpm_settledAccumulated', JSON.stringify(data.settledAccumulated));
+          localStorage.setItem(`tjcpm_settledAccumulated`, JSON.stringify(data.settledAccumulated));
         }
-        if (data.hasOwnProperty('isActiveProxy')) {
+        if (data.hasOwnProperty(`isActiveProxy`)) {
           currentUser.isActiveProxy = data.isActiveProxy;
         }
         applyAdminSubTabVisibility();
-        sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
+        sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
       } else {
         // 舊版或無 quota 回傳時之手動估算
-        let annualBase = currentUser.empId === '115' ? 24 : (currentUser.empId === '111' ? 112 : 80);
+        let annualBase = currentUser.empId === `115` ? 24 : (currentUser.empId === `111` ? 112 : 80);
         let compBase = 16;
         annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
         compRemaining = Math.max(0, compBase - compLeaveUsed);
       }
 
-      document.getElementById('profileAnnualLeave').textContent = '${annualRemaining} 小時';
-      document.getElementById('profileCompensatoryLeave').textContent = '${compRemaining} 小時';
+      document.getElementById(`profileAnnualLeave`).textContent = `${annualRemaining} 小時`;
+      document.getElementById(`profileCompensatoryLeave`).textContent = `${compRemaining} 小時`;
 
       // 寫入勞基法說明卡中的「今年已請」累計時數
-      document.getElementById('accumAnnual').textContent = '${annualLeaveUsed}h';
-      document.getElementById('accumComp').textContent = '${compLeaveUsed}h';
-      document.getElementById('accumSick').textContent = '${sickLeaveUsed}h';
-      document.getElementById('accumPersonal').textContent = '${personalLeaveUsed}h';
-      document.getElementById('accumOfficial').textContent = '${officialLeaveUsed}h';
-      document.getElementById('accumMarriage').textContent = '${marriageLeaveUsed}h';
-      document.getElementById('accumFuneral').textContent = '${funeralLeaveUsed}h';
+      document.getElementById(`accumAnnual`).textContent = `${annualLeaveUsed}h`;
+      document.getElementById(`accumComp`).textContent = `${compLeaveUsed}h`;
+      document.getElementById(`accumSick`).textContent = `${sickLeaveUsed}h`;
+      document.getElementById(`accumPersonal`).textContent = `${personalLeaveUsed}h`;
+      document.getElementById(`accumOfficial`).textContent = `${officialLeaveUsed}h`;
+      document.getElementById(`accumMarriage`).textContent = `${marriageLeaveUsed}h`;
+      document.getElementById(`accumFuneral`).textContent = `${funeralLeaveUsed}h`;
       
      // 💡 V37-v31: 同步完最新 quota (含 correction) 之後，必須立刻重新執行出勤統計與頁面重繪！
       calcAttendance();
@@ -4124,7 +4124,7 @@ async function syncProfileAndAccumulatedLeaves() {
     }
     return { ok: true, changed: false };
   } catch (e) {
-    console.error('拉取雲端考勤餘額與累計失敗:', e);
+    console.error(`拉取雲端考勤餘額與累計失敗:`, e);
     return { ok: false, changed: false };
   }
 }
@@ -4132,14 +4132,14 @@ async function syncProfileAndAccumulatedLeaves() {
 
 // 💡 日期格式標準化輔助函式 (YYYY/M/D)
 function normalizeDate(str) {
-  if (!str) return '';
-  const clean = str.replace(/-/g, '/');
-  const parts = clean.split('/');
+  if (!str) return ``;
+  const clean = str.replace(/-/g, `/`);
+  const parts = clean.split(`/`);
   if (parts.length === 3) {
     const y = parseInt(parts[0], 10);
     const m = parseInt(parts[1], 10);
     const d = parseInt(parts[2], 10);
-    return '${y}/${m}/${d}';
+    return `${y}/${m}/${d}`;
   }
   return clean;
 }
@@ -4147,7 +4147,7 @@ function normalizeDate(str) {
 
 function timeToMin(timeStr) {
   if (!timeStr) return 540; // Default to 09:00 if empty
-  const parts = timeStr.split(':');
+  const parts = timeStr.split(`:`);
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || 0, 10);
 }
 
@@ -4160,14 +4160,14 @@ function calculateLeaveHoursLocal(r, holidays) {
   if (isNaN(startD.getTime())) return 0;
   
   let sh = 9, sm = 0;
-  if (r.startTime && r.startTime.includes(':')) {
-    sh = parseInt(r.startTime.split(':')[0], 10);
-    sm = parseInt(r.startTime.split(':')[1], 10);
+  if (r.startTime && r.startTime.includes(`:`)) {
+    sh = parseInt(r.startTime.split(`:`)[0], 10);
+    sm = parseInt(r.startTime.split(`:`)[1], 10);
   }
   let eh = 18, em = 0;
-  if (r.endTime && r.endTime.includes(':')) {
-    eh = parseInt(r.endTime.split(':')[0], 10);
-    em = parseInt(r.endTime.split(':')[1], 10);
+  if (r.endTime && r.endTime.includes(`:`)) {
+    eh = parseInt(r.endTime.split(`:`)[0], 10);
+    em = parseInt(r.endTime.split(`:`)[1], 10);
   }
 
   const reqStartMin = sh * 60 + sm;
@@ -4224,10 +4224,10 @@ function calculateLeaveHoursLocal(r, holidays) {
 }
 
 function renderYearlyIssues() {
-  const el = document.getElementById('yearIssueList');
+  const el = document.getElementById(`yearIssueList`);
   if (!el) return;
-  if (!currentUser || currentUser.empType === '兼任') {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">兼任同仁不計算漏打卡與遲到/早退</div></div>';
+  if (!currentUser || currentUser.empType === `兼任`) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">兼任同仁不計算漏打卡與遲到/早退</div></div>`;
     return;
   }
 
@@ -4245,7 +4245,7 @@ function renderYearlyIssues() {
     compareEnd.setHours(23, 59, 59, 999);
     
     if (compareD > compareEnd) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">資料區間無出勤異常，！</div></div>';
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">資料區間無出勤異常，！</div></div>`;
       return;
     }
   }
@@ -4260,35 +4260,35 @@ function renderYearlyIssues() {
 
   const myPunches = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    return r.type === '上班' || r.type === '下班';
+    return r.type === `上班` || r.type === `下班`;
   });
 
   const mySupps = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    return r.type === '補打卡';
+    return r.type === `補打卡`;
   });
 
   const myLeaves = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    return r.type === '請假' && r.status === '同意';
+    return r.type === `請假` && r.status === `同意`;
   });
 
   const dailyPunches = {};
   myPunches.forEach(r => {
     const normD = normalizeDate(r.date);
     if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
-    if (r.type === '上班') {
+    if (r.type === `上班`) {
       if (!dailyPunches[normD].in || r.time < dailyPunches[normD].in) dailyPunches[normD].in = r.time;
-    } else if (r.type === '下班') {
+    } else if (r.type === `下班`) {
       if (!dailyPunches[normD].out || r.time > dailyPunches[normD].out) dailyPunches[normD].out = r.time;
     }
   });
 
-  mySupps.filter(r => r.status === '同意').forEach(r => {
+  mySupps.filter(r => r.status === `同意`).forEach(r => {
     const normD = normalizeDate(r.date);
     if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
-    if (r.subType === '上班') dailyPunches[normD].in = r.time;
-    if (r.subType === '下班') dailyPunches[normD].out = r.time;
+    if (r.subType === `上班`) dailyPunches[normD].in = r.time;
+    if (r.subType === `下班`) dailyPunches[normD].out = r.time;
   });
 
   let loopCount = 0;
@@ -4304,8 +4304,8 @@ function renderYearlyIssues() {
       }
     }
     const dayOfWeek = dIndex.getDay();
-    const dateStr = '${dIndex.getFullYear()}-${String(dIndex.getMonth() + 1).padStart(2, '0')}-${String(dIndex.getDate()).padStart(2, '0')}';
-    const dateQueryStr = '${dIndex.getFullYear()}/${dIndex.getMonth() + 1}/${dIndex.getDate()}'; // M/D format
+    const dateStr = `${dIndex.getFullYear()}-${String(dIndex.getMonth() + 1).padStart(2, `0`)}-${String(dIndex.getDate()).padStart(2, `0`)}`;
+    const dateQueryStr = `${dIndex.getFullYear()}/${dIndex.getMonth() + 1}/${dIndex.getDate()}`; // M/D format
 
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     const isHoliday = currentUser.holidayStrings && currentUser.holidayStrings.includes(dateStr);
@@ -4326,14 +4326,14 @@ function renderYearlyIssues() {
         const isStart = dIndex.getFullYear() === startD.getFullYear() && dIndex.getMonth() === startD.getMonth() && dIndex.getDate() === startD.getDate();
         const isEnd = dIndex.getFullYear() === endD.getFullYear() && dIndex.getMonth() === endD.getMonth() && dIndex.getDate() === endD.getDate();
         if (isStart && isEnd) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else if (isStart) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
           leaveEndMin = 1080;
         } else if (isEnd) {
           leaveStartMin = 540;
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else {
           leaveStartMin = 540;
           leaveEndMin = 1080;
@@ -4351,41 +4351,41 @@ function renderYearlyIssues() {
       if (!isFullDayExempted) {
         let isProblem = false;
         let reason = [];
-        let checkinHTML = punch.in || '—';
-        let checkoutHTML = punch.out || '—';
+        let checkinHTML = punch.in || `—`;
+        let checkoutHTML = punch.out || `—`;
 
         if (!punch.in && !punch.out) {
           isProblem = true;
-          reason.push('雙簽漏卡');
-          checkinHTML = '<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>';
-          checkoutHTML = '<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>';
+          reason.push(`雙簽漏卡`);
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`上班`,event)">⚠️ 漏上班</span>`;
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`下班`,event)">⚠️ 漏下班</span>`;
         } else {
           if (!punch.in) {
             isProblem = true;
-            reason.push('上班漏卡');
-            checkinHTML = '<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>';
+            reason.push(`上班漏卡`);
+            checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`上班`,event)">⚠️ 漏上班</span>`;
           } else {
             const punchInMin = timeToMin(punch.in);
             if (punchInMin > shift.start) {
               if (!isRangeExempted(shift.start, punchInMin, dayLeaves)) {
                 isProblem = true;
-                reason.push('遲到');
-                checkinHTML = '<span style="color:var(--accent-orange);font-weight:bold;">${punch.in} ⚠️遲到</span>';
+                reason.push(`遲到`);
+                checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.in} ⚠️遲到</span>`;
               }
             }
           }
           
           if (!punch.out) {
             isProblem = true;
-            reason.push('下班漏卡');
-            checkoutHTML = '<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>';
+            reason.push(`下班漏卡`);
+            checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp(`${dateStr}`,`下班`,event)">⚠️ 漏下班</span>`;
           } else {
             const punchOutMin = timeToMin(punch.out);
             if (punchOutMin < shift.end) {
               if (!isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
                 isProblem = true;
-                reason.push('早退');
-                checkoutHTML = '<span style="color:var(--accent-orange);font-weight:bold;">${punch.out} ⚠️早退</span>';
+                reason.push(`早退`);
+                checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.out} ⚠️早退</span>`;
               }
             }
           }
@@ -4396,7 +4396,7 @@ function renderYearlyIssues() {
             date: dateStr,
             inHTML: checkinHTML,
             outHTML: checkoutHTML,
-            reason: reason.join('、')
+            reason: reason.join(`、`)
           });
         }
       }
@@ -4407,12 +4407,12 @@ function renderYearlyIssues() {
   issues.sort((a, b) => b.date.localeCompare(a.date));
   
   // 💡 V75 智慧數據校準大腦：115 號同仁（劉玟君）年度明細僅呈現 1/7 至 6/30 之間的 2次遲到與 3次未打卡
-  //if (currentUser && currentUser.empId === '115') {
-  //  const allowedDates = ['2026-03-06', '2026-03-10', '2026-05-29', '2026-06-22', '2026-06-26'];
+  //if (currentUser && currentUser.empId === `115`) {
+  //  const allowedDates = [`2026-03-06`, `2026-03-10`, `2026-05-29`, `2026-06-22`, `2026-06-26`];
   //  for (let i = issues.length - 1; i >= 0; i--) {
    //   const issueDate = issues[i].date;
       // 💡 只有在 1/7 到 6/30 的歷史期間內，才進行這 5 筆異常的精密限制；其餘新月份出勤正常呈現！
-  //    if (issueDate >= '2026-01-07' && issueDate <= '2026-06-30') {
+  //    if (issueDate >= `2026-01-07` && issueDate <= `2026-06-30`) {
    //     if (!allowedDates.includes(issueDate)) {
   //        issues.splice(i, 1);
   //      }
@@ -4423,11 +4423,11 @@ function renderYearlyIssues() {
   // 💡 V72 全域動態保護安全閥：已升級透過 getEarliestCheckDate() 動態與歷史校正日 100% 自動對齊過濾
 
   if (issues.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">計算區間內無出勤異常！</div></div>';
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">計算區間內無出勤異常！</div></div>`;
     return;
   }
 
-  let html = '
+  let html = `
     <div class="calendar-table-container">
       <table class="calendar-table">
         <thead>
@@ -4439,26 +4439,26 @@ function renderYearlyIssues() {
           </tr>
         </thead>
         <tbody>
-  ';
+  `;
 
   issues.forEach(item => {
-    const weekdayStr = ['日', '一', '二', '三', '四', '五', '六'][new Date(item.date).getDay()];
-    const dateDisplay = '${item.date.slice(5)} (${weekdayStr})';
-    html += '
+    const weekdayStr = [`日`, `一`, `二`, `三`, `四`, `五`, `六`][new Date(item.date).getDay()];
+    const dateDisplay = `${item.date.slice(5)} (${weekdayStr})`;
+    html += `
       <tr>
         <td style="font-weight:bold; color:var(--text-secondary);">${dateDisplay}</td>
         <td>${item.inHTML}</td>
         <td>${item.outHTML}</td>
-        <td><span class="badge ${item.reason.includes('漏卡') ? 'badge-red' : 'badge-orange'}">${item.reason}</span></td>
+        <td><span class="badge ${item.reason.includes(`漏卡`) ? `badge-red` : `badge-orange`}">${item.reason}</span></td>
       </tr>
-    ';
+    `;
   });
 
-  html += '
+  html += `
         </tbody>
       </table>
     </div>
-  ';
+  `;
   el.innerHTML = html;
 }
 
@@ -4488,24 +4488,24 @@ function calcAttendance() {
 
   // 1. 本月加班時數 (主管同意的)
   let otHours = 0;
-  const approvedOts = myRecords.filter(r => r.type === '加班' && r.status === '同意');
+  const approvedOts = myRecords.filter(r => r.type === `加班` && r.status === `同意`);
   approvedOts.forEach(r => {
     if (r.hours) otHours += parseFloat(r.hours);
     else if (r.startTime && r.endTime) {
-      const sh = parseInt(r.startTime.split(':')[0], 10);
-      const sm = parseInt(r.startTime.split(':')[1] || 0, 10);
-      const eh = parseInt(r.endTime.split(':')[0], 10);
-      const em = parseInt(r.endTime.split(':')[1] || 0, 10);
+      const sh = parseInt(r.startTime.split(`:`)[0], 10);
+      const sm = parseInt(r.startTime.split(`:`)[1] || 0, 10);
+      const eh = parseInt(r.endTime.split(`:`)[0], 10);
+      const em = parseInt(r.endTime.split(`:`)[1] || 0, 10);
       otHours += Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60);
     }
   });
 
   // 2. 本月補打卡次數 (主管同意或待審)
-  const suppCount = myRecords.filter(r => r.type === '補打卡' && (r.status === '同意' || r.status === '待審')).length;
+  const suppCount = myRecords.filter(r => r.type === `補打卡` && (r.status === `同意` || r.status === `待審`)).length;
 
   // 3. 本月請假總時數 (主管同意的)
   let leaveHours = 0;
-  const approvedLeaves = myRecords.filter(r => r.type === '請假' && r.status === '同意');
+  const approvedLeaves = myRecords.filter(r => r.type === `請假` && r.status === `同意`);
   approvedLeaves.forEach(r => {
     leaveHours += calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
   });
@@ -4513,29 +4513,29 @@ function calcAttendance() {
   // 4. 統計本月每日打卡狀態與未打卡 (💡 使用智慧標準化日期對齊，徹底消除補漏打卡統計天數膨脹 Bug)
   const dailyPunches = {};
   myRecords.forEach(r => {
-    if (r.type === '上班' || r.type === '下班') {
+    if (r.type === `上班` || r.type === `下班`) {
       const normD = normalizeDate(r.date);
       if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
-      if (r.type === '上班') {
+      if (r.type === `上班`) {
         if (!dailyPunches[normD].in || r.time < dailyPunches[normD].in) dailyPunches[normD].in = r.time;
-      } else if (r.type === '下班') {
+      } else if (r.type === `下班`) {
         if (!dailyPunches[normD].out || r.time > dailyPunches[normD].out) dailyPunches[normD].out = r.time;
       }
     }
   });
 
-  myRecords.filter(r => r.type === '補打卡' && r.status === '同意').forEach(r => {
+  myRecords.filter(r => r.type === `補打卡` && r.status === `同意`).forEach(r => {
     const normD = normalizeDate(r.date);
     if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
-    if (r.subType === '上班') dailyPunches[normD].in = r.time;
-    if (r.subType === '下班') dailyPunches[normD].out = r.time;
+    if (r.subType === `上班`) dailyPunches[normD].in = r.time;
+    if (r.subType === `下班`) dailyPunches[normD].out = r.time;
   });
 
   let missedCount = 0;
   let lateCount = 0;
   let earlyCount = 0;
 
-  if (currentUser.empType !== '兼任') {
+  if (currentUser.empType !== `兼任`) {
     for (let d = 1; d <= endDayCheck; d++) {
     const dateObj = new Date(thisYear, thisMonth - 1, d);
     // 💡 V62: 若日期在入職日期或校正起始日之前，不計算出勤異常
@@ -4546,9 +4546,9 @@ function calcAttendance() {
       if (curD < earliestD) continue;
     }
     const dayOfWeek = dateObj.getDay();
-    const dateStr = '${thisYear}/${thisMonth}/${d}'; // 💡 使用無補零之標準 M/D 格式對齊
+    const dateStr = `${thisYear}/${thisMonth}/${d}`; // 💡 使用無補零之標準 M/D 格式對齊
     
-    // We can check if it's weekend
+    // We can check if it`s weekend
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     
     if (!isWeekend) {
@@ -4556,7 +4556,7 @@ function calcAttendance() {
       
       // 1. Gather all approved leaves covering dateObj for this employee
       const dayLeaves = myRecords.filter(r => {
-        if (r.type !== '請假' || r.status !== '同意') return false;
+        if (r.type !== `請假` || r.status !== `同意`) return false;
         const startD = safeNewDate(r.date);
         const endD = safeNewDate(r.endDate || r.date);
         return dateObj >= startD && dateObj <= endD;
@@ -4571,14 +4571,14 @@ function calcAttendance() {
         const isEnd = dateObj.getFullYear() === endD.getFullYear() && dateObj.getMonth() === endD.getMonth() && dateObj.getDate() === endD.getDate();
         
         if (isStart && isEnd) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else if (isStart) {
-          leaveStartMin = timeToMin(r.startTime || '09:00');
+          leaveStartMin = timeToMin(r.startTime || `09:00`);
           leaveEndMin = 1080;
         } else if (isEnd) {
           leaveStartMin = 540;
-          leaveEndMin = timeToMin(r.endTime || '18:00');
+          leaveEndMin = timeToMin(r.endTime || `18:00`);
         } else {
           leaveStartMin = 540;
           leaveEndMin = 1080;
@@ -4626,13 +4626,13 @@ function calcAttendance() {
   }
 
   // Update profile cards
-  const checkinDays = new Set(myRecords.filter(r => r.type === '上班').map(r => r.date)).size;
-  const leaveCount = myRecords.filter(r => r.type === '請假').length;
+  const checkinDays = new Set(myRecords.filter(r => r.type === `上班`).map(r => r.date)).size;
+  const leaveCount = myRecords.filter(r => r.type === `請假`).length;
 
-  const attTotalEl = document.getElementById('attTotal');
-  const attMissedEl = document.getElementById('attMissed');
-  const attLateEl = document.getElementById('attLate');
-  const attLeaveEl = document.getElementById('attLeave');
+  const attTotalEl = document.getElementById(`attTotal`);
+  const attMissedEl = document.getElementById(`attMissed`);
+  const attLateEl = document.getElementById(`attLate`);
+  const attLeaveEl = document.getElementById(`attLeave`);
 
   if (attTotalEl) attTotalEl.textContent = checkinDays;
   if (attMissedEl) attMissedEl.textContent = missedCount;
@@ -4640,24 +4640,24 @@ function calcAttendance() {
   if (attLeaveEl) attLeaveEl.textContent = leaveCount;
 
   // Update month summary elements
-  const mOtEl = document.getElementById('m-ot');
-  const mMissEl = document.getElementById('m-miss');
-  const mSuppEl = document.getElementById('m-supp');
-  const mLateEl = document.getElementById('m-late');
-  const mEarlyEl = document.getElementById('m-early');
-  const mLeaveEl = document.getElementById('m-leave');
+  const mOtEl = document.getElementById(`m-ot`);
+  const mMissEl = document.getElementById(`m-miss`);
+  const mSuppEl = document.getElementById(`m-supp`);
+  const mLateEl = document.getElementById(`m-late`);
+  const mEarlyEl = document.getElementById(`m-early`);
+  const mLeaveEl = document.getElementById(`m-leave`);
 
-  if (mOtEl) mOtEl.textContent = otHours.toFixed(1) + ' h';
-  if (mMissEl) mMissEl.textContent = missedCount + ' 次';
-  if (mSuppEl) mSuppEl.textContent = suppCount + ' 次';
-  if (mLateEl) mLateEl.textContent = lateCount + ' 次';
-  if (mEarlyEl) mEarlyEl.textContent = earlyCount + ' 次';
-  if (mLeaveEl) mLeaveEl.textContent = leaveHours.toFixed(1) + ' h';
+  if (mOtEl) mOtEl.textContent = otHours.toFixed(1) + ` h`;
+  if (mMissEl) mMissEl.textContent = missedCount + ` 次`;
+  if (mSuppEl) mSuppEl.textContent = suppCount + ` 次`;
+  if (mLateEl) mLateEl.textContent = lateCount + ` 次`;
+  if (mEarlyEl) mEarlyEl.textContent = earlyCount + ` 次`;
+  if (mLeaveEl) mLeaveEl.textContent = leaveHours.toFixed(1) + ` h`;
 
   // Update yearly summary elements
-  const yOtEl = document.getElementById('y-ot');
-  const yMissEl = document.getElementById('y-miss');
-  const yLateEarlyEl = document.getElementById('y-lateearly');
+  const yOtEl = document.getElementById(`y-ot`);
+  const yMissEl = document.getElementById(`y-miss`);
+  const yLateEarlyEl = document.getElementById(`y-lateearly`);
 
   // 💡 V37-v44: 直接讀取由每月出缺勤統計加總得出的年度已結算指標 (到職月~前一個月)
   let yOtHours = 0;
@@ -4673,54 +4673,54 @@ function calcAttendance() {
   }
   if (currentUser) {
     if (currentUser.settledAccumulated) {
-      if (yOtEl) yOtEl.textContent = yOtHours.toFixed(1) + ' h';
-      if (yMissEl) yMissEl.textContent = yMissedCount + ' 次';
-      if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ' 次';
+      if (yOtEl) yOtEl.textContent = yOtHours.toFixed(1) + ` h`;
+      if (yMissEl) yMissEl.textContent = yMissedCount + ` 次`;
+      if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ` 次`;
     } else {
-      if (yOtEl) yOtEl.textContent = '登入中…';
-      if (yMissEl) yMissEl.textContent = '登入中…';
-      if (yLateEarlyEl) yLateEarlyEl.textContent = '登入中…';
+      if (yOtEl) yOtEl.textContent = `登入中…`;
+      if (yMissEl) yMissEl.textContent = `登入中…`;
+      if (yLateEarlyEl) yLateEarlyEl.textContent = `登入中…`;
     }
   }
-  if (typeof renderYearlyIssues === 'function') {
+  if (typeof renderYearlyIssues === `function`) {
     renderYearlyIssues();
   }
 }
 
 function togglePwChange() {
-const area = document.getElementById('pwChangeArea');
-area.classList.toggle('open');
-if (area.classList.contains('open')) {
-document.getElementById('pwOld').focus();
+const area = document.getElementById(`pwChangeArea`);
+area.classList.toggle(`open`);
+if (area.classList.contains(`open`)) {
+document.getElementById(`pwOld`).focus();
 } else {
-['pwOld','pwNew','pwConfirm'].forEach(id => {
-document.getElementById(id).value = '';
+[`pwOld`,`pwNew`,`pwConfirm`].forEach(id => {
+document.getElementById(id).value = ``;
 });
 }
 }
 
 async function changePassword() {
-const oldPw = document.getElementById('pwOld').value;
-const newPw = document.getElementById('pwNew').value;
-const confirm = document.getElementById('pwConfirm').value;
-if (!oldPw || !newPw || !confirm) { showToast('⚠️ 請填寫所有密碼欄位'); return; }
-if (newPw !== confirm) { showToast('⚠️ 新密碼與確認密碼不一致'); return; }
-if (newPw.length < 4) { showToast('⚠️ 新密碼至少需要 4 個字元'); return; }
+const oldPw = document.getElementById(`pwOld`).value;
+const newPw = document.getElementById(`pwNew`).value;
+const confirm = document.getElementById(`pwConfirm`).value;
+if (!oldPw || !newPw || !confirm) { showToast(`⚠️ 請填寫所有密碼欄位`); return; }
+if (newPw !== confirm) { showToast(`⚠️ 新密碼與確認密碼不一致`); return; }
+if (newPw.length < 4) { showToast(`⚠️ 新密碼至少需要 4 個字元`); return; }
 try {
 const res = await callGAS({
-action: 'changePassword',
+action: `changePassword`,
 empId: currentUser.empId,
 oldPassword: oldPw,
 newPassword: newPw
 });
-if (res.status === 'ok') {
-showToast('✅ 密碼已成功修改');
+if (res.status === `ok`) {
+showToast(`✅ 密碼已成功修改`);
 togglePwChange();
 } else {
-showToast('⚠️ ' + (res.message || '舊密碼不正確'));
+showToast(`⚠️ ` + (res.message || `舊密碼不正確`));
 }
 } catch (e) {
-showToast('⚠️ 連線失敗，請確認網路後再試');
+showToast(`⚠️ 連線失敗，請確認網路後再試`);
 }
 }
 </script>
