@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統7</title>
+<title>TJCPM 員工系統8</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v87.js')
+    navigator.serviceWorker.register('sw-v89.js')
       .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -2519,7 +2519,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
-            <td>${remarksHTML}</td>  <!-- 新增備註列 0708-->
+            <td style="font-size:12px; line-height:1.5;">${remarksHTML}</td>
             <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
         `;
@@ -2838,7 +2838,7 @@ function renderCalendarTable() {
     if (sortedKeys.length === 0) {
       html += `
         <tr>
-          <td colspan="3" style="text-align:center; color:var(--text-secondary); padding:20px;">
+          <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">
             尚無年度打卡紀錄
           </td>
         </tr>
