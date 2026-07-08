@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -549,6 +549,7 @@ box-shadow:var(--shadow-md);
 .badge-purple { background:var(--accent-purple-pale); color:var(--accent-purple); }
 .badge-blue { background:var(--blue-pale); color:var(--blue-light); }
 .badge-gray { background:#1f2937; color:#9ca3af; }
+.badge-withdrawn { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
 
 /* ── Stats ── */
 .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
@@ -1534,7 +1535,6 @@ function getYearRangeString(joinDateStr, quota) {
         // 並顯示待生效提示
         noteText = `⏳ 校正將於 ${corrStart.getFullYear()}.${String(corrStart.getMonth() + 1)}.${String(corrStart.getDate())} 生效（本月尚未結算）`;
       }
-      // 💡 Case 3：校正日期超過年度範圍或之前，忽略
     }
   }
   const sy = displayedStart.getFullYear();
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v89.js')
+    navigator.serviceWorker.register('sw-v87.js')
       .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -2519,6 +2519,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
             <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
             <td>${checkinHTML}</td>
             <td>${checkoutHTML}</td>
+            <td>${remarksHTML}</td>  <!-- 新增備註列 0708-->
             <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
           </tr>
         `;
@@ -2762,6 +2763,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         <td style="color:${isWeekend?'var(--accent-orange)':'var(--text-primary)'}">${formattedDate}</td>
         <td>${checkinHTML}</td>
         <td>${checkoutHTML}</td>
+        <td>${remarksHTML}</td>  <!-- 新增備註列 --0708>
         <td style="font-size:12px; line-height:1.5;">${col4HTML}</td>
       </tr>
     `;
@@ -2827,6 +2829,7 @@ function renderCalendarTable() {
               <th>📅 出勤日期</th>
               <th>🟢 上班簽到</th>
               <th>🏁 下班簽退</th>
+              <th>📝 備註</th>
             </tr>
           </thead>
           <tbody>
@@ -2919,6 +2922,7 @@ function renderCalendarTable() {
             <th>📅 日期</th>
             <th>🟢 上班簽到</th>
             <th>🏁 下班簽退</th>
+            <th>📝 備註</th>
           </tr>
         </thead>
         <tbody>
@@ -3197,7 +3201,22 @@ function formatDateTimeRange(r) {
     return `${dateStr} ${r.time || ''}`;
   }
 }
-
+// 💡 V89: 構建備註欄，顯示該日期的所有請假詳情（時間段+假別）0708
+let remarksHTML = '';
+if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length > 0) {
+  const dayLeaveDetails = mineLeave.filter(r => {
+    // 過濾該日期的請假記錄
+  });
+  
+  if (dayLeaveDetails.length > 0) {
+    const remarkParts = dayLeaveDetails.map(r => {
+      // 計算每筆請假的開始和結束時間
+      // 格式：startTime-endTime [假別]
+    }).join(' / ');
+    
+    remarksHTML = `<span style="color:var(--green-main);font-size:12px;font-weight:600;">${remarkParts}</span>`;
+  }
+}
 function recordHTML(r, showName = false, showApprove = false) {
 let dotClass = 'dot-green', badge = '';
 const subTypeLabel = r.subType === '加班補休' ? '補休' : (r.subType || '');
@@ -3252,24 +3271,56 @@ const approveRow = showApprove && r.status === '待審' ? `
 </div>
 </div>` : '';
 
-const retractButton = (!showApprove && r.status === '待審') ? `
-<div style="text-align: right; margin-top: 8px;">
+//const retractButton = (!showApprove && r.status === '待審') ? `
+// 💡 替換原本的 const retractButton 邏輯
+let actionOrStatusHtml = '';
+
+if (!showApprove && r.status === '待審') {
+  // 待審中顯示「撤回」按鈕
+  actionOrStatusHtml = `<button class="retract-btn" style="margin-left:auto;" onclick="retractRecord('${r.id}','${r.type}','${r.clientId}')">撤回</button>`;
+} else {
+  // 已結束的單據顯示對應顏色的標籤，並統一放在右側
+  let badgeClass = 'badge-gray';
+  if (r.status === '同意') badgeClass = 'badge-green';
+  else if (r.status === '拒絕') badgeClass = 'badge-red';
+  else if (r.status === '已撤回') badgeClass = 'badge-withdrawn'; // 套用剛才新增的 CSS
+  
+  actionOrStatusHtml = `<span class="badge ${badgeClass}" style="margin-left:auto;">${r.status}</span>`;
+}
+  <div style="text-align: right; margin-top: 8px;">
   <button class="approve-btn reject" onclick="retractApplication(${r.id})" style="padding: 4px 10px; font-size: 12px; border-radius: 4px; border: 1.5px solid #5c2a2e;">🛑 撤回申請</button>
 </div>
 ` : '';
 
-return `<div class="record-item">
-<div class="record-row">
-<div class="record-dot ${dotClass}"></div>
-<div class="record-info">
-<div class="record-type">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
-<div class="record-meta">${meta}</div>
-</div>
-<div class="record-time">${r.time || ''}</div>
-</div>
-${approveRow}
-${retractButton}
+eturn `<div class="record-item">
+  <div class="record-row" style="display:flex; align-items:center; width:100%; gap:12px;">
+    <!-- 左側資訊區 -->
+    <div class="record-info" style="flex:1;">
+      <div class="record-type" style="font-weight:700;">${r.type}</div>
+      <div class="record-meta">${r.date} ${r.time || ''}</div>
+    </div>
+    
+    <!-- 右側：這裡是整合後的位置，會根據狀態噴出「按鈕」或是「標籤」 -->
+    <div class="record-status-area">
+      ${actionOrStatusHtml}
+    </div>
+  </div>
+  
+  <!-- 如果有簽核意見，顯示在下方 -->
+  ${r.approveComment ? `<div class="record-meta" style="color:var(--accent-orange); margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:4px;">💬 意見：${r.approveComment}</div>` : ''}
 </div>`;
+//return `<div class="record-item">
+//<div class="record-row">
+//<div class="record-dot ${dotClass}"></div>
+//<div class="record-info">
+//<div class="record-type">${badge}${statusBadge}${who ? ' ' + who : ''}</div>
+//<div class="record-meta">${meta}</div>
+//</div>
+//<div class="record-time">${r.time || ''}</div>
+//</div>
+//${approveRow}
+//${retractButton}
+//</div>`;
 }
 
 // ── Admin ───────────────────────────────────────────────────────
@@ -4138,7 +4189,7 @@ function renderYearlyIssues() {
     compareEnd.setHours(23, 59, 59, 999);
     
     if (compareD > compareEnd) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">年度內無出勤異常，表現完美！</div></div>';
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">資料區間無出勤異常，！</div></div>';
       return;
     }
   }
