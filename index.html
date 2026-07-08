@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統2</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -170,19 +170,24 @@ display:none;
 .header-left img { height:52px; transition: height 0.2s; } /* 置中加大 1.5 倍 */
 .header-right { display:flex; align-items:center; gap:10px; }
 .header-clock { font-size:var(--fs-label); color:var(--blue-light); font-variant-numeric:tabular-nums; font-weight:700; }
-.header-user { font-size:var(--fs-label); color:#00BFFF; font-weight:500; }
-.logout-btn {
-font-size:var(--fs-label);
-color:var(--accent-red);
-cursor:pointer;
-background:none;
-border:2px (--blue-light);
-font-family:inherit;
-padding:6px 12px;
-border-radius:6px;
-transition:background 0.15s;
+.header-user { font-size:var(--fs-label); color:#00BFFF; font-weight:700; }
+background: rgba(0,191,255,0.12);  /* 淡淡底色，讓文字有個「區塊」感 */
+  padding: 5px 10px;
+  border-radius: 6px;
 }
-.logout-btn:hover { background:var(--accent-red-pale); }
+.logout-btn {
+  font-size: var(--fs-label);
+  color: var(--accent-red);
+  cursor: pointer;
+  background: none;
+  border: 2px solid var(--accent-red);   /* ✅ 修正：補上 solid + var()，且改用跟文字同色系(紅色)更醒目 */
+  font-family: inherit;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+.logout-btn:hover { background: var(--accent-red-pale); }
 .notif-bell { font-size:21px; cursor:pointer; position:relative; }
 .notif-badge {
 position:absolute;
@@ -800,7 +805,7 @@ display: inline-block;
 <div class="notif-bell" id="notifBell" style="display:none !important">
 🔔<span class="notif-badge" id="notifCount" style="display:none !important">!</span>
 </div>
-<span class="header-user" id="headerUser" style="display:none !important"></span>
+<span class="header-user" id="headerUser" ></span>
 <span class="header-clock" id="headerClock" style="display:none !important">--:--:--</span>
 <button class="logout-btn" onclick="doLogout()">登出</button>
 </div>
@@ -1578,8 +1583,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v88.js')
-      .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
+    navigator.serviceWorker.register('sw-v89.js')
+      .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
 }
