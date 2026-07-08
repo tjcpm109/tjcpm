@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4212,7 +4212,8 @@ async function syncProfileAndAccumulatedLeaves() {
     return { ok: true, changed: false };
   } catch (e) {
     console.error(`拉取雲端考勤餘額與累計失敗:`, e);
-    return { ok: false, changed: false };
+    showToast('⚠️ 雲端同步逾時，畫面可能顯示過期資料，請稍後重新整理');
+    //return { ok: false, changed: false };
   }
 }
 
