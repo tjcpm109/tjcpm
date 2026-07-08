@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統3</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1492,42 +1492,51 @@ function getYearRangeString(joinDateStr, quota) {
       break;
     }
   }
+
+
+
+
+
+
+
   
   // 檢查是否有落在此週年區間內的歷史校正
-  let  = start;
-  let noteText = '';
-  if (quota && quota.correction && quota.correction.startDate) {
-    const corrStart = safeNewDate(quota.correction.startDate);
-    if (corrStart && !isNaN(corrStart.getTime()) && corrStart >= start && corrStart <= end) {
-      displayedStart = corrStart;
-      if (quota.correction.note) {
-        const parts = quota.correction.note.split(/[,，]/);
-        noteText = parts[parts.length - 1].trim(); // 取最末尾段說明字，例：1/7 前無打卡紀錄
-      }
-    }
-  }
-  
-  // 顯示截止日：自動限制在「上月底」(月底才會一次結算)，並受週年結束日(end)限制
+  let displayedStart = start;
   let displayedEnd = new Date(prevMonthEnd);
+  let noteText = '';
+  
+  // 限制 displayedEnd 不超過週年結束日
   if (displayedEnd > end) {
     displayedEnd = end;
   }
-    displayedStart = start;
-let noteText = '';
-if (quota && quota.correction && quota.correction.startDate) {
-  const corrStart = safeNewDate(quota.correction.startDate);
-  if (corrStart && !isNaN(corrStart.getTime()) && corrStart >= start && corrStart <= displayedEnd) {
-    // 校正生效日已落在「已結算」範圍內，正常套用
-    displayedStart = corrStart;
-    if (quota.correction.note) {
-      const parts = quota.correction.note.split(/[,，]/);
-      noteText = parts[parts.length - 1].trim();
+  
+  // 檢查校正日期
+  if (quota && quota.correction && quota.correction.startDate) {
+    const corrStart = safeNewDate(quota.correction.startDate);
+    if (corrStart && !isNaN(corrStart.getTime())) {
+      // 💡 Case 1：校正日期在已結算範圍內（即 <= 上月底）
+      // 這表示補休/加班在結算時已計入，校正日期前的數據已結算
+      if (corrStart <= displayedEnd) {
+        // 校正已生效，改變顯示起始日
+        // 但要確保起始日不早於週年區間開始
+        if (corrStart >= start) {
+          displayedStart = corrStart;
+        }
+        if (quota.correction.note) {
+          const parts = quota.correction.note.split(/[,，]/);
+          noteText = parts[parts.length - 1].trim(); // 取最末尾段說明字，例：1/7 前無打卡紀錄
+        }
+      } 
+      // 💡 Case 2：校正日期在本月（尚未結算）
+      // 這表示校正還沒有生效，6/30的補休仍應計入6月份
+      else if (corrStart > displayedEnd && corrStart <= end) {
+        // 保持 displayedStart = start，不改變起始日
+        // 並顯示待生效提示
+        noteText = `⏳ 校正將於 ${corrStart.getFullYear()}.${String(corrStart.getMonth() + 1)}.${String(corrStart.getDate())} 生效（本月尚未結算）`;
+      }
+      // 💡 Case 3：校正日期超過年度範圍或之前，忽略
     }
-  } else if (corrStart && !isNaN(corrStart.getTime()) && corrStart > displayedEnd) {
-    // 校正生效日在本月(尚未結算)，暫不套用起始日覆蓋，避免區間顯示錯亂
-    noteText = `校正將於 ${corrStart.getFullYear()}.${corrStart.getMonth() + 1}.${corrStart.getDate()} 生效（本月尚未結算）`;
   }
-}
   const sy = displayedStart.getFullYear();
   const sm = String(displayedStart.getMonth() + 1); // 智慧去補零：使用原字
   const sd = String(displayedStart.getDate());      // 智慧去補零：使用原字
@@ -1583,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v88.js')
+    navigator.serviceWorker.register('sw-v89.js')
       .then(reg => console.log('SW-v89 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
