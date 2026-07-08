@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統2</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -70,7 +70,7 @@
 body {
 background:var(--bg-page);
 color:var(--page-text-primary);
-font-family:-apple-system,`PingFang TC`,`Microsoft JhengHei`,sans-serif;
+font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
 min-height:100vh;
 font-size:var(--fs-body);
 }
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v89.js`)
+    navigator.serviceWorker.register(`sw-v88.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -4548,7 +4548,7 @@ function calcAttendance() {
     const dayOfWeek = dateObj.getDay();
     const dateStr = `${thisYear}/${thisMonth}/${d}`; // 💡 使用無補零之標準 M/D 格式對齊
     
-    // We can check if it`s weekend
+    // We can check if it's weekend
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     
     if (!isWeekend) {
@@ -4693,7 +4693,7 @@ area.classList.toggle(`open`);
 if (area.classList.contains(`open`)) {
 document.getElementById(`pwOld`).focus();
 } else {
-[`pwOld`,`pwNew`,`pwConfirm`].forEach(id => {
+[`pwOld`, `pwNew`, `pwConfirm`].forEach(id => {
 document.getElementById(id).value = ``;
 });
 }
