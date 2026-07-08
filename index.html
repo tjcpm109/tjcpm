@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統7</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v87.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -3307,8 +3307,9 @@ function recordHTML(r, showName = false, showApprove = false) {
 
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
 
-  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 ===== const approveRow = (showApprove && r.status === `待審`) ? `
+  // ===== 主管端：待審才顯示核准 / 拒絕按鈕 ===== 
   
+  const approveRow = (showApprove && r.status === `待審`) ? `
     <div class="approve-row" id="approveBtns-${r.id}">
       <button class="approve-btn ok" onclick="toggleApproveComment(${r.id}, `同意`)">✓ 核准</button>
       <button class="approve-btn reject" onclick="toggleApproveComment(${r.id}, `拒絕`)">✗ 拒絕</button>
