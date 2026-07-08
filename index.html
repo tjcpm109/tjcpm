@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統2</title>
+<title>TJCPM 員工系統8</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3287,11 +3287,11 @@ function recordHTML(r, showName = false, showApprove = false) {
   if (r.status === `待審`) {
     statusBadge = `<span class="badge badge-gray" style="margin-left:4px;">待審</span>`;
   } else if (r.status === `同意`) {
-    statusBadge = `<span class="badge badge-green" style="margin-left:4px;">✓ 同意</span>`;
+    statusBadge = `<span class="badge badge-green" style="margin-left:4px;display:none;">✓ 同意</span>`;
   } else if (r.status === `拒絕`) {
-    statusBadge = `<span class="badge badge-red" style="margin-left:4px;">✗ 拒絕</span>`;
+    statusBadge = `<span class="badge badge-red" style="margin-left:4px;display:none;">✗ 拒絕</span>`;
   } else if (r.status === `已撤回`) {
-    statusBadge = `<span class="badge badge-gray" style="margin-left:4px;">🛑 已撤回</span>`;
+    statusBadge = `<span class="badge badge-gray" style="margin-left:4px;display:none;">🛑 已撤回</span>`;
   }
 
   // ===== 員工端隱私精簡：GPS 不顯示經緯度，只顯示是否有定位 =====
