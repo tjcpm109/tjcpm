@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -920,8 +920,17 @@ display: inline-block;
           </tbody>
         </table>
       </div>
-      <p class="section-title" style="margin-top: 24px;">⚠️ 年度出勤異常明細 (漏打卡、遲到、早退)</p>
-      <div id="yearIssueList"></div>
+<p class="section-title" style="margin-top: 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+  <span>⚠️ 年度出勤異常明細 (漏打卡、遲到、早退)</span>
+  <span style="font-weight:normal; font-size:12px; display:flex; align-items:center; gap:6px;">
+    <span id="yearIssueLastSync" style="color:var(--text-secondary);"></span>
+    <button id="yearIssueRefreshBtn" onclick="manualRefreshYearlyIssues()"
+      style="cursor:pointer; border:1px solid var(--card-border); background:transparent; border-radius:6px; padding:4px 10px; font-size:12px; color:var(--text-primary);">
+      🔄 更新
+    </button>
+  </span>
+</p>
+<div id="yearIssueList"></div>
     </div>
 
     <!-- 打卡明細 (純打卡日曆) -->
@@ -1557,7 +1566,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw-v87.js')
+    navigator.serviceWorker.register('sw-v89.js')
       .then(reg => console.log('SW-v74 註冊成功:', reg.scope))
       .catch(err => console.error('SW-v30 註冊失敗:', err));
   });
@@ -1739,6 +1748,11 @@ try {
 const data = await callGAS({ action: 'login', empId, password });
 if (data.status === 'ok') {
 currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || '專任', defaultShift: data.defaultShift || '09:00-18:00', quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false };
+// 💡 用本地快取的年度已結算數據回填，避免每次登入都要等同步才有畫面
+try {
+  const cachedSettled = localStorage.getItem('tjcpm_settledAccumulated');
+  if (cachedSettled) currentUser.settledAccumulated = JSON.parse(cachedSettled);
+} catch (e) {}
 sessionStorage.setItem('tjcpm_user', JSON.stringify(currentUser));
 showApp();
 } else {
@@ -3823,11 +3837,55 @@ if (emailEl) {
   emailEl.textContent = currentUser.email || '—';
 }
 
-calcAttendance();
-syncProfileAndAccumulatedLeaves();
-  updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
+calcAttendance(); // 先用本地快取立即顯示，避免畫面空白
+updateYearIssueLastSyncLabel();
+if (shouldAutoSyncYearlyIssues()) {
+  syncProfileAndAccumulatedLeaves().then(result => {
+    if (result && result.ok) markYearlyIssuesSynced();
+  });
+} 
+updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
+}
+// 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
+function getMonthKey(d) {
+  const now = d || new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function shouldAutoSyncYearlyIssues() {
+  const lastMonth = localStorage.getItem('tjcpm_yearIssueLastSyncMonth');
+  return lastMonth !== getMonthKey();
+}
+
+function markYearlyIssuesSynced() {
+  const now = new Date();
+  localStorage.setItem('tjcpm_yearIssueLastSyncMonth', getMonthKey(now));
+  localStorage.setItem('tjcpm_yearIssueLastSyncTime', now.toISOString());
+  updateYearIssueLastSyncLabel();
+}
+
+function updateYearIssueLastSyncLabel() {
+  const el = document.getElementById('yearIssueLastSync');
+  if (!el) return;
+  const t = localStorage.getItem('tjcpm_yearIssueLastSyncTime');
+  if (!t) { el.textContent = '尚未同步'; return; }
+  const d = new Date(t);
+  el.textContent = `上次更新: ${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// 手動按下 🔄 按鈕：強制重新同步，不管本月是否已同步過
+window.manualRefreshYearlyIssues = async function() {
+  const btn = document.getElementById('yearIssueRefreshBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 更新中…'; }
+  const result = await syncProfileAndAccumulatedLeaves();
+  if (result && result.ok) {
+    markYearlyIssuesSynced();
+    showToast(result.changed ? '✅ 已更新最新出勤異常資料' : 'ℹ️ 資料沒有變動，已是最新');
+  } else {
+    showToast('⚠️ 更新失敗，請確認網路連線');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 更新'; }
+};
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
 async function syncProfileAndAccumulatedLeaves() {
   try {
@@ -3849,7 +3907,7 @@ async function syncProfileAndAccumulatedLeaves() {
       
       if (!isRecordsChanged && !isQuotaChanged) {
         console.log('[V63 Dirty Check] 偵測到雲端資料與本機完全一致，自動免除重繪，大幅省電與降低耗能！');
-        return; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
+        return { ok: true, changed: false }; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
       }
 
       // 100% 覆蓋本機緩存紀錄，實現跨裝置即時同步
@@ -3900,6 +3958,7 @@ async function syncProfileAndAccumulatedLeaves() {
         }
         if (data.settledAccumulated) {
           currentUser.settledAccumulated = data.settledAccumulated;
+          localStorage.setItem('tjcpm_settledAccumulated', JSON.stringify(data.settledAccumulated));
         }
         if (data.hasOwnProperty('isActiveProxy')) {
           currentUser.isActiveProxy = data.isActiveProxy;
@@ -3926,11 +3985,14 @@ async function syncProfileAndAccumulatedLeaves() {
       document.getElementById('accumMarriage').textContent = `${marriageLeaveUsed}h`;
       document.getElementById('accumFuneral').textContent = `${funeralLeaveUsed}h`;
       
-      // 💡 V37-v31: 同步完最新 quota (含 correction) 之後，必須立刻重新執行出勤統計與頁面重繪！
+     // 💡 V37-v31: 同步完最新 quota (含 correction) 之後，必須立刻重新執行出勤統計與頁面重繪！
       calcAttendance();
+      return { ok: true, changed: true };
     }
+    return { ok: true, changed: false };
   } catch (e) {
     console.error('拉取雲端考勤餘額與累計失敗:', e);
+    return { ok: false, changed: false };
   }
 }
 
@@ -4476,11 +4538,16 @@ function calcAttendance() {
     // 遲到與早退合併統計為 yLateCount
     yLateCount = currentUser.settledAccumulated.yLateEarlyCount || 0;
   }
-
   if (currentUser) {
-    if (yOtEl) yOtEl.textContent = yOtHours.toFixed(1) + ' h';
-    if (yMissEl) yMissEl.textContent = yMissedCount + ' 次';
-    if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ' 次';
+    if (currentUser.settledAccumulated) {
+      if (yOtEl) yOtEl.textContent = yOtHours.toFixed(1) + ' h';
+      if (yMissEl) yMissEl.textContent = yMissedCount + ' 次';
+      if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ' 次';
+    } else {
+      if (yOtEl) yOtEl.textContent = '登入中…';
+      if (yMissEl) yMissEl.textContent = '登入中…';
+      if (yLateEarlyEl) yLateEarlyEl.textContent = '登入中…';
+    }
   }
   if (typeof renderYearlyIssues === 'function') {
     renderYearlyIssues();
