@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統10</title>
+<title>TJCPM 員工系統1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v89.js`)
+    navigator.serviceWorker.register(`sw-v88.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -3300,29 +3300,30 @@ function formatDateTimeRange(r) {
   }
 }
 // 💡 V89: 構建備註欄，顯示該日期的所有請假詳情（時間段+假別）0708
-let remarksHTML = ``;
-if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length > 0) {
-  const dayLeaveDetails = mineLeave.filter(r => {
-    const startD = safeNewDate(r.date);
-    const endD = safeNewDate(r.endDate || r.date);
-    return dateObj >= startD && dateObj <= endD;
-  });
+
+//if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length > 0) {
+//  const dayLeaveDetails = mineLeave.filter(r => {
+//    const startD = safeNewDate(r.date);
+//    const endD = safeNewDate(r.endDate || r.date);
+//    return dateObj >= startD && dateObj <= endD;
+//  });
   
-  if (dayLeaveDetails.length > 0) {
-      const remarkParts = dayLeaveDetails.map(r => {
-      const start = r.startTime || `09:00`;
-      const end = r.endTime || `18:00`;
-      const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || `請假`);
-      return `${start}-${end} [${leaveType}]`;
-    }).join(` / `);
+ // if (dayLeaveDetails.length > 0) {
+ //     const remarkParts = dayLeaveDetails.map(r => {
+ //     const start = r.startTime || `09:00`;
+ //     const end = r.endTime || `18:00`;
+ //     const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || `請假`);
+ //     return `${start}-${end} [${leaveType}]`;
+ //   }).join(` / `);
     
-    remarksHTML = `<span style="color:var(--green-main);font-size:12px;font-weight:600;">${remarkParts}</span>`;
-  }
-}
+ //   remarksHTML = `<span style="color:var(--green-main);font-size:12px;font-weight:600;">${remarkParts}</span>`;
+ // }
+//}
   
 function recordHTML(r, showName = false, showApprove = false) {
   let dotClass = `dot-green`;
   let badge = ``;
+  let remarksHTML = ``;  // ← 在這裡定義
   const subTypeLabel = r.subType === `加班補休` ? `補休` : (r.subType || ``);
 
   // ===== 類型 badge =====
@@ -3411,7 +3412,14 @@ function recordHTML(r, showName = false, showApprove = false) {
       </span>
     `;
   }
-
+// ===== 構建備註欄（顯示打卡備註或請假詳情） =====
+  if (r.type === `請假` && r.status === `同意`) {
+    // 如果是已核准的請假，顯示時間段
+    const start = r.startTime || `09:00`;
+    const end = r.endTime || `18:00`;
+    const hoursLabel = r.hours ? `${r.hours}h` : ``;
+    remarksHTML = `<span style="color:var(--green-main);font-size:12px;font-weight:600;">${r.subType} ${start}-${end}${hoursLabel ? ` (${hoursLabel})` : ``}</span>`;
+  }
   // ===== 主畫面 HTML =====
   return `
     <div class="record-item">
