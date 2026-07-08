@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統10</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v88.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -1866,7 +1866,7 @@ try {
 await fetch(GAS_URL, {
 method: `POST`,
 mode: `no-cors`,
-headers: { `Content-Type`: `application/json` },
+headers: { "Content-Type": "application/json" },
 body: JSON.stringify(record)
 });
 if (el) {
@@ -1999,7 +1999,7 @@ async function processOfflineQueue() {
       await fetch(GAS_URL, {
         method: `POST`,
         mode: `no-cors`,
-        headers: { `Content-Type`: `application/json` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(record)
       });
       console.log(`[Sync] id=${record.id} 補傳成功！`);
