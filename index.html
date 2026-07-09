@@ -4258,7 +4258,7 @@ function calculateLeaveHoursLocal(r, holidays) {
     em = parseInt(r.endTime.split(`:`)[1], 10);
   }
 
-  /*let totalHours = 0;
+  let totalHours = 0;
   let curr = safeNewDate(startD);
   let loops = 0;
   const hList = holidays || currentUser?.holidayStrings || [];
@@ -4306,30 +4306,9 @@ function calculateLeaveHoursLocal(r, holidays) {
     curr.setDate(curr.getDate() + 1);
   } 
   return parseFloat(totalHours.toFixed(1));
-}*/
-  // 💡 步驟 A：計算單日時數
-  let dailyMin = (eh * 60 + em) - (sh * 60 + sm);
-  if (sh <= 12 && eh >= 13) dailyMin -= 60;
-  const dailyHours = Math.max(0, dailyMin / 60);
-
-  // 💡 步驟 B：統計工作天數
-  let workDays = 0;
-  let curr = safeNewDate(r.date);
-  const endD = safeNewDate(r.endDate || r.date);
-  const hList = holidays || currentUser?.holidayStrings || [];
-
-  while (curr <= endD) {
-    const dateStr = formatLocalDateStr(curr);
-    const isHoliday = hList.includes(dateStr);
-    const dayOfWeek = curr.getDay();
-    if (!isHoliday && dayOfWeek !== 0 && dayOfWeek !== 6) {
-      workDays++;
-    }
-    curr.setDate(curr.getDate() + 1);
-  }
-
-  return parseFloat((dailyHours * workDays).toFixed(1));
 }
+
+ 
 
 function renderYearlyIssues() {
   const el = document.getElementById(`yearIssueList`);
