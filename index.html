@@ -3132,10 +3132,6 @@ const allRemarkParts = [...leaveParts, ...remarkParts];
 const remarksHTML = allRemarkParts.length > 0
   ? `<span style="font-size:12px;font-weight:600;line-height:1.6;">${allRemarkParts.join(`<br>`)}</span>`
   : `—`;
-    
-    remarksHTML = remarkParts.length > 0
-      ? `<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join(`<br>`)}</span>`
-      : `—`;
     const rowStyle = isToday ? `style="background:var(--card-bg-soft);font-weight:bold;"` : ``;
     const clickAttr = (punch.上班 === `—` || punch.下班 === `—`) && !isWeekend && !leaveLabel && !isToday && !isFuture && !isBeforeJoin
       ? `class="calendar-row-missed" title="點擊漏打卡一鍵補單"`
