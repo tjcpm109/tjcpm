@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v89.js`)
+    navigator.serviceWorker.register(`sw-v88.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -1781,6 +1781,7 @@ try {
 } catch (e) {}
 sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
 showApp();
+//syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
 } else {
 showLoginErr(data.message || `帳號或密碼錯誤，請再試一次`);
 }
@@ -3872,11 +3873,22 @@ t.classList.toggle(`active`, t.dataset.tab === tab);
 });
 document.querySelectorAll(`.page`).forEach(p => p.classList.remove(`active`));
 document.getElementById(`page-` + tab).classList.add(`active`);
-if (tab === `records`) renderAllList();
+if (tab === `records`){ renderAllList();
+  if (shouldSyncRecordsNow()) {
+    syncProfileAndAccumulatedLeaves().then(result => {
+      if (result && result.ok) {
+        markRecordsSynced();
+        if (result.changed) renderAllList(); // 有新資料才重繪，沒變動就不用重繪
+      }
+    });
+  }
+}
 if (tab === `admin`) loadAdminData();
 if (tab === `profile`) renderProfile();
 }
-
+  
+const RECORDS_SYNC_INTERVAL_MS = 5 * 60 * 1000
+  
 function openModal(type) {
 document.getElementById(`modal-` + type).classList.add(`open`);
 }
@@ -4082,7 +4094,15 @@ function shouldAutoSyncYearlyIssues() {
   const lastMonth = localStorage.getItem(`tjcpm_yearIssueLastSyncMonth`);
   return lastMonth !== getMonthKey();
 }
-
+  function shouldSyncRecordsNow() {
+  const lastSyncStr = localStorage.getItem(`tjcpm_recordsLastSyncTime`);
+  if (!lastSyncStr) return true; // 從沒同步過（例如新裝置第一次登入）→ 一定要同步
+  const lastSync = new Date(lastSyncStr).getTime();
+  return (Date.now() - lastSync) > RECORDS_SYNC_INTERVAL_MS;
+}
+function markRecordsSynced() {
+  localStorage.setItem(`tjcpm_recordsLastSyncTime`, new Date().toISOString());
+}
 function markYearlyIssuesSynced() {
   const now = new Date();
   localStorage.setItem(`tjcpm_yearIssueLastSyncMonth`, getMonthKey(now));
