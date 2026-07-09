@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統10</title>
+<title>TJCPM 員工系統11</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3115,7 +3115,24 @@ function renderCalendarTable() {
           : `<span class="badge badge-red">下班</span>`;
         return `${badge} 💬 ${String(p.remark).trim()}`;
       });
+// 💡 新增：當天的請假資訊（假別 + 時段），只放備註欄，不影響簽到/簽退欄
+const dayLeavesForRemark = mineLeave.filter(r => {
+  const startD = safeNewDate(r.date);
+  const endD = safeNewDate(r.endDate || r.date);
+  return dateObj >= startD && dateObj <= endD;
+});
+const leaveParts = dayLeavesForRemark.map(r => {
+  const st = r.startTime || `09:00`;
+  const et = r.endTime || `18:00`;
+  return `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || `請假`} ${st}-${et}</span>`;
+});
+// 請假資訊放前面、打卡備註放後面
+const allRemarkParts = [...leaveParts, ...remarkParts];
 
+const remarksHTML = allRemarkParts.length > 0
+  ? `<span style="font-size:12px;font-weight:600;line-height:1.6;">${allRemarkParts.join(`<br>`)}</span>`
+  : `—`;
+    
     const remarksHTML = remarkParts.length > 0
       ? `<span style="color:var(--green-main);font-size:12px;font-weight:600;line-height:1.6;">${remarkParts.join(`<br>`)}</span>`
       : `—`;
