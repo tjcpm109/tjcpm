@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統8</title>
+<title>TJCPM 員工系統10</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v88.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -2966,8 +2966,6 @@ function renderCalendarTable() {
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
-  // 🔍 加這行臨時調試
-console.log('專任打卡篩選結果:', minePunch.length, '筆');
 
   const mineLeave = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
@@ -4156,9 +4154,17 @@ async function syncProfileAndAccumulatedLeaves() {
         return { ok: true, changed: false }; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
       }
 
-      // 100% 覆蓋本機緩存紀錄，實現跨裝置即時同步
-      records = data.updates;
-      saveRecords();
+      // 💡 修正：不再整批覆蓋 records，改為「合併」——
+    // 只替換「本人」的請假/加班/補打卡等申請類紀錄，
+    // 保留其他同仁的資料，以及本人原始的上班/下班打卡紀錄
+    // (因為 getMyStatus 後端只回傳申請類紀錄，不含原始打卡)
+    const keepRecords = records.filter(r => {
+      const isMine = matchEmpId(r.empId, currentUser.empId);
+      const isRawPunch = r.type === `上班` || r.type === `下班`;
+      return !isMine || isRawPunch;
+    });
+    records = [...keepRecords, ...data.updates];
+    saveRecords();
 
       // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
       let annualLeaveUsed = 0;
