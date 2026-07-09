@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統7</title>
+<title>TJCPM 員工系統8</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1592,7 +1592,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──────────────────────────────────────────
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v88.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v30 註冊失敗:`, err));
   });
@@ -4051,11 +4051,17 @@ if (shouldAutoSyncYearlyIssues()) {
 } 
 updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
 }
-// 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
-function getMonthKey(d) {
+
+function getDayKey(d) {
+    const now = d || new Date();
+    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+}
+  // 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
+  function getMonthKey(d) {
   const now = d || new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, `0`)}`;
 }
+  
 function manualRefreshYearlyIssues() {
   const btn = document.getElementById('yearIssueRefreshBtn');
   if (btn) btn.disabled = true;
@@ -4576,7 +4582,7 @@ function calcAttendance() {
   });
 
   // 2. 本月補打卡次數 (主管同意或待審)
-  const suppCount = myRecords.filter(r => r.type === `補打卡` && (r.status === `同意` || r.status === `待審`)).length;
+  const suppCount = myRecords.filter(r => r.type === `補打卡` && (r.status === `同意` )).length;
 
   // 3. 本月請假總時數 (主管同意的)
   let leaveHours = 0;
