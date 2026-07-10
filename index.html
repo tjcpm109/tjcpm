@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統12</title>
+<title>TJCPM 員工系統0710</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1912,7 +1912,7 @@ function updateNotifBadge() {
 const unread = notifications.filter(n => !n.read).length;
 let hasPending = false;
 if (currentUser && (currentUser.role === `admin` || currentUser.role === `admin1` || currentUser.role === `admin2`)) {
-hasPending = records.some(r => r.status === `待審` && (r.type === `請假` || r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`));
+hasPending = records.some(r => r.status === (r.status === `待審`|| r.status ===`補件`|| r.status ===`待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`));
 }
 const badge = document.getElementById(`notifCount`);
 const showBadge = unread > 0 || hasPending;
@@ -2062,7 +2062,7 @@ showToast(`📝 請假申請已送出`);
 function calculateCompensationBalance() {
   // 取得本年度所有核准的加班時數
   const approvedOTs = records.filter(r => 
-    r.type === `加班` && r.status === `同意`
+    r.type === `加班` && isFinalApproved(r.status)
   );
   
   let totalOTHours = 0;
@@ -2074,7 +2074,7 @@ function calculateCompensationBalance() {
   
   // 取得本年度所有核准的補休時數
   const usedCompensation = records.filter(r =>
-    r.type === `請假` && r.subType === `加班補休` && r.status === `同意`
+    r.type === `請假` && r.subType === `加班補休` && isFinalApproved(r.status)
   );
   
   let totalUsedHours = 0;
@@ -2202,6 +2202,41 @@ function submitAdminAgent() {
     hideLoading();
     showToast(`⚠️ 連線失敗，請檢查網路`);
   });
+}
+
+  function toggleResubmitBox(id) {
+  const box = document.getElementById(`resubmitBox-${id}`);
+  if (box) box.style.display = box.style.display === `none` ? `block` : `none`;
+}
+
+async function confirmResubmit(id, clientId, type) {
+  const textEl = document.getElementById(`resubmitText-${id}`);
+  const text = textEl ? textEl.value.trim() : ``;
+  if (!text) {
+    showToast(`⚠️ 請填寫補充說明或證明文件連結`);
+    return;
+  }
+  try {
+    const res = await callGAS({
+      action: `resubmit`,
+      type: type,
+      clientId: clientId,
+      empId: currentUser.empId,
+      name: currentUser.name,
+      suppMark: text
+    });
+    if (res.status === `ok`) {
+      showToast(`✅ 補件已送出，等待主管第二次審核`);
+      const rec = records.find(r => r.id === id);
+      if (rec) rec.status = `待第二次審查`;
+      saveRecords();
+      renderAllList();
+    } else {
+      showToast(`⚠️ 補件送出失敗：` + (res.message || `請稍後再試`));
+    }
+  } catch (e) {
+    showToast(`🛑 補件送出失敗，請確認網路連線`);
+  }
 }
 async function retractRecord(recordId, type, clientId) {
   if (!confirm(`確認要撤回這筆 ${type} 記錄嗎？`)) return;
@@ -3386,9 +3421,10 @@ function recordHTML(r, showName = false, showApprove = false) {
 
   // ===== 主管端：待審才顯示核准 / 拒絕按鈕 ===== 
   
-  const approveRow = (showApprove && r.status === `待審`) ? `
+  const approveRow = (showApprove && (r.status === `待審` || r.status === `待第二次審查`)) ? `...` : ``;
     <div class="approve-row" id="approveBtns-${r.id}">
       <button class="approve-btn ok" onclick="toggleApproveComment('${r.id}', '同意')">✓ 核准</button>
+      <button class="approve-btn" onclick="toggleApproveComment('${r.id}', '補件')">🔄 退回補件</button>
       <button class="approve-btn reject" onclick="toggleApproveComment('${r.id}', '拒絕')">✗ 拒絕</button>
     </div>
     <div class="approve-comment-area" id="approveArea-${r.id}">
@@ -3411,12 +3447,27 @@ function recordHTML(r, showName = false, showApprove = false) {
             onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')"> 撤回
       </span>
     `;
+    } else if (!showApprove && r.status === `補件`) {
+  actionOrStatusHtml = `
+    <div>
+      <button class="approve-btn ok" style="background:var(--accent-orange);" onclick="toggleResubmitBox('${r.id}')">📝 補件重新申請</button>
+      <div id="resubmitBox-${r.id}" style="display:none; margin-top:8px;">
+        <textarea id="resubmitText-${r.id}" placeholder="請輸入補充說明或證明文件連結" 
+          style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
+        <button class="approve-btn ok" style="margin-top:6px;" 
+          onclick="confirmResubmit('${r.id}', '${r.clientId || ''}', '${r.type}')">送出補件</button>
+      </div>
+    </div>`;
   } else if (!showApprove && r.status) {
     // 員工端：非待審顯示狀態 badge
     let badgeClass = `badge-gray`;
     if (r.status === `同意`) badgeClass = `badge-green`;
     else if (r.status === `拒絕`) badgeClass = `badge-red`;
     else if (r.status === `已撤回`) badgeClass = `badge-withdrawn`;
+    else if (r.status === `補件`) badgeClass = `badge-orange`;
+    else if (r.status === `待第二次審查`) badgeClass = `badge-orange`;
+    else if (r.status === `同意_補件後`) badgeClass = `badge-green`;
+    else if (r.status === `拒絕_補件後`) badgeClass = `badge-red`;
 
     actionOrStatusHtml = `
       <span class="badge ${badgeClass}" style="margin-left:auto;">
@@ -3425,7 +3476,7 @@ function recordHTML(r, showName = false, showApprove = false) {
     `;
   }
 // ===== 構建備註欄（顯示打卡備註或請假詳情） =====
-  if (r.type === `請假` && r.status === `同意`) {
+  if (r.type === `請假` && isFinalApproved(r.status)) {
     // 如果是已核准的請假，顯示時間段
     const start = r.startTime || `09:00`;
     const end = r.endTime || `18:00`;
@@ -3475,10 +3526,10 @@ async function loadAdminData() {
   document.getElementById(`pendingLoading`).textContent = `載入中…`;
   
   // 💡 V37-v28: 本地快取降級顯示
-  let pending = records.filter(r => r.status === `待審` && (r.type === `請假` || r.type === `加班` || r.type === `補打卡`));
+  let pending = records.filter(r => (r.status === `待審`|| r.status ===`補件`|| r.status ===`待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡`));
   adminPendingCache = pending; // 🔧 修復：快取起來，供 approveRecord() 查找
-  document.getElementById(`statLeave`).innerHTML = records.filter(r => r.type === `請假` && r.status === `待審`).length + `<span>筆</span>`;
-  document.getElementById(`statOT`).innerHTML = records.filter(r => (r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`) && r.status === `待審`).length + `<span>筆</span>`;
+  document.getElementById(`statLeave`).innerHTML = records.filter(r => r.type === `請假` && (r.status === `待審`|| r.status ===`補件`|| r.status ===`待第二次審查`)).length + `<span>筆</span>`;
+  document.getElementById(`statOT`).innerHTML = records.filter(r => (r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`) && (r.status === `待審`|| r.status ===`補件`|| r.status ===`待第二次審查`)).length + `<span>筆</span>`;
   document.getElementById(`pendingList`).innerHTML = pending.length ? pending.map(r => recordHTML(r, true, true)).join(``) : `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">沒有待審項目</div></div>`;
   
   try {
@@ -3984,8 +4035,8 @@ area.classList.add(`open`);
 if (btns) btns.style.display = `none`;
 const confirmBtn = document.getElementById(`approveConfirmBtn-` + id);
 if (confirmBtn) {
-confirmBtn.textContent = decision === `同意` ? `✓ 確認核准` : `✗ 確認拒絕`;
-confirmBtn.className = `approve-btn ` + (decision === `同意` ? `ok` : `reject`);
+confirmBtn.textContent = decision === `同意` ? `✓ 確認核准` : (decision === `補件` ? `🔄 確認退回補件` : `✗ 確認拒絕`);
+confirmBtn.className = `approve-btn ` + (decision === `同意` ? `ok` : (decision === `補件` ? `` : `reject`));
 }
 const ta = document.getElementById(`approveComment-` + id);
 if (ta) setTimeout(() => ta.focus(), 100);
@@ -4022,7 +4073,7 @@ rec.status = decision;
 if (comment) rec.approveComment = comment;
 saveRecords();
 const msg = `已${decision}：${rec.name}（${rec.empId}）的${rec.type}申請（${rec.date}）${comment ? `，意見：` + comment : ``}`;
-addNotif(decision === `同意` ? `approve` : `reject`, msg);
+addNotif(decision === `同意` ? `approve` : (decision === `補件` ? `info` : `reject`), msg);
 sendPush(`TJCPM 審批`, msg);
 try {
 const res = await callGAS({
@@ -4032,11 +4083,13 @@ approverName: currentUser.name, approverId: currentUser.empId,
 comment: comment || ``
 });
 const synced = res.status === `ok` && res.found !== false;
-showToast(decision === `同意`
-? (synced ? `✅ 已核准並同步` : `✅ 已核准（Sheet 未找到對應列）`)
-: (synced ? `❌ 已拒絕並同步` : `❌ 已拒絕（Sheet 未找到對應列）`));
+let resultText;
+if (decision === `同意`) resultText = synced ? `✅ 已核准並同步` : `✅ 已核准（Sheet 未找到對應列）`;
+else if (decision === `補件`) resultText = synced ? `🔄 已退回請員工補件並同步` : `🔄 已標記補件（Sheet 未找到對應列）`;
+else resultText = synced ? `❌ 已拒絕並同步` : `❌ 已拒絕（Sheet 未找到對應列）`;
+showToast(resultText);
 } catch (e) {
-showToast(decision === `同意` ? `✅ 已核准（離線）` : `❌ 已拒絕（離線）`);
+showToast(decision === `同意` ? `✅ 已核准（離線）` : (decision === `補件` ? `🔄 已標記補件（離線）` : `❌ 已拒絕（離線）`));
 }
 loadAdminData();
   renderAdminEmployeeOverviewTable();
@@ -4182,7 +4235,7 @@ async function syncProfileAndAccumulatedLeaves() {
       let funeralLeaveUsed = 0;
 
       records.forEach(r => {
-        if (r.type === `請假` && r.status === `同意`) {
+        if (r.type === `請假` && isFinalApproved(r.status)) {
           const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
           const hours = parseFloat(r.hours) || 0;
           if (leaveType === `特休`) annualLeaveUsed += hours;
@@ -4395,7 +4448,7 @@ function renderYearlyIssues() {
 
   const myLeaves = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    return r.type === `請假` && r.status === `同意`;
+    return r.type === `請假` && isFinalApproved(r.status);
   });
 
   const dailyPunches = {};
@@ -4409,7 +4462,7 @@ function renderYearlyIssues() {
     }
   });
 
-  mySupps.filter(r => r.status === `同意`).forEach(r => {
+  mySupps.filter(r => isFinalApproved(r.status)).forEach(r => {
     const normD = normalizeDate(r.date);
     if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
     if (r.subType === `上班`) dailyPunches[normD].in = r.time;
@@ -4601,7 +4654,7 @@ function calcAttendance() {
 
   // 1. 本月加班時數 (主管同意的)
   let otHours = 0;
-  const approvedOts = myRecords.filter(r => r.type === `加班` && r.status === `同意`);
+  const approvedOts = myRecords.filter(r => r.type === `加班` && isFinalApproved(r.status));
   approvedOts.forEach(r => {
     if (r.hours) otHours += parseFloat(r.hours);
     else if (r.startTime && r.endTime) {
@@ -4614,11 +4667,11 @@ function calcAttendance() {
   });
 
   // 2. 本月補打卡次數 (主管同意或待審)
-  const suppCount = myRecords.filter(r => r.type === `補打卡` && (r.status === `同意` )).length;
+  const suppCount = myRecords.filter(r => r.type === `補打卡` && (isFinalApproved(r.status) )).length;
 
   // 3. 本月請假總時數 (主管同意的)
   let leaveHours = 0;
-  const approvedLeaves = myRecords.filter(r => r.type === `請假` && r.status === `同意`);
+  const approvedLeaves = myRecords.filter(r => r.type === `請假` && isFinalApproved(r.status));
   approvedLeaves.forEach(r => {
     leaveHours += calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
   });
@@ -4637,7 +4690,7 @@ function calcAttendance() {
     }
   });
 
-  myRecords.filter(r => r.type === `補打卡` && r.status === `同意`).forEach(r => {
+  myRecords.filter(r => r.type === `補打卡` && isFinalApproved(r.status)).forEach(r => {
     const normD = normalizeDate(r.date);
     if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
     if (r.subType === `上班`) dailyPunches[normD].in = r.time;
@@ -4799,7 +4852,10 @@ function calcAttendance() {
     renderYearlyIssues();
   }
 }
-
+  
+function isFinalApproved(status) {
+  return status === `同意` || status === `同意_補件後`;
+}
 function togglePwChange() {
 const area = document.getElementById(`pwChangeArea`);
 area.classList.toggle(`open`);
