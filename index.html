@@ -4753,9 +4753,9 @@ function calcAttendance() {
       });
 
       // 2. Helper functions
-      /* local isTimeExempted removed */
-
-      /* local isRangeExempted removed */
+     function isRangeExempted(start, end, dayLeaves) {
+     return dayLeaves.some(leave => leave.start < end && leave.end > start);
+      }
 
       // 💡 V37-v34: 自動依據『特別排班』工作表適應上下班起迄，不再寫死 09:00 - 18:00
       const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
@@ -4789,7 +4789,7 @@ function calcAttendance() {
       }
     }
   }
-  }
+  
 
   // Update profile cards
   const checkinDays = new Set(myRecords.filter(r => r.type === `上班`).map(r => r.date)).size;
