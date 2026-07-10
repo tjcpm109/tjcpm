@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3456,15 +3456,15 @@ function recordHTML(r, showName = false, showApprove = false) {
   if (!showApprove && r.status === `待審`) {
     // 員工端：待審可撤回
     actionOrStatusHtml = `
-      <span class="retract-btn"
-            style="margin-left:auto;"
-            onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')"> 撤回
-      </span>
+      <button class="retract-btn"
+        style="margin-left:auto; background:#dc2626; color:#ffffff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; font-family:inherit; transition:all 0.2s;"
+        onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')">🔙 撤回
+      </button>
     `;
     } else if (!showApprove && r.status === `補件`) {
   actionOrStatusHtml = `
     <div>
-      <button class="approve-btn ok" style="background:var(--accent-orange);" onclick="toggleResubmitBox('${r.id}')">📝 補件重新申請</button>
+      <button class="approve-btn ok" style="background:var(--accent-orange); color:#0f172a; border:none;" onclick="toggleResubmitBox('${r.id}')">📝 補件重新申請</button>
       <div id="resubmitBox-${r.id}" style="display:none; margin-top:8px;">
         <textarea id="resubmitText-${r.id}" placeholder="請輸入補充說明或證明文件連結" 
           style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
