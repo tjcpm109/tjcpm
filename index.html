@@ -1594,6 +1594,17 @@ if (`serviceWorker` in navigator) {
 
 // ── JSONP caller ──────────────────────────────────────────────
 function callGAS(params, timeoutMs = 15000) {
+    // ✅ 添加 API 檢查
+  if (!window.google || !window.google.script || !window.google.script.run) {
+    console.error(`[callGAS] Google Apps Script API 未初始化`);
+    console.error(`[callGAS] 當前環境: ${location.hostname}`);
+    return Promise.reject(new Error(
+      `系統未連接後端。請確認:\n` +
+      `1. 部署在 Google Apps Script 中\n` +
+      `2. 頁面完全載入\n` +
+      `3. 檢查瀏覽器控制台錯誤`
+    ));
+  }
 return new Promise((resolve, reject) => {
 const cbName = `cb_` + Date.now() + `_` + Math.random().toString(36).slice(2);
 const url = GAS_URL + `?callback=` + cbName + `&data=` + encodeURIComponent(JSON.stringify(params));
@@ -4302,20 +4313,73 @@ async function syncProfileAndAccumulatedLeaves() {
   }
 }
 
-
-// 💡 日期格式標準化輔助函式 (YYYY/M/D)
-function normalizeDate(str) {
-  if (!str) return ``;
-  const clean = str.replace(/-/g, `/`);
-  const parts = clean.split(`/`);
-  if (parts.length === 3) {
-    const y = parseInt(parts[0], 10);
-    const m = parseInt(parts[1], 10);
-    const d = parseInt(parts[2], 10);
-    return `${y}/${m}/${d}`;
-  }
-  return clean;
+function timeToMin(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(`:`).map(Number);
+  return (h || 0) * 60 + (m || 0);
 }
+// 💡 日期格式標準化輔助函式 (YYYY/M/D)
+// Step 1: 重寫 normalizeDate()
+function normalizeDate(str) {
+  if (!str) return null;
+  
+  // 支持多種輸入格式並統一轉換為 YYYY/M/D
+  let date;
+  
+  if (typeof str === 'number') {
+    date = new Date(str);
+  } else if (typeof str === 'string') {
+    // 嘗試解析各種格式
+    if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
+      // ISO 格式: 2024-01-05
+      date = new Date(str + 'T00:00:00');
+    } else if (str.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
+      // YYYY/M/D 或 YYYY/MM/DD
+      const [y, m, d] = str.split('/').map(Number);
+      date = new Date(y, m - 1, d);
+    }
+  }
+  
+  if (!(date instanceof Date) || isNaN(date)) {
+    console.warn(`[normalizeDate] 無法解析日期: ${str}`);
+    return null;
+  }
+  
+  // 統一輸出格式: YYYY/M/D (無補零)
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+// Step 2: 使用一致的日期格式
+function formatDateForComparison(year, month, day) {
+  // 統一使用此函數產生日期字符串
+  return `${year}/${month}/${day}`;
+}
+
+// Step 3: 修改出勤檢查邏輯
+const dailyPunches = {};
+myRecords.forEach(r => {
+  if (r.type === `上班` || r.type === `下班`) {
+    const normD = normalizeDate(r.date);  // 現在統一格式
+    if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
+    if (r.type === `上班`) {
+      if (!dailyPunches[normD].in || r.time < dailyPunches[normD].in) 
+        dailyPunches[normD].in = r.time;
+    }
+  }
+});
+
+// 建立時區安全的日期工具
+function createLocalDate(year, month, day, hour = 0, minute = 0) {
+  // 使用本地時區創建日期（不使用 UTC）
+  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+  return date;
+}
+
+function getLocalDateString(date) {
+  // 返回本地時間的 YYYY/M/D 格式
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+}
+
 
 
 function timeToMin(timeStr) {
