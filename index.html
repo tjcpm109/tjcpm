@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2059,8 +2059,9 @@ function submitLeave() {
   }
   
   const id = Date.now();
+  const clientId = pendingClientId || String(id);   // ← 優先用表單一開始就準備好的 pendingClientId
 const record = {
-id, clientId: String(id), type: `請假`, subType: document.getElementById(`leaveType`).value,
+id, clientId: clientId, type: `請假`, subType: document.getElementById(`leaveType`).value,
 empId: currentUser.empId, name: currentUser.name,
 date: document.getElementById(`leaveStart`).value, startTime: document.getElementById(`leaveStartTime`).value,
 endDate: document.getElementById(`leaveEnd`).value, endTime: document.getElementById(`leaveEndTime`).value,
@@ -2320,8 +2321,9 @@ function submitAdminAdjust() {
 
 function quickLeave() {
 const id = Date.now();
+const clientId = pendingClientId || String(id);   // ← 優先用表單一開始就準備好的 pendingClientId
 const record = {
-id, clientId: String(id), type: `請假`, subType: document.getElementById(`modalLeaveType`).value,
+id, clientId: clientId, type: `請假`, subType: document.getElementById(`modalLeaveType`).value,
 empId: currentUser.empId, name: currentUser.name, date: document.getElementById(`modalLeaveDate`).value,
 status: `待審`, timestamp: new Date().toISOString()
 };
@@ -2336,8 +2338,9 @@ showToast(`📝 請假申請已送出`);
 
 function quickOvertime() {
 const id = Date.now();
+const clientId = pendingClientId || String(id);   // ← 優先用表單一開始就準備好的 pendingClientId
 const record = {
-id, clientId: String(id), type: `加班`, empId: currentUser.empId, name: currentUser.name,
+id, clientId: clientId, type: `加班`, empId: currentUser.empId, name: currentUser.name,
 hours: document.getElementById(`modalOTHours`).value, reason: document.getElementById(`modalOTReason`).value,
 date: todayStr, status: `待審`, timestamp: new Date().toISOString()
 };
@@ -3436,7 +3439,8 @@ function recordHTML(r, showName = false, showApprove = false) {
     timeInfo,
     showGPS,
     (r.type === `上班` || r.type === `下班`) ? `` : (r.reason || ``),
-    r.approveComment ? `💬 簽核意見：${r.approveComment}` : ``
+    r.approveComment ? `💬 簽核意見：${r.approveComment}` : ``,
+    r.attachment ? `📎 <a href="${r.attachment.split(`: `)[1] || `#`}" target="_blank" onclick="event.stopPropagation()">查看證明文件</a>` : ``
   ].filter(Boolean).join(` · `);
 
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
@@ -3946,7 +3950,16 @@ function applyAdminSubTabVisibility() {
 function saveRecords() {
 localStorage.setItem(`tjcpm_records`, JSON.stringify(records));
 }
+let pendingClientId = null;
 
+async function prepareUploadFolder() {
+  pendingClientId = `C${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const res = await callGAS({ action: `getUploadFolderLink`, clientId: pendingClientId, purpose: `證明文件` });
+  if (res.status === `ok`) {
+    document.getElementById(`uploadFolderLink`).href = res.folderUrl;
+  }
+}
+  
 function switchTab(tab) {
 if (tab === `admin` && (!currentUser || (currentUser.role !== `admin` && currentUser.role !== `admin1` && currentUser.role !== `admin2`))) {
 return;
