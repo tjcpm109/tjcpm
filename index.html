@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統2</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2494,13 +2494,13 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     });
 
     const mineSupp = empRecords.filter(r => {
-      if (r.type !== `補打卡` || r.status !== `同意`) return false;
+      if (r.type !== `補打卡` ||!isFinalApproved(r.status)) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
 
     const mineLeave = empRecords.filter(r => {
-      if (r.type !== `請假` || r.status !== `同意`) return false;
+      if (r.type !== `請假` || !isFinalApproved(r.status)) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
@@ -2660,7 +2660,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   });
 
   const mineLeave = empRecords.filter(r => {
-    if (r.type !== `請假` || r.status !== `同意`) return false;
+    if (r.type !== `請假` || !isFinalApproved(r.status)) return false;
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
@@ -2905,7 +2905,7 @@ function renderCalendarTable() {
 
     const mineSupp = records.filter(r => {
       if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-      if (r.type !== `補打卡` || r.status !== `同意`) return false;
+      if (r.type !== `補打卡` || !isFinalApproved(r.status)) return false;
       const d = safeNewDate(r.date || r.timestamp);
       return d.getFullYear() === currentYear;
     });
@@ -3018,7 +3018,7 @@ function renderCalendarTable() {
 
   const mineLeave = records.filter(r => {
     if (!matchEmpId(r.empId, currentUser?.empId)) return false;
-    if (r.type !== `請假` || r.status !== `同意`) return false;
+    if (r.type !== `請假` || !isFinalApproved(r.status)) return false;
     const d = safeNewDate(r.date || r.timestamp);
     return d.getFullYear() === year && (d.getMonth() + 1) === month;
   });
@@ -3082,13 +3082,12 @@ function renderCalendarTable() {
     let checkinHTML = punch.上班;
     let checkoutHTML = punch.下班;
 
+    const isHoliday = currentUser?.holidayStrings && currentUser.holidayStrings.includes(dateQueryStr) && !isWeekend;
+    
     if (isBeforeJoin) {
       checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
       checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
-    }
-
-    const isHoliday = currentUser?.holidayStrings && currentUser.holidayStrings.includes(dateQueryStr) && !isWeekend;
-    if (isFuture) {
+   } else if (isFuture) { 
       if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
       if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
     } else if (isWeekend || isHoliday) {
@@ -4797,7 +4796,7 @@ function calcAttendance() {
       
       // 1. Gather all approved leaves covering dateObj for this employee
       const dayLeaves = myRecords.filter(r => {
-        if (r.type !== `請假` || r.status !== `同意`) return false;
+        if (r.type !== `請假` || !isFinalApproved(r.status)) return false;
         const startD = safeNewDate(r.date);
         const endD = safeNewDate(r.endDate || r.date);
         return dateObj >= startD && dateObj <= endD;
