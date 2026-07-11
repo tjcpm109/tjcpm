@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3129,10 +3129,11 @@ function renderCalendarTable() {
 
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, 1080, dayLeaves);
+      const isFullDayExempted = isMorningExempted && isAfternoonExempted;   // ← 新增這行
 
       if (punch.上班 === `—`) {
-        if (isMorningExempted) {
-          checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || "🌴 已請假"}</span>`;
+        if (isFullDayExempted) {                                            // ← 改成用這個
+    checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
         } else if (!isToday) {
           checkinHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp('${dateQueryStr}','上班',event)">⚠️ 漏打卡</span>`;
         } else {
@@ -3141,8 +3142,8 @@ function renderCalendarTable() {
       }
       
       if (punch.下班 === `—`) {
-        if (isAfternoonExempted) {
-          checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${leaveLabel || "🌴 已請假"}</span>`;
+        if (isFullDayExempted) {                                            // ← 改成用這個
+          checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
         } else if (!isToday) {
           checkoutHTML = `<span style="color:#ef4444;font-weight:bold;font-size:13px;" onclick="autoFillSupp('${dateQueryStr}','下班',event)">⚠️ 漏打卡</span>`;
         } else {
