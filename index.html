@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統3</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -412,6 +412,7 @@ box-shadow:var(--shadow);
 .dot-orange { background:var(--accent-orange); }
 .dot-purple { background:var(--accent-purple); }
 .dot-blue { background:var(--blue-light); }
+.dot-yellow { background:#eab308; }
 .record-info { flex:1; }
 .record-type { font-size:var(--fs-body); font-weight:600; color:var(--text-primary); display: flex; align-items: center; gap: 6px; }
 .record-meta { font-size:var(--fs-label); color:var(--text-secondary); margin-top:3px; }
@@ -549,6 +550,7 @@ box-shadow:var(--shadow-md);
 .badge-purple { background:var(--accent-purple-pale); color:var(--accent-purple); }
 .badge-blue { background:var(--blue-pale); color:var(--blue-light); }
 .badge-gray { background:#1f2937; color:#9ca3af; }
+.badge-waiting { background:#78350f; color:#fbbf24; }
 .badge-withdrawn { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
 
 /* ── Stats ── */
@@ -1792,6 +1794,12 @@ el.style.display = `block`;
 }
 function doLogout() {
   sessionStorage.removeItem(`tjcpm_user`);
+  localStorage.removeItem(`tjcpm_records`);
+  localStorage.removeItem(`tjcpm_notif`);
+  localStorage.removeItem(`tjcpm_settledAccumulated`);
+  localStorage.removeItem(`tjcpm_recordsLastSyncTime`);
+  records = [];
+  notifications = [];
   currentUser = null;
   isOnline = true;
   isGpsLocked = false;
@@ -3396,20 +3404,20 @@ function recordHTML(r, showName = false, showApprove = false) {
     dotClass = `dot-blue`;
     badge = `<span class="badge badge-blue">補打卡${subTypeLabel ? `·` + subTypeLabel : ``}</span>`;
   } else if (r.type === `班別調整`) {
-    dotClass = `dot-orange`;
-    badge = `<span class="badge badge-orange">班別調整${r.subType ? `·` + r.subType : ``}</span>`;
+    dotClass = `dot-green`;
+    badge = `<span class="badge badge-green">班別調整${r.subType ? `·` + r.subType : ``}</span>`;
   }
 
   // ===== 狀態 badge（顯示在標題旁）=====
   let statusBadge = ``;
   if (r.status === `待審`) {
-    statusBadge = `<span class="badge badge-gray" style="margin-left:4px;">待審</span>`;
+    statusBadge = `<span class="badge badge-waiting" style="margin-left:4px;">待審</span>`;
   } else if (r.status === `同意`) {
     statusBadge = `<span class="badge badge-green" style="margin-left:4px;display:none;">✓ 同意</span>`;
   } else if (r.status === `拒絕`) {
     statusBadge = `<span class="badge badge-red" style="margin-left:4px;display:none;">✗ 拒絕</span>`;
   } else if (r.status === `已撤回`) {
-    statusBadge = `<span class="badge badge-gray" style="margin-left:4px;display:none;">🛑 已撤回</span>`;
+    statusBadge = `<span class="badge badge-waiting" style="margin-left:4px;display:none;">🛑 已撤回</span>`;
   } else if (r.status === `補件`) {
     statusBadge = `<span class="badge" style="margin-left:4px; background:#eff6ff; color:#3b82f6; border:1px solid #3b82f6; border-radius:6px; padding:4px 8px;">🔄 需補件</span>`;
   } else if (r.status === `待第二次審查`) {
@@ -3454,10 +3462,10 @@ function recordHTML(r, showName = false, showApprove = false) {
   let actionOrStatusHtml = ``;
 
   if (!showApprove && r.status === `待審`) {
-    // 員工端：待審可撤回
+    // 員工端：待審可撤回 style="margin-left:auto; background:#dc2626; color:#ffffff;border:none;
     actionOrStatusHtml = `
       <button class="retract-btn"
-        style="margin-left:auto; background:#dc2626; color:#ffffff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; font-family:inherit; transition:all 0.2s;"
+        style="background:transparent; color:#dc2626; border:1.5px solid #dc2626;  padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; font-family:inherit; transition:all 0.2s;"
         onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')">🔙 撤回
       </button>
     `;
@@ -3468,7 +3476,7 @@ function recordHTML(r, showName = false, showApprove = false) {
       <div id="resubmitBox-${r.id}" style="display:none; margin-top:8px;">
         <textarea id="resubmitText-${r.id}" placeholder="請輸入補充說明或證明文件連結" 
           style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
-        <button class="approve-btn ok" style="margin-top:6px; background:#ec4899; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${r.id}', '${r.clientId || ''}', '${r.type}')">送出補件</button>
+        <button class="approve-btn ok" style="margin-top:6px; background:#2563eb; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${r.id}', '${r.clientId || ''}', '${r.type}')">送出補件</button>
       </div>
     </div>`;
   } else if (!showApprove && r.status) {
