@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統1</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2060,6 +2060,7 @@ function submitLeave() {
   
   const id = Date.now();
   const clientId = pendingClientId || String(id);   // ← 優先用表單一開始就準備好的 pendingClientId
+  pendingClientId = null;    // ← 加這一行，用完立刻清空
 const record = {
 id, clientId: clientId, type: `請假`, subType: document.getElementById(`leaveType`).value,
 empId: currentUser.empId, name: currentUser.name,
@@ -4342,11 +4343,6 @@ async function syncProfileAndAccumulatedLeaves() {
   }
 }
 
-function timeToMin(timeStr) {
-  if (!timeStr) return 0;
-  const [h, m] = timeStr.split(`:`).map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
 // 💡 日期格式標準化輔助函式 (YYYY/M/D)
 // Step 1: 重寫 normalizeDate()
 function normalizeDate(str) {
@@ -4440,7 +4436,8 @@ function calculateLeaveHoursLocal(r, holidays) {
   let curr = safeNewDate(startD);
   let loops = 0;
   const hList = holidays || currentUser?.holidayStrings || [];
-
+  const reqStartMin = sh * 60 + sm;
+  const reqEndMin = eh * 60 + em;
   while (curr <= endD && loops < 100) {
     loops++;
     const dateStr = formatLocalDateStr(curr);
