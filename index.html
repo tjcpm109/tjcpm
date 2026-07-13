@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統.713</title>
+<title>TJCPM 員工系統</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4428,6 +4428,12 @@ function calculateLeaveHoursLocal(r, holidays) {
   if (r.hours !== undefined && r.hours !== null) {
     return parseFloat(r.hours);
   }
+  // 💡 新增：如果有 startTime 和 endTime，按時段計算
+  if (r.startTime && r.endTime) {
+    const startMin = timeToMin(r.startTime);
+    const endMin = timeToMin(r.endTime);
+    return Math.max(0, (endMin - startMin) / 60);
+  }
   const startD = safeNewDate(r.date);
   const endD = safeNewDate(r.endDate || r.date);
   if (isNaN(startD.getTime())) return 0;
@@ -4595,7 +4601,7 @@ function renderYearlyIssues() {
         const startD = safeNewDate(r.date);
         const endD = safeNewDate(r.endDate || r.date);
         let leaveStartMin = 540;
-        let leaveEndMin = 1080;
+        let leaveEndMin = 1080-60;// 18:00 扣 1 小時午餐 = 8 小時
         const isStart = dIndex.getFullYear() === startD.getFullYear() && dIndex.getMonth() === startD.getMonth() && dIndex.getDate() === startD.getDate();
         const isEnd = dIndex.getFullYear() === endD.getFullYear() && dIndex.getMonth() === endD.getMonth() && dIndex.getDate() === endD.getDate();
         if (isStart && isEnd) {
