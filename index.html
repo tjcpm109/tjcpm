@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統123</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3356,8 +3356,10 @@ function formatDateTimeRange(r) {
       const startMin = sh * 60 + sm;
       const endMin = eh * 60 + em;
       const grossHours = ((endMin - startMin) / 60).toFixed(1);
-      hoursText = ` (${hoursVal}h)`;
-    }
+      hoursText = ` (${grossHours}h)`;  // ✅ 改這裡，用 grossHours 而不是 hoursVal
+  } else {
+    hoursText = ` (${hoursVal}h)`;
+  }
   }
 
   if (r.type === `請假` || r.type === `加班`) {
