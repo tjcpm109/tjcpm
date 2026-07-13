@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統</title>
+<title>TJCPM 員工系統0713</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1003,7 +1003,7 @@ display: inline-block;
 <div class="input-group" style="margin-bottom:20px;">
 <label class="input-label" style="display:flex; justify-content:space-between; align-items:center;">
   <span>證明文件（病假/公假等需提供）</span>
-  <a href="https://drive.google.com/drive/folders/1XR_EUQoaJlkDCoxvJZcsPKXN53Xze1xE?usp=drive_link" target="_blank" class="pw-toggle-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-color:var(--accent-orange); color:var(--accent-orange);">📎 前往雲端上傳證明</a>
+  <a href="https://drive.google.com/drive/folders/1XR_EUQoaJlkDCoxvJZcsPKXN53Xze1xE?usp=drive_link" target="_blank" class="pw-toggle-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-color:var(--accent-orange); color:var(--accent-orange);">📁 前往雲端上傳證明</a>
 </label>
 </div>
 <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
@@ -3347,7 +3347,18 @@ function formatDateTimeRange(r) {
     const h = parseFloat(r.hours);
     hoursVal = isNaN(h) ? r.hours : String(h).replace(/\.0$/, ``);
   }
-  const hoursText = hoursVal ? ` (${hoursVal}h)` : ``;
+  // ✅ 改這裡：加入計算說明
+  let hoursText = ``;
+  if (hoursVal) {
+    if (startT && endT && (r.type === `請假` || r.type === `加班`)) {
+      const [sh, sm] = startT.split(':').map(Number);
+      const [eh, em] = endT.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = eh * 60 + em;
+      const grossHours = ((endMin - startMin) / 60).toFixed(1);
+      hoursText = ` (${hoursVal}h)`;
+    }
+  }
 
   if (r.type === `請假` || r.type === `加班`) {
     if (dateStr === endDateStr || !r.endDate) {
@@ -3360,10 +3371,10 @@ function formatDateTimeRange(r) {
   } else if (r.type === `班別調整`) {
     return `${dateStr} ${r.subType || ``}`;
   } else {
-    // 上班 / 下班 (打卡)
     return `${dateStr} ${r.time || ``}`;
   }
 }
+
 // 💡 V89: 構建備註欄，顯示該日期的所有請假詳情（時間段+假別）0708
 
 //if (!isWeekend && !isHoliday && !isFuture && !isBeforeJoin && mineLeave.length > 0) {
@@ -3441,7 +3452,7 @@ function recordHTML(r, showName = false, showApprove = false) {
     showGPS,
     (r.type === `上班` || r.type === `下班`) ? `` : (r.reason || ``),
     r.approveComment ? `💬 簽核意見：${r.approveComment}` : ``,
-    r.attachment ? `📎 <a href="${r.attachment.split(`: `)[1] || `#`}" target="_blank" onclick="event.stopPropagation()">查看證明文件</a>` : ``
+    r.attachment ? `📁 <a href="${r.attachment.split(`: `)[1] || `#`}" target="_blank" onclick="event.stopPropagation()">查看證明文件</a>` : ``
   ].filter(Boolean).join(` · `);
 
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
