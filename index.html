@@ -1195,37 +1195,37 @@ display: inline-block;
 <tbody>
 <tr style="border-bottom: 1px solid var(--card-border);">
 <td style="padding: 10px 4px; font-weight: bold; color: var(--green-light);">🌴 特休假</td>
-<td id="accumAnnual" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumAnnual" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。天數依到職年資遞增發給。</td>
 </tr>
 <tr style="border-bottom: 1px solid var(--card-border);">
 <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-purple);">⏰ 補休</td>
-<td id="accumComp" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumComp" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。加班時數 1:1 兌換，限當年度休畢。</td>
 </tr>
 <tr style="border-bottom: 1px solid var(--card-border);">
 <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-orange);">🩹 普通病假</td>
-<td id="accumSick" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumSick" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);"><span style="color:var(--accent-orange); font-weight:bold;">折半發給 (半薪)</span>。未住院者一年上限 30 天。</td>
 </tr>
 <tr style="border-bottom: 1px solid var(--card-border);">
 <td style="padding: 10px 4px; font-weight: bold; color: #f87171;">💼 事假</td>
-<td id="accumPersonal" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumPersonal" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);"><span style="color:#f87171; font-weight:bold;">期間不給薪 (無薪)</span>。一年累計最多請 14 天。</td>
 </tr>
 <tr style="border-bottom: 1px solid var(--card-border);">
 <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">🏛️ 公假</td>
-<td id="accumOfficial" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumOfficial" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
 </tr>
 <tr style="border-bottom: 1px solid var(--card-border);">
 <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">💍 婚假</td>
-<td id="accumMarriage" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumMarriage" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
 </tr>
 <tr>
 <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">🕯️ 喪假</td>
-<td id="accumFuneral" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">0h</td>
+<td id="accumFuneral" style="padding: 10px 4px; font-variant-numeric: tabular-nums;">未讀入</td>
 <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
 </tr>
 </tbody>
@@ -4277,23 +4277,16 @@ async function syncProfileAndAccumulatedLeaves() {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
       // 💡 V63: 實裝高階髒檢查 (Dirty Check) 機制！比對本次拉取到的 updates 與原本本地快取的 records
-      const oldRecordsStr = localStorage.getItem(`tjcpm_records`) || `[]`;
-      const newRecordsStr = JSON.stringify(data.updates);
-      const isRecordsChanged = oldRecordsStr !== newRecordsStr;
-      
-      let isQuotaChanged = false;
-      if (data.quota) {
-        const oldUserStr = sessionStorage.getItem(`tjcpm_user`) || `{}`;
-        const oldUserObj = JSON.parse(oldUserStr);
-        const oldQuotaStr = JSON.stringify(oldUserObj.quota || {});
-        const newQuotaStr = JSON.stringify(data.quota);
-        isQuotaChanged = oldQuotaStr !== newQuotaStr;
-      }
-      
-      if (!isRecordsChanged && !isQuotaChanged) {
-        console.log(`[V63 Dirty Check] 偵測到雲端資料與本機完全一致，自動免除重繪，大幅省電與降低耗能！`);
-        return { ok: true, changed: false }; // 零變動！直接阻斷後續 DOM 重繪，極致優化效能！
-      }
+const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
+const newSnapshotStr = JSON.stringify({ updates: data.updates, quota: data.quota || null });
+const oldSnapshotStr = localStorage.getItem(snapshotKey) || ``;
+const isChanged = oldSnapshotStr !== newSnapshotStr;
+
+if (!isChanged) {
+  console.log(`[Dirty Check] 偵測到雲端資料與上次拉取結果完全一致，自動免除重繪`);
+  return { ok: true, changed: false };
+}
+localStorage.setItem(snapshotKey, newSnapshotStr);
 
       // 💡 修正：不再整批覆蓋 records，改為「合併」——
     const keepRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
@@ -4379,7 +4372,7 @@ async function syncProfileAndAccumulatedLeaves() {
   } catch (e) {
     console.error(`拉取雲端考勤餘額與累計失敗:`, e);
     showToast('⚠️ 雲端同步逾時，畫面可能顯示過期資料，請稍後重新整理');
-    //return { ok: false, changed: false };
+    return { ok: false, changed: false };
   }
 }
 
