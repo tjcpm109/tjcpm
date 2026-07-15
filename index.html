@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07151</title>
+<title>TJCPM 員工系統0716</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1889,20 +1889,20 @@ setTimeout(() => { if (el) el.textContent = ``; }, 4000);
 }
 
 // ── Push / Notification ──
-async function requestPush() {
-if (!(`Notification` in window)) {
-showToast(`此裝置不支援通知`);
-return;
-}
-const perm = await Notification.requestPermission();
-document.getElementById(`pushBanner`).style.display = `none`;
-if (perm === `granted`) {
-showToast(`✅ 推播通知已開啟`);
-addNotif(`system`, `🔔 通知已開啟，審批結果將即時通知您`);
-} else {
-showToast(`⚠️ 未允許通知權限`);
-}
-}
+//async function requestPush() {
+//if (!(`Notification` in window)) {
+//showToast(`此裝置不支援通知`);
+//return;
+//}
+//const perm = await Notification.requestPermission();
+//document.getElementById(`pushBanner`).style.display = `none`;
+//if (perm === `granted`) {
+//showToast(`✅ 推播通知已開啟`);
+//addNotif(`system`, `🔔 通知已開啟，審批結果將即時通知您`);
+//} else {
+//showToast(`⚠️ 未允許通知權限`);
+//}
+//}
 function sendPush(title, body) {
 if (Notification && Notification.permission === `granted`) new Notification(title, { body });
 }
@@ -2414,12 +2414,12 @@ function switchRecordSubTab(sub) {
   renderAllList();
 }
 
-function filterRecords(type, chip) {
-currentFilter = type;
-document.querySelectorAll(`#record-detail-content .filter-chip`).forEach(c => c.classList.remove(`active`));
-chip.classList.add(`active`);
-renderAllList();
-}
+//function filterRecords(type, chip) {
+//currentFilter = type;
+//document.querySelectorAll(`#record-detail-content .filter-chip`).forEach(c => c.classList.remove(`active`));
+//chip.classList.add(`active`);
+//renderAllList();
+//}
 
 function filterApplyRecords(type, chip) {
   currentApplyFilter = type;
@@ -3226,48 +3226,48 @@ window.autoFillSupp = function(dateStr, type, event) {
   showToast(`🔄 已為您自動填入 ${dateStr} ${type} 漏卡資訊！`);
 }
 
-function getConciseDateText(dateStr) {
-  if (!dateStr) return ``;
-  const d = safeNewDate(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const m = String(d.getMonth() + 1).padStart(2, `0`);
-  const dateVal = String(d.getDate()).padStart(2, `0`);
-  const weekdays = [`日`, `一`, `二`, `三`, `四`, `五`, `六`];
-  const w = weekdays[d.getDay()];
-  return `${m}/${dateVal} (${w})`;
-}
+//function getConciseDateText(dateStr) {
+//  if (!dateStr) return ``;
+//  const d = safeNewDate(dateStr);
+//  if (isNaN(d.getTime())) return dateStr;
+//  const m = String(d.getMonth() + 1).padStart(2, `0`);
+//  const dateVal = String(d.getDate()).padStart(2, `0`);
+//  const weekdays = [`日`, `一`, `二`, `三`, `四`, `五`, `六`];
+//  const w = weekdays[d.getDay()];
+//  return `${m}/${dateVal} (${w})`;
+//}
 
-async function retractApplication(id) {
-  const rec = records.find(r => r.id === id);
-  if (!rec) return;
-  if (!confirm(`確定要撤回此筆 ${rec.type} 申請嗎？`)) return;
+//async function retractApplication(id) {
+//  const rec = records.find(r => r.id === id);
+//  if (!rec) return;
+//  if (!confirm(`確定要撤回此筆 ${rec.type} 申請嗎？`)) return;
 
-  // Optimistically set to `已撤回`
-  rec.status = `已撤回`;
-  saveRecords();
-  renderAllList();
+ // // Optimistically set to `已撤回`
+ // rec.status = `已撤回`;
+//  saveRecords();
+//  renderAllList();
   
-  try {
-    const res = await callGAS({
-      action: `cancel`,
-      clientId: rec.clientId || String(rec.id),
-      empId: rec.empId,
-      type: rec.type
-    });
-    if (res.status === `ok`) {
-      showToast(`🛑 申請已成功撤回並同步`);
-    } else {
-      showToast(`⚠️ 撤回同步失敗，請確認後台`);
-    }
-  } catch (e) {
-    showToast(`🛑 申請已在本地撤回（離線）`);
-  }
-  if (typeof syncProfileAndAccumulatedLeaves === `function`) {
-    syncProfileAndAccumulatedLeaves();
-  } else {
-    renderAllList();
-  }
-}
+//  try {
+//    const res = await callGAS({
+//      action: `cancel`,
+//      clientId: rec.clientId || String(rec.id),
+//      empId: rec.empId,
+//      type: rec.type
+//    });
+//    if (res.status === `ok`) {
+//      showToast(`🛑 申請已成功撤回並同步`);
+//    } else {
+//      showToast(`⚠️ 撤回同步失敗，請確認後台`);
+//    }
+//  } catch (e) {
+//    showToast(`🛑 申請已在本地撤回（離線）`);
+//  }
+//  if (typeof syncProfileAndAccumulatedLeaves === `function`) {
+//    syncProfileAndAccumulatedLeaves();
+//  } else {
+//    renderAllList();
+//  }
+//}
 
 
 
@@ -4025,9 +4025,7 @@ if (tab === `profile`) renderProfile();
   
 const RECORDS_SYNC_INTERVAL_MS = 5 * 60 * 1000
   
-function openModal(type) {
-document.getElementById(`modal-` + type).classList.add(`open`);
-}
+
 function closeModal(type) {
 document.getElementById(`modal-` + type).classList.remove(`open`);
 }
@@ -4202,10 +4200,7 @@ if (shouldAutoSyncYearlyIssues()) {
 updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
 }
 
-function getDayKey(d) {
-    const now = d || new Date();
-    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-}
+
   // 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
   function getMonthKey(d) {
   const now = d || new Date();
@@ -4407,10 +4402,10 @@ function normalizeDate(str) {
 }
 
 // Step 2: 使用一致的日期格式
-function formatDateForComparison(year, month, day) {
-  // 統一使用此函數產生日期字符串
-  return `${year}/${month}/${day}`;
-}
+//function formatDateForComparison(year, month, day) {
+//  // 統一使用此函數產生日期字符串
+//  return `${year}/${month}/${day}`;
+//}
 
 // Step 3: 修改出勤檢查邏輯
 const dailyPunches = {};
@@ -4426,16 +4421,16 @@ myRecords.forEach(r => {
 });
 
 // 建立時區安全的日期工具
-function createLocalDate(year, month, day, hour = 0, minute = 0) {
-  // 使用本地時區創建日期（不使用 UTC）
-  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
-  return date;
-}
+//function createLocalDate(year, month, day, hour = 0, minute = 0) {
+//  // 使用本地時區創建日期（不使用 UTC）
+//  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+//  return date;
+//}
 
-function getLocalDateString(date) {
-  // 返回本地時間的 YYYY/M/D 格式
-  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-}
+//function getLocalDateString(date) {
+//  // 返回本地時間的 YYYY/M/D 格式
+//  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+//}
 
 
 
