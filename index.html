@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0715</title>
+<title>TJCPM 員工系統07151</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -236,6 +236,8 @@ pointer-events:none;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
+      @media(min-width:600px) { .nav-tab { flex: 1 !important; }
+}
     }
     .nav-tab:hover {
       color: var(--blue-light) !important;
@@ -1778,7 +1780,7 @@ try {
 } catch (e) {}
 sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
 showApp();
-//syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
+syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
 } else {
 showLoginErr(data.message || `帳號或密碼錯誤，請再試一次`);
 }
@@ -2069,6 +2071,7 @@ function submitLeave() {
     return;
   }
 // 🔴 加這段：檢查補休餘額
+  const subType = document.getElementById(`leaveType`).value;
   if (subType === `加班補休`) {
     const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
     const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
