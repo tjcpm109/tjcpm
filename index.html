@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07162</title>
+<title>TJCPM 員工系統0716</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4529,22 +4529,18 @@ async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
-      // 💡 V63: 實裝高階髒檢查 (Dirty Check) 機制！比對本次拉取到的 updates 與原本本地快取的 records
-const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
-const newSnapshotStr = JSON.stringify({ updates: data.updates, quota: data.quota || null });
-const oldSnapshotStr = localStorage.getItem(snapshotKey) || ``;
-const isChanged = oldSnapshotStr !== newSnapshotStr;
+      // 💡 修正：髒檢查只用來判斷「要不要標記已同步/要不要強制重繪」，
+      // 絕對不能因為雲端資料沒變就跳過合併，否則 records 若因登出等原因被清空，資料就再也帶不回來
+      const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
+      const newSnapshotStr = JSON.stringify({ updates: data.updates, quota: data.quota || null });
+      const oldSnapshotStr = localStorage.getItem(snapshotKey) || ``;
+      const isChanged = oldSnapshotStr !== newSnapshotStr;
+      localStorage.setItem(snapshotKey, newSnapshotStr);
 
-if (!isChanged) {
-  console.log(`[Dirty Check] 偵測到雲端資料與上次拉取結果完全一致，自動免除重繪`);
-  return { ok: true, changed: false };
-}
-localStorage.setItem(snapshotKey, newSnapshotStr);
-
-      // 💡 修正：不再整批覆蓋 records，改為「合併」——
-    const keepRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
-    records = [...keepRecords, ...data.updates];
-    saveRecords();
+      // 💡 合併：不再因為 isChanged=false 而提前 return，永遠執行合併
+      const keepRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
+      records = [...keepRecords, ...data.updates];
+      saveRecords();
 
       // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
       let annualLeaveUsed = 0;
