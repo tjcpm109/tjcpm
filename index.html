@@ -1464,7 +1464,7 @@ const GAS_URL = `https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9g
 function parseLocalDate(d) { return safeNewDate(d); }
 
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
-function getYearRangeString(joinDateStr, quota) {
+/* 0716 function getYearRangeString(joinDateStr, quota) {
   if (!joinDateStr) return ``;
   const joinParts = joinDateStr.split(/[-/]/);
   const jYear = parseInt(joinParts[0], 10);
@@ -1497,6 +1497,57 @@ function getYearRangeString(joinDateStr, quota) {
       break;
     }
   }
+  // 檢查是否有落在此週年區間內的歷史校正
+  let displayedStart = start;
+  let displayedEnd = new Date(prevMonthEnd);
+  let noteText = ``;
+  
+  // 限制 displayedEnd 不超過週年結束日
+  if (displayedEnd > end) {
+    displayedEnd = end;
+  }
+  
+  // 檢查校正日期
+  if (quota && quota.correction && quota.correction.startDate) {
+    const corrStart = safeNewDate(quota.correction.startDate);
+    if (corrStart && !isNaN(corrStart.getTime())) {
+      // 💡 Case 1：校正日期在已結算範圍內（即 <= 上月底）
+      // 這表示補休/加班在結算時已計入，校正日期前的數據已結算
+      if (corrStart <= displayedEnd) {
+        // 校正已生效，改變顯示起始日
+        // 但要確保起始日不早於週年區間開始
+        if (corrStart >= start) {
+          displayedStart = corrStart;
+        }
+        if (quota.correction.note) {
+          const parts = quota.correction.note.split(/[,，]/);
+          noteText = parts[parts.length - 1].trim(); // 取最末尾段說明字，例：1/7 前無打卡紀錄
+        }
+      } 
+      // 💡 Case 2：校正日期在本月（尚未結算）
+      // 這表示校正還沒有生效，6/30的補休仍應計入6月份
+      else if (corrStart > displayedEnd && corrStart <= end) {
+        // 保持 displayedStart = start，不改變起始日
+        // 並顯示待生效提示
+        noteText = `⏳ 校正將於 ${corrStart.getFullYear()}.${String(corrStart.getMonth() + 1)}.${String(corrStart.getDate())} 生效（本月尚未結算）`;
+      }
+    }
+  }
+  const sy = displayedStart.getFullYear();
+  const sm = String(displayedStart.getMonth() + 1); // 智慧去補零：使用原字
+  const sd = String(displayedStart.getDate());      // 智慧去補零：使用原字
+  const ey = displayedEnd.getFullYear();
+  const em = String(displayedEnd.getMonth() + 1);   // 智慧去補零：使用原字
+  const ed = String(displayedEnd.getDate());        // 智慧去補零：使用原字
+  
+  const appendNote = noteText ? ` (${noteText})` : ``;
+  return `年度區間: ${sy}.${sm}.${sd} ~ ${ey}.${em}.${ed}${appendNote}`;
+} */
+function getYearRangeString(joinDateStr, quota) {
+  if (!joinDateStr) return ``;
+  const win = getCurrentAnniversaryWindow(joinDateStr);
+  if (!win) return ``;
+  const { start, end, prevMonthEnd } = win;
 
   
   // 檢查是否有落在此週年區間內的歷史校正
@@ -4267,7 +4318,7 @@ window.manualRefreshYearlyIssues = async function() {
   if (btn) { btn.disabled = false; btn.textContent = `🔄 更新`; }
 };
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
-async function syncProfileAndAccumulatedLeaves() {
+/* 0716 async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
@@ -4299,6 +4350,122 @@ localStorage.setItem(snapshotKey, newSnapshotStr);
 
       records.forEach(r => {
         if (r.type === `請假` && isFinalApproved(r.status)) {
+          const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
+          const hours = parseFloat(r.hours) || 0;
+          if (leaveType === `特休`) annualLeaveUsed += hours;
+          else if (leaveType === `補休`) compLeaveUsed += hours;
+          else if (leaveType === `病假`) sickLeaveUsed += hours;
+          else if (leaveType === `事假`) personalLeaveUsed += hours;
+          else if (leaveType === `公假`) officialLeaveUsed += hours;
+          else if (leaveType === `婚假`) marriageLeaveUsed += hours;
+          else if (leaveType === `喪假`) funeralLeaveUsed += hours;
+        }
+      });
+
+      let annualRemaining = 24;
+      let compRemaining = 16;
+
+      if (data.quota) {
+        annualRemaining = data.quota.specialLeaveRemainingHours;
+        compRemaining = data.quota.compLeaveRemainingHours;
+        annualLeaveUsed = data.quota.specialLeaveUsedHours;
+        
+        // 同步儲存至 currentUser 中，確保全系統共享
+        currentUser.quota = data.quota;
+        if (data.holidayStrings) {
+          currentUser.holidayStrings = data.holidayStrings;
+        }
+        if (data.specialShifts) {
+          currentUser.specialShifts = data.specialShifts;
+        }
+        if (data.defaultShift) {
+          currentUser.defaultShift = data.defaultShift;
+        }
+        if (data.settledAccumulated) {
+          currentUser.settledAccumulated = data.settledAccumulated;
+          localStorage.setItem(`tjcpm_settledAccumulated`, JSON.stringify(data.settledAccumulated));
+        }
+        if (data.hasOwnProperty(`isActiveProxy`)) {
+          currentUser.isActiveProxy = data.isActiveProxy;
+        }
+        applyAdminSubTabVisibility();
+        sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+      } else {
+        // 舊版或無 quota 回傳時之手動估算
+        let annualBase = currentUser.empId === `115` ? 24 : (currentUser.empId === `111` ? 112 : 80);
+        let compBase = 16;
+        annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
+        compRemaining = Math.max(0, compBase - compLeaveUsed);
+      }
+
+      document.getElementById(`profileAnnualLeave`).textContent = `${annualRemaining} 小時`;
+      document.getElementById(`profileCompensatoryLeave`).textContent = `${compRemaining} 小時`;
+
+      // 寫入勞基法說明卡中的「今年已請」累計時數
+      document.getElementById(`accumAnnual`).textContent = `${annualLeaveUsed}h`;
+      document.getElementById(`accumComp`).textContent = `${compLeaveUsed}h`;
+      document.getElementById(`accumSick`).textContent = `${sickLeaveUsed}h`;
+      document.getElementById(`accumPersonal`).textContent = `${personalLeaveUsed}h`;
+      document.getElementById(`accumOfficial`).textContent = `${officialLeaveUsed}h`;
+      document.getElementById(`accumMarriage`).textContent = `${marriageLeaveUsed}h`;
+      document.getElementById(`accumFuneral`).textContent = `${funeralLeaveUsed}h`;
+      
+     // 💡 V37-v31: 同步完最新 quota (含 correction) 之後，必須立刻重新執行出勤統計與頁面重繪！
+      calcAttendance();
+      return { ok: true, changed: true };
+    }
+    return { ok: true, changed: false };
+  } catch (e) {
+    console.error(`拉取雲端考勤餘額與累計失敗:`, e);
+    showToast('⚠️ 雲端同步逾時，畫面可能顯示過期資料，請稍後重新整理');
+    return { ok: false, changed: false };
+  }
+}*/
+async function syncProfileAndAccumulatedLeaves() {
+  try {
+    const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
+    if (data.status === `ok` && data.updates) {
+      // 💡 V63: 實裝高階髒檢查 (Dirty Check) 機制！比對本次拉取到的 updates 與原本本地快取的 records
+const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
+const newSnapshotStr = JSON.stringify({ updates: data.updates, quota: data.quota || null });
+const oldSnapshotStr = localStorage.getItem(snapshotKey) || ``;
+const isChanged = oldSnapshotStr !== newSnapshotStr;
+
+if (!isChanged) {
+  console.log(`[Dirty Check] 偵測到雲端資料與上次拉取結果完全一致，自動免除重繪`);
+  return { ok: true, changed: false };
+}
+localStorage.setItem(snapshotKey, newSnapshotStr);
+
+      // 💡 修正：不再整批覆蓋 records，改為「合併」——
+    const keepRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
+    records = [...keepRecords, ...data.updates];
+    saveRecords();
+
+      // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
+      let annualLeaveUsed = 0;
+      let compLeaveUsed = 0;
+      let sickLeaveUsed = 0;
+      let personalLeaveUsed = 0;
+      let officialLeaveUsed = 0;
+      let marriageLeaveUsed = 0;
+      let funeralLeaveUsed = 0;
+
+      // 只累加到「上個月最後一天」為止，且限定在「服務週年」這個週期內（不是自然年1/1~12/31）
+      // 特休那一列不受這個影響——它是直接吃 quota.specialLeaveUsedHours（下面會覆蓋），跟這個迴圈算法不同
+      const cutoffD = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+      const cutoffStr = `${cutoffD.getFullYear()}-${String(cutoffD.getMonth() + 1).padStart(2, `0`)}-${String(cutoffD.getDate()).padStart(2, `0`)}`;
+
+      let anniversaryStartStr = null;
+      if (currentUser && currentUser.joinDate) {
+        const win = getCurrentAnniversaryWindow(currentUser.joinDate);
+        if (win && win.start) {
+          anniversaryStartStr = `${win.start.getFullYear()}-${String(win.start.getMonth() + 1).padStart(2, `0`)}-${String(win.start.getDate()).padStart(2, `0`)}`;
+        }
+      }
+
+      records.forEach(r => {
+        if (r.type === `請假` && isFinalApproved(r.status) && r.date && r.date <= cutoffStr && (!anniversaryStartStr || r.date >= anniversaryStartStr)) {
           const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
           const hours = parseFloat(r.hours) || 0;
           if (leaveType === `特休`) annualLeaveUsed += hours;
