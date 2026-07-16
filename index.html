@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0716</title>
+<title>TJCPM 員工系統07161</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2307,7 +2307,8 @@ async function retractRecord(recordId, type, clientId) {
   
   try {
     const res = await callGAS({
-      action: `retractRecord`,
+     // action: `retractRecord`,
+      action: `cancel`，
       recordId: recordId,
       type: type,
       clientId: clientId
@@ -4400,39 +4401,6 @@ function normalizeDate(str) {
   // 統一輸出格式: YYYY/M/D (無補零)
   return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 }
-
-// Step 2: 使用一致的日期格式
-//function formatDateForComparison(year, month, day) {
-//  // 統一使用此函數產生日期字符串
-//  return `${year}/${month}/${day}`;
-//}
-
-// Step 3: 修改出勤檢查邏輯
-const dailyPunches = {};
-myRecords.forEach(r => {
-  if (r.type === `上班` || r.type === `下班`) {
-    const normD = normalizeDate(r.date);  // 現在統一格式
-    if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
-    if (r.type === `上班`) {
-      if (!dailyPunches[normD].in || r.time < dailyPunches[normD].in) 
-        dailyPunches[normD].in = r.time;
-    }
-  }
-});
-
-// 建立時區安全的日期工具
-//function createLocalDate(year, month, day, hour = 0, minute = 0) {
-//  // 使用本地時區創建日期（不使用 UTC）
-//  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
-//  return date;
-//}
-
-//function getLocalDateString(date) {
-//  // 返回本地時間的 YYYY/M/D 格式
-//  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-//}
-
-
 
 function timeToMin(timeStr) {
   if (!timeStr) return 540; // Default to 09:00 if empty
