@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07162</title>
+<title>TJCPM 員工系統0716</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1003,12 +1003,11 @@ display: inline-block;
 <input class="input-field" id="leaveReason" placeholder="請假原因" />
 </div>
 <div class="input-group" style="margin-bottom:20px;">
-<label class="input-label" style="display:flex; justify-content:space-between; align-items:center;">
-  <span>證明文件（病假/公假等需提供）</span>
-  <a href="https://drive.google.com/drive/folders/1XR_EUQoaJlkDCoxvJZcsPKXN53Xze1xE?usp=drive_link" id="uploadFolderLink" target="_blank" class="pw-toggle-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-color:var(--accent-orange); color:var(--accent-orange);" onclick="return openUploadFolder(event)">📁 前往雲端上傳證明</a>
-</label>
+<label class="input-label">證明文件（病假/公假等需提供，可一次選多個檔案，單檔上限10MB）</label>
+<input type="file" id="leaveProofFiles" multiple accept="image/*,.pdf" style="display:block; margin-top:6px; width:100%;" onchange="handleProofFilesSelected(event, 'leave')" />
+<div id="leaveProofFileList" style="margin-top:6px; font-size:13px; color:var(--card-border);"></div>
 </div>
-<button class="submit-btn orange" onclick="()">送出請假申請</button>
+<button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
 </div>
 
 <!-- 加班 -->
@@ -4024,37 +4023,76 @@ localStorage.setItem(`tjcpm_records`, JSON.stringify(records));
 }
 let pendingClientId = null;
 
-async function prepareUploadFolder() {
-  pendingClientId = `C${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const res = await callGAS({ action: `getUploadFolderLink`, name: currentUser.name, clientId: pendingClientId, purpose: `證明文件` });
-  if (res.status === `ok`) {
-    document.getElementById(`uploadFolderLink`).href = res.folderUrl;
+
+// 選檔案時觸發：檢查大小、更新畫面上的檔名清單
+function handleProofFilesSelected(event, formKey) {
+  const files = Array.from(event.target.files || []);
+  const listEl = document.getElementById(`${formKey}ProofFileList`);
+  const oversized = files.filter(f => f.size > MAX_PROOF_FILE_SIZE);
+  if (oversized.length > 0) {
+    showToast(`⚠️ 「${oversized.map(f => f.name).join(`、`)}」超過 10MB，請壓縮後再選`);
+    event.target.value = ``;
+    pendingProofFiles = [];
+    if (listEl) listEl.textContent = ``;
+    return;
   }
-  return res;
+  pendingProofFiles = files;
+  if (listEl) {
+    listEl.textContent = files.length
+      ? `已選擇 ${files.length} 個檔案：` + files.map(f => `${f.name}（${(f.size / 1024 / 1024).toFixed(1)}MB）`).join(`、`)
+      : ``;
+  }
 }
 
-// 按「前往雲端上傳證明」時，先跟後端要「這位員工自己」的證明文件資料夾連結，
-// 拿到之後才真正開新分頁；避免使用者一直連到寫死的舊資料夾根目錄
-async function openUploadFolder(event) {
-  event.preventDefault();
-  const btn = event.currentTarget;
-  const originalText = btn.textContent;
-  btn.textContent = `⏳ 準備中...`;
-  try {
-    const res = await prepareUploadFolder();
-    if (res.status === `ok`) {
-      window.open(res.folderUrl, `_blank`);
-    } else {
-      alert(`無法取得上傳資料夾連結，請稍後再試`);
-    }
-  } catch (err) {
-    alert(`無法取得上傳資料夾連結，請稍後再試`);
-  } finally {
-    btn.textContent = originalText;
-  }
-  return false;
+// 送出申請前/後清空目前的檔案選取狀態
+function clearProofFileSelection(formKey) {
+  pendingProofFiles = [];
+  const listEl = document.getElementById(`${formKey}ProofFileList`);
+  if (listEl) listEl.textContent = ``;
+  const inputEl = document.getElementById(`${formKey}ProofFiles`);
+  if (inputEl) inputEl.value = ``;
 }
-  
+
+// 把 File 物件讀成純 base64 字串（去掉 data:xxx;base64, 前綴）
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(`,`)[1] || ``);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// 把選好的檔案（可多個）一次上傳給後端，寫入這位員工的證明文件資料夾，檔名自動加上 clientId 前綴
+// 用跟 syncToSheet 一樣的 no-cors 直接 POST：不用讀回應內容，但 await 仍會等後端執行完（含 Drive 寫入）才 resolve，
+// 這樣接下來呼叫 syncToSheet 時，後端掃描 clientId 才保證找得到剛上傳的檔案
+async function uploadProofFiles(clientId, files) {
+  if (!files || files.length === 0) return true;
+  try {
+    const payload = await Promise.all(files.map(async f => ({
+      name: f.name,
+      mimeType: f.type || `application/octet-stream`,
+      data: await fileToBase64(f)
+    })));
+    await fetch(GAS_URL, {
+      method: `POST`,
+      mode: `no-cors`,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: `uploadProofFile`,
+        clientId: clientId,
+        name: currentUser.name,
+        files: payload
+      })
+    });
+    return true;
+  } catch (e) {
+    console.error(`證明文件上傳失敗:`, e);
+    showToast(`⚠️ 證明文件上傳失敗，申請單仍會送出，請之後用「補件」功能補上`);
+    return false;
+  }
+}
+
 function switchTab(tab) {
 if (tab === `admin` && (!currentUser || (currentUser.role !== `admin` && currentUser.role !== `admin1` && currentUser.role !== `admin2`))) {
 return;
