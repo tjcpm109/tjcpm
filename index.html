@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07162</title>
+<title>TJCPM 員工系統0716</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1181,7 +1181,7 @@ display: inline-block;
 <p class="section-title" style="margin-top: 24px;">⚖️ 勞基法常用假別與給薪說明 <span id="profile-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
 <div class="profile-card" style="padding: 16px; background: var(--card-bg); border: 1px solid var(--card-border); overflow-x: auto;">
 <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; padding: 10px; background: var(--card-bg-soft); border-radius: var(--radius); border-left: 4px solid var(--blue-main);">
-<strong>💡 系統請假規範：</strong>請假一律以<strong>小時</strong>為單位，半天假登記為 4 小時，全天假登記為 8 小時。
+<strong>💡 系統請假規範：</strong>請假一律以<strong>小時</strong>為單位，全天假登記為 8 小時。
 </div>
 <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; color: var(--text-primary);">
 <thead>
@@ -3416,7 +3416,7 @@ function formatDateTimeRange(r) {
       const startMin = sh * 60 + sm;
       const endMin = eh * 60 + em;
       const grossHours = ((endMin - startMin) / 60).toFixed(1);
-      hoursText = ` (${hoursVal}h)`;
+      hoursText = ` (${grossHours}h)`;
     }
   }
 
