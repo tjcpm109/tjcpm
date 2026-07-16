@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0716</title>
+<title>TJCPM 員工系統07161</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2207,7 +2207,7 @@ function calculateCompensationBalance() {
   
   return totalOTHours - totalUsedHours;
 }
-function submitOvertime() {
+async function submitOvertime() {
   // 💡 V63: 前端按鈕點擊防重複防抖機制
   if (window.submitOvertimeInFlight) return;
   window.submitOvertimeInFlight = true;
@@ -2220,8 +2220,14 @@ function submitOvertime() {
     return;
   }
 const id = Date.now();
+const clientId: String(id);  
+  
+// 💡 0716：把目前選好、尚未上傳的證明文件先快照下來，並立刻清空選取狀態，避免重複送出
+const filesToUpload = pendingProofFiles.slice();
+clearProofFileSelection(`overtime`);
+
 const record = {
-id, clientId: String(id), type: `加班`, empId: currentUser.empId, name: currentUser.name,
+id, clientId:clientId, type: `加班`, empId: currentUser.empId, name: currentUser.name,
 date: document.getElementById(`otDate`).value, startTime: document.getElementById(`otStart`).value,
 endTime: document.getElementById(`otEnd`).value, reason: document.getElementById(`otReason`).value,
 status: `待審`, timestamp: new Date().toISOString()
@@ -2229,6 +2235,12 @@ status: `待審`, timestamp: new Date().toISOString()
 records.unshift(record);
 saveRecords();
 renderAllList();
+
+if (filesToUpload.length > 0) {
+  showToast(`📤 證明文件上傳中…`);
+  await uploadProofFiles(clientId, filesToUpload, `加班`);
+}
+  
 syncToSheet(record);
 addNotif(`pending`, `加班申請已送出（${record.date}），等待主管審核`);
 showToast(`🌙 加班申請已送出`);
@@ -2248,8 +2260,9 @@ async function submitSupp() {
     return;
   }
 const id = Date.now();
+const clientId = String(id); 
 const record = {
-id, clientId: String(id), type: `補打卡`, subType: document.getElementById(`suppType`).value,
+id, clientId: clientId, type: `補打卡`, subType: document.getElementById(`suppType`).value,
 empId: currentUser.empId, name: currentUser.name,
 date: document.getElementById(`suppDate`).value, time: document.getElementById(`suppTime`).value,
 reason: document.getElementById(`suppReason`).value, status: `待審`, timestamp: new Date().toISOString()
@@ -2257,6 +2270,13 @@ reason: document.getElementById(`suppReason`).value, status: `待審`, timestamp
 records.unshift(record);
 saveRecords();
 renderAllList();
+
+
+if (filesToUpload.length > 0) {
+  showToast(`📤 證明文件上傳中…`);
+  await uploadProofFiles(clientId, filesToUpload, `補打卡`);
+}
+  
 syncToSheet(record);
 addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
 showToast(`🔄 補打卡申請已送出`);
@@ -2287,8 +2307,13 @@ async function submitAdjust() {
   }
   
 const id = Date.now();
+const clientId = String(id);
+  
+const filesToUpload = pendingProofFiles.slice();
+clearProofFileSelection(`schedule`);
+
 const record = {
-id, clientId: String(id), type: `班別調整`, subType: adjustShiftVal,
+id, clientId: clientId, type: `班別調整`, subType: adjustShiftVal,
 empId: currentUser.empId, name: currentUser.name,
 date: adjustDateVal,
 reason: document.getElementById(`adjustReason`).value, status: `待審`, timestamp: new Date().toISOString()
@@ -2296,6 +2321,12 @@ reason: document.getElementById(`adjustReason`).value, status: `待審`, timesta
 records.unshift(record);
 saveRecords();
 renderAllList();
+
+if (filesToUpload.length > 0) {
+  showToast(`📤 證明文件上傳中…`);
+  await uploadProofFiles(clientId, filesToUpload, `班別調整`);
+}
+  
 syncToSheet(record);
 addNotif(`pending`, `班別調整申請已送出（${record.date} ${record.subType}），等待主管審核`);
 showToast(`⚙️ 班別調整申請已送出`);
