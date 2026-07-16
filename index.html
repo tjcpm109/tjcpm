@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0716</title>
+<title>TJCPM 員工系統07161</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1860,6 +1860,9 @@ el.textContent = msg;
 el.style.display = `block`;
 }
 function doLogout() {
+  if (currentUser && currentUser.empId) {
+    localStorage.removeItem(`tjcpm_lastSync_${currentUser.empId}`); // 💡 修正：登出時一併清除髒檢查快照，避免下次登入誤判「沒變化」而跳過合併
+  }
   sessionStorage.removeItem(`tjcpm_user`);
   localStorage.removeItem(`tjcpm_records`);
   localStorage.removeItem(`tjcpm_notif`);
