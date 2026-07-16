@@ -5098,7 +5098,7 @@ function calcAttendance() {
     renderYearlyIssues();
   }
 }
-/ 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
+// 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
 // 共用：從到職日往後推算，找出「截至上個月底」目前落在哪一個服務週年區間
 // getYearRangeString()（本週期文字顯示）跟 syncProfileAndAccumulatedLeaves()（累加篩選）都用這個，避免各寫一次
 function getCurrentAnniversaryWindow(joinDateStr) {
