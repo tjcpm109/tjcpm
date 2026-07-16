@@ -2359,7 +2359,7 @@ async function retractRecord(recordId, type, clientId) {
   try {
     const res = await callGAS({
      // action: `retractRecord`,
-      action: `cancel`，
+      action: `cancel`,
       recordId: recordId,
       type: type,
       clientId: clientId
