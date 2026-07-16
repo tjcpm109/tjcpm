@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07161</title>
+<title>TJCPM 員工系統07162</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1642,8 +1642,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
     navigator.serviceWorker.register(`sw-v89.js`)
-      .then(reg => console.log(`SW-v88 註冊成功:`, reg.scope))
-      .catch(err => console.error(`SW-v30 註冊失敗:`, err));
+      .then(reg => console.log(`SW-v89 註冊成功:`, reg.scope))
+      .catch(err => console.error(`SW-v89 註冊失敗:`, err));
   });
 }
 
@@ -5097,6 +5097,44 @@ function calcAttendance() {
   if (typeof renderYearlyIssues === `function`) {
     renderYearlyIssues();
   }
+}
+/ 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
+// 共用：從到職日往後推算，找出「截至上個月底」目前落在哪一個服務週年區間
+// getYearRangeString()（本週期文字顯示）跟 syncProfileAndAccumulatedLeaves()（累加篩選）都用這個，避免各寫一次
+function getCurrentAnniversaryWindow(joinDateStr) {
+  if (!joinDateStr) return null;
+  const joinParts = joinDateStr.split(/[-/]/);
+  const jYear = parseInt(joinParts[0], 10);
+  const jMonth = parseInt(joinParts[1], 10) - 1; // JS Month is 0-indexed
+  const jDay = parseInt(joinParts[2], 10);
+
+  const now = new Date();
+  // 上月底結算切分日 (D_prev_end)
+  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  prevMonthEnd.setHours(0, 0, 0, 0);
+
+  let y = jYear;
+  let start = null;
+  let end = null;
+  while (true) {
+    const s = new Date(y, jMonth, jDay);
+    const e = new Date(y + 1, jMonth, jDay - 1, 23, 59, 59, 999);
+    if (prevMonthEnd >= s && prevMonthEnd <= e) {
+      start = s;
+      end = e;
+      break;
+    }
+    if (prevMonthEnd < s) {
+      start = new Date(jYear, jMonth, jDay);
+      end = new Date(jYear + 1, jMonth, jDay - 1, 23, 59, 59, 999);
+      break;
+    }
+    y++;
+    if (y > jYear + 100) {
+      break;
+    }
+  }
+  return { start, end, prevMonthEnd };
 }
   
 function isFinalApproved(status) {
