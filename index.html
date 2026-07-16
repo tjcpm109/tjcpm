@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07161</title>
+<title>TJCPM 員工系統0716</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1003,7 +1003,7 @@ display: inline-block;
 <input class="input-field" id="leaveReason" placeholder="請假原因" />
 </div>
 <div class="input-group" style="margin-bottom:20px;">
-<label class="input-label">證明文件（病假/公假等需提供，可一次選多個檔案，單檔上限10MB）</label>
+<label class="input-label">證明文件（病假/公假等需提供，可一次選多個檔案，單檔上限5MB）</label>
 <input type="file" id="leaveProofFiles" multiple accept="image/*,.pdf" style="display:block; margin-top:6px; width:100%;" onchange="handleProofFilesSelected(event, 'leave')" />
 <div id="leaveProofFileList" style="margin-top:6px; font-size:13px; color:var(--card-border);"></div>
 </div>
@@ -1036,6 +1036,11 @@ display: inline-block;
 <label class="input-label">加班原因</label>
 <input class="input-field" id="otReason" placeholder="加班原因" />
 </div>
+<div class="input-group" style="margin-bottom:20px;">
+<label class="input-label">證明文件（如有需要，可一次選多個檔案，單檔上限5MB）</label>
+<input type="file" id="overtimeProofFiles" multiple accept="image/*,.pdf" style="display:block; margin-top:6px; width:100%;" onchange="handleProofFilesSelected(event, 'overtime')" />
+<div id="overtimeProofFileList" style="margin-top:6px; font-size:13px; color:var(--card-border);"></div>
+</div>
 <button class="submit-btn purple" onclick="submitOvertime()">送出加班申請</button>
 </div>
 
@@ -1067,6 +1072,11 @@ display: inline-block;
 <label class="input-label">未打卡原因</label>
 <input class="input-field" id="suppReason" placeholder="請說明未打卡原因" />
 </div>
+<div class="input-group" style="margin-bottom:20px;">
+<label class="input-label">證明文件（如有需要，可一次選多個檔案，單檔上限3MB）</label>
+<input type="file" id="punchfixProofFiles" multiple accept="image/*,.pdf" style="display:block; margin-top:6px; width:100%;" onchange="handleProofFilesSelected(event, 'punchfix')" />
+<div id="punchfixProofFileList" style="margin-top:6px; font-size:13px; color:var(--card-border);"></div>
+</div>
 <button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
 </div>
 
@@ -1095,6 +1105,11 @@ display: inline-block;
 <div class="input-group">
 <label class="input-label">調整原因</label>
 <input class="input-field" id="adjustReason" placeholder="請說明調整班別原因" />
+</div>
+<div class="input-group" style="margin-bottom:20px;">
+<label class="input-label">證明文件（如有需要，可一次選多個檔案，單檔上限10MB）</label>
+<input type="file" id="scheduleProofFiles" multiple accept="image/*,.pdf" style="display:block; margin-top:6px; width:100%;" onchange="handleProofFilesSelected(event, 'schedule')" />
+<div id="scheduleProofFileList" style="margin-top:6px; font-size:13px; color:var(--card-border);"></div>
 </div>
 <button class="submit-btn orange" onclick="submitAdjust()">送出班別調整申請</button>
 </div>
