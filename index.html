@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07162</title>
+<title>TJCPM 員工系統07161</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3407,24 +3407,26 @@ function formatDateTimeRange(r) {
     const h = parseFloat(r.hours);
     hoursVal = isNaN(h) ? r.hours : String(h).replace(/\.0$/, ``);
   }
-  // 💡 0716 修補：請假改用跟後端一致的班別/國定假日/午休感知計算，不再用單純的起訖時間相減
+  // 💡 0716 修補（更正版）：請假/加班畫面預覽都改成「不依賴目前登入者個人班別資料」的單純起訖時間計算
+  // （原本改用 calculateLeaveHoursLocal() 內部會抓 currentUser.specialShifts，
+  //   但主管審核清單顯示的是「員工」的申請，用「主管自己」的班別資料算會算錯，所以退回這個安全版本）
   let hoursText = ``;
-  if (startT && endT && r.type === `請假`) {
-    const leaveHoursForDisplay = calculateLeaveHoursLocal(
-      { date: r.date, endDate: r.endDate, startTime: r.startTime || r.time, endTime: r.endTime, empId: r.empId },
-      currentUser?.holidayStrings || []
-    );
-    hoursText = ` (${leaveHoursForDisplay}h)`;
-  } else if (startT && endT && r.type === `加班`) {
-    // 加班沒有跨日班別問題，維持單純起訖時間相減，但一樣要扣午休（跟後端 calcHoursBetweenTimes 一致），不進位
+  if (startT && endT && (r.type === `請假` || r.type === `加班`)) {
     const [sh, sm] = startT.split(':').map(Number);
     const [eh, em] = endT.split(':').map(Number);
     let startMin = sh * 60 + sm;
     let endMin = eh * 60 + em;
     let diffMin = endMin - startMin;
-    if (startMin < 720 && endMin > 780) diffMin -= 60; // 完全跨過 12:00-13:00 才扣午休
-    const otHours = Math.max(0, diffMin / 60);
-    hoursText = ` (${parseFloat(otHours.toFixed(1))}h)`;
+    if (startMin < 720 && endMin > 780) diffMin -= 60; // 完全跨過 12:00-13:00 才扣午休，跟後端 calcHoursBetweenTimes 一致
+    const rawHours = Math.max(0, diffMin / 60);
+    if (r.type === `請假`) {
+      // 請假才無條件進位（2.5h → 3h），加班維持原本一位小數、不進位
+      const cleanHours = Math.round(rawHours * 100) / 100;
+      const grossHours = cleanHours > 0 ? Math.ceil(cleanHours) : 0;
+      hoursText = ` (${grossHours}h)`;
+    } else {
+      hoursText = ` (${parseFloat(rawHours.toFixed(1))}h)`;
+    }
   } else if (hoursVal) {
     hoursText = ` (${hoursVal}h)`;
   }
@@ -3443,6 +3445,7 @@ function formatDateTimeRange(r) {
     return `${dateStr} ${r.time || ``}`;
   }
 }
+
   
 // 共用：把「證明文件」欄位的原始文字（可能包含多個檔案、多次補件）解析成多個獨立可點連結
 // 格式範例：📁 a.pdf: url1\n📁 b.pdf: url2\n【補件新增】\n📁 c.pdf: url3
