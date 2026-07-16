@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07161</title>
+<title>TJCPM 員工系統07162</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4329,7 +4329,7 @@ if (emailEl) {
   emailEl.textContent = currentUser.email || `—`;
 }
 
-calcAttendance(); // 先用本地快取立即顯示，避免畫面空白
+/*calcAttendance(); // 先用本地快取立即顯示，避免畫面空白
 updateYearIssueLastSyncLabel();
 if (shouldAutoSyncYearlyIssues()) {
   syncProfileAndAccumulatedLeaves().then(result => {
@@ -4337,8 +4337,25 @@ if (shouldAutoSyncYearlyIssues()) {
   });
 } 
 updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
+}*/
+calcAttendance(); // 先用本地快取立即顯示，避免畫面空白
+updateYearIssueLastSyncLabel();
+
+// 💡 修正：先用 currentUser.quota 快取立即回填特休/補休賸餘，避免畫面卡在「未讀入 / — 小時」
+if (currentUser.quota) {
+  const annualEl = document.getElementById(`profileAnnualLeave`);
+  const compEl = document.getElementById(`profileCompensatoryLeave`);
+  if (annualEl) annualEl.textContent = `${currentUser.quota.specialLeaveRemainingHours} 小時`;
+  if (compEl) compEl.textContent = `${currentUser.quota.compLeaveRemainingHours} 小時`;
 }
 
+// 💡 修正：特休/補休賸餘與累計時數屬於「輕量資料」，每次切換到個人資料頁都應該重新拉取最新值，
+// 不應該被「年度出勤異常」專用的每月節流閥卡住
+syncProfileAndAccumulatedLeaves().then(result => {
+  if (result && result.ok && shouldAutoSyncYearlyIssues()) markYearlyIssuesSynced();
+});
+updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
+}
 
   // 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
   function getMonthKey(d) {
