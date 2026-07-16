@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0716</title>
+<title>TJCPM 員工系統07161</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4565,8 +4565,8 @@ localStorage.setItem(snapshotKey, newSnapshotStr);
         }
       });
 
-      let annualRemaining = 24;
-      let compRemaining = 16;
+      let annualRemaining = null;
+      let compRemaining = null;
 
       if (data.quota) {
         annualRemaining = data.quota.specialLeaveRemainingHours;
@@ -4601,8 +4601,8 @@ localStorage.setItem(snapshotKey, newSnapshotStr);
         compRemaining = Math.max(0, compBase - compLeaveUsed);
       }
 
-      document.getElementById(`profileAnnualLeave`).textContent = `${annualRemaining} 小時`;
-      document.getElementById(`profileCompensatoryLeave`).textContent = `${compRemaining} 小時`;
+      document.getElementById(`profileAnnualLeave`).textContent = (annualRemaining === null) ? `⚠️ 暫時無法取得` :`${annualRemaining} 小時`;
+      document.getElementById(`profileCompensatoryLeave`).textContent = (compRemaining === null) ? `⚠️ 暫時無法取得` :`${compRemaining} 小時`;
 
       // 寫入勞基法說明卡中的「今年已請」累計時數
       document.getElementById(`accumAnnual`).textContent = `${annualLeaveUsed}h`;
