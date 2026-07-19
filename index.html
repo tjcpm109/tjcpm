@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07161</title>
+<title>TJCPM 員工系統0720</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2262,6 +2262,8 @@ async function submitSupp() {
     window.submitSuppInFlight = false;
     return;
   }
+const filesToUpload = pendingProofFiles.slice();
+clearProofFileSelection(`supp`);
 const id = Date.now();
 const clientId = String(id); 
 const record = {
@@ -4071,6 +4073,7 @@ function saveRecords() {
 localStorage.setItem(`tjcpm_records`, JSON.stringify(records));
 }
 let pendingClientId = null;
+let pendingProofFiles = [];   // ← 補上這一行
 
 
 // 選檔案時觸發：檢查大小、更新畫面上的檔名清單
