@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07204</title>
+<title>TJCPM 員工系統07205</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1948,7 +1948,7 @@ body: JSON.stringify(record)
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(record)
 });
-if (!res.ok) throw new Error('Sync failed');
+if (!res.ok) throw new Error('Sync failed'+ res.statusText);
 if (el) {
 el.textContent = `✅ 已同步雲端`;
 el.style.color = `var(--green-main)`;
