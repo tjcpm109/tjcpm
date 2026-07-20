@@ -2063,7 +2063,7 @@ if (!isOnline) {
   addNotif(`system`, `${type}離線打卡成功 ${record.time} 📍 (待同步)`);
   showToast(`✅ 離線${type}打卡成功！已加入補傳佇列`);
 } else {
-  await syncToSheet(record);
+  syncToSheet(record);
   addNotif(`system`, `${type}打卡成功 ${record.time} 📍`);
   showToast(type === `上班` ? `✅ 上班打卡成功` : `👋 下班打卡成功`);
 }
