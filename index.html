@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07208</title>
+<title>TJCPM 員工系統07209</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2199,6 +2199,22 @@ async function submitLeave() {
       window.submitLeaveInFlight = false;
       return;
     }
+  } else if (subType === `特休`) {
+    const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
+    const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
+    const requestHours = calculateLeaveHoursLocal(
+      { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
+      currentUser?.holidayStrings || []
+    );
+    const annualBalance = currentUser?.quota?.annual || 0;  // 特休餘額
+    
+    if (requestHours > annualBalance) {
+      showToast(`⚠️ 特休餘額不足！申請時數：${requestHours}h，餘額：${annualBalance}h`);
+      window.submitLeaveInFlight = false;
+      return;
+    }
+  }
+  
   }
   
   const id = Date.now();
