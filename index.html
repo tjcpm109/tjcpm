@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07209</title>
+<title>TJCPM 員工系統07210</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2215,8 +2215,6 @@ async function submitLeave() {
     }
   }
   
-  }
-  
   const id = Date.now();
   const clientId = pendingClientId || String(id);   // ← 優先用表單一開始就準備好的 pendingClientId
   pendingClientId = null;    // ← 加這一行，用完立刻清空
@@ -2257,7 +2255,14 @@ function calculateCompensationBalance() {
   approvedOTs.forEach(r => {
     const startMin = timeToMin(r.startTime || `09:00`);
     const endMin = timeToMin(r.endTime || `18:00`);
-    totalOTHours += (endMin - startMin) / 60;
+    let diffMin = endMin - startMin;  // ← 加這行
+    if (diffMin > 0) {
+      // 如果跨越午休時間（12:00-13:00），減掉 1 小時
+      if (startMin <= 720 && endMin >= 780) {
+        diffMin -= 60;
+      }
+      totalOTHours += diffMin / 60;
+    }
   });
   
   // 取得本年度所有核准的補休時數
@@ -2270,7 +2275,14 @@ function calculateCompensationBalance() {
   usedCompensation.forEach(r => {
     const startMin = timeToMin(r.startTime || `09:00`);
     const endMin = timeToMin(r.endTime || `18:00`);
-    totalUsedHours += (endMin - startMin) / 60;
+    let diffMin = endMin - startMin;
+    if (diffMin > 0) {
+      // 如果跨越午休時間（12:00-13:00），減掉 1 小時
+      if (startMin <= 720 && endMin >= 780) {
+        diffMin -= 60;
+      }
+      totalUsedHours += diffMin / 60;
+    }
   });
   
   return totalOTHours - totalUsedHours;
