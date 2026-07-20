@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0720</title>
+<title>TJCPM 員工系統0720-1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -974,7 +974,8 @@ display: inline-block;
 <label class="input-label">假別</label>
 <select class="select-field" id="leaveType">
 <option>特休</option>
-<option>補休</option>
+<!--<option>補休</option>-->
+<option value="加班補休">補休</option>
 <option>事假</option>
 <option>病假</option>
 <option>公假</option>
@@ -1415,7 +1416,7 @@ display: inline-block;
 <label class="input-label">假別</label>
 <select class="select-field" id="modalLeaveType">
 <option>特休</option>
-<option>補休</option>
+<option value="加班補休">補休</option> <!--<option>補休</option>-->
 <option>事假</option>
 <option>病假</option>
 <option>公假</option>
@@ -2262,10 +2263,11 @@ async function submitSupp() {
     window.submitSuppInFlight = false;
     return;
   }
-const filesToUpload = pendingProofFiles.slice();
-clearProofFileSelection(`supp`);
+
 const id = Date.now();
 const clientId = String(id); 
+const filesToUpload = pendingProofFiles.slice();
+clearProofFileSelection(`punchfix`);
 const record = {
 id, clientId: clientId, type: `補打卡`, subType: document.getElementById(`suppType`).value,
 empId: currentUser.empId, name: currentUser.name,
@@ -4168,7 +4170,8 @@ if (tab === `admin`) loadAdminData();
 if (tab === `profile`) renderProfile();
 }
   
-const RECORDS_SYNC_INTERVAL_MS = 5 * 60 * 1000
+const RECORDS_SYNC_INTERVAL_MS = 5 * 60 * 1000;
+const MAX_PROOF_FILE_SIZE = 5 * 1024 * 1024; // 5MB,對應表單上寫的「單檔上限5MB」
   
 
 function closeModal(type) {
@@ -4749,7 +4752,7 @@ function calculateLeaveHoursLocal(r, holidays) {
     curr.setDate(curr.getDate() + 1);
   } 
   //return parseFloat(totalHours.toFixed(1));
-  return cleanTotal > 0 ? Math.ceil(cleanTotal) : 0;
+  return cleanTotal > 0 ? Math.ceil(totalHours) : 0;
 }
 
  
