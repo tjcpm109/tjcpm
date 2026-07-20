@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07203</title>
+<title>TJCPM 員工系統07204</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2438,7 +2438,14 @@ async function retractRecord(recordId, type, clientId) {
     
     if (res.status === `ok`) {
       showToast(`✅ 已撤回`);
-      location.reload(); // 重新加載頁面
+      //location.reload(); // 重新加載頁面
+      // 重新取得最新資料，不要整個頁面重新加載
+const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
+if (data.status === `ok` && data.records) {
+  records = data.records;
+  saveRecords();
+  renderAllList();
+}
     } else {
       showToast(`⚠️ ` + (res.message || `撤回失敗`));
     }
@@ -4759,7 +4766,7 @@ function calculateLeaveHoursLocal(r, holidays) {
     curr.setDate(curr.getDate() + 1);
   } 
   //return parseFloat(totalHours.toFixed(1));
-  return cleanTotal > 0 ? Math.ceil(totalHours) : 0;
+  return totalHours > 0 ? Math.ceil(totalHours) : 0;
 }
 
  
