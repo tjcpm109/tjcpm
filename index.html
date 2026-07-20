@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07206</title>
+<title>TJCPM 員工系統07207</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1930,25 +1930,14 @@ document.getElementById(`gpsCoords`).textContent = coords;
 }
 
 // ── Sync ──
-async function syncToSheet(record) {
+/*async function syncToSheet(record) {
 const el = document.getElementById(`syncStatus`);
 if (el) {
 el.textContent = `☁️ 同步中…`;
 el.style.color = `var(--blue-light)`;
 }
 try {
-/*await fetch(GAS_URL, {
-method: `POST`,
-mode: `no-cors`,
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify(record)
-});*/
-  /*const res = await callGAS(GAS_URL, {
-  method: `POST`,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(record)
-});
-if (!res.ok) throw new Error('Sync failed'+ res.statusText);*/
+if (!res.ok) throw new Error('Sync failed'+ res.statusText);
   const res = await callGAS(record);
 if (res && res.status === 'ok') {
   if (el) {
@@ -1966,23 +1955,68 @@ el.style.color = `var(--accent-orange)`;
 }
 setTimeout(() => { if (el) el.textContent = ``; }, 4000);
 }
+}*/
+async function syncToSheet(record) {  // 0720
+  const el = document.getElementById(`syncStatus`);
+  if (el) {
+    el.textContent = `☁️ 同步中…`;
+    el.style.color = `var(--blue-light)`;
+  }
+  try {
+    // 用 JSONP 方式呼叫 doGet
+    const cbName = `cb_` + Date.now() + `_` + Math.random().toString(36).slice(2);
+    const url = GAS_URL + `?callback=` + cbName + `&data=` + encodeURIComponent(JSON.stringify(record));
+    
+    const response = await new Promise((resolve, reject) => {
+      const script = document.createElement(`script`);
+      const timer = setTimeout(() => {
+        delete window[cbName];
+        script.remove();
+        reject(new Error('timeout'));
+      }, 15000);
+      
+      window[cbName] = (res) => {
+        clearTimeout(timer);
+        delete window[cbName];
+        script.remove();
+        resolve(res);
+      };
+      
+      script.onerror = () => {
+        clearTimeout(timer);
+        delete window[cbName];
+        script.remove();
+        reject(new Error('network'));
+      };
+      
+      script.src = url;
+      document.head.appendChild(script);
+    });
+    
+    if (response && response.status === 'ok') {
+      if (el) {
+        el.textContent = `✅ 已同步雲端`;
+        el.style.color = `var(--green-main)`;
+      }
+      setTimeout(() => { if (el) el.textContent = ``; }, 3000);
+    } else {
+      throw new Error('Sync failed');
+    }
+  } catch (e) {
+    if (el) {
+      el.textContent = `⚠️ 離線（本機已儲存）`;
+      el.style.color = `var(--accent-orange)`;
+    }
+    setTimeout(() => { if (el) el.textContent = ``; }, 4000);
+  }
 }
 
-// ── Push / Notification ──
-//async function requestPush() {
-//if (!(`Notification` in window)) {
-//showToast(`此裝置不支援通知`);
-//return;
-//}
-//const perm = await Notification.requestPermission();
-//document.getElementById(`pushBanner`).style.display = `none`;
-//if (perm === `granted`) {
-//showToast(`✅ 推播通知已開啟`);
-//addNotif(`system`, `🔔 通知已開啟，審批結果將即時通知您`);
-//} else {
-//showToast(`⚠️ 未允許通知權限`);
-//}
-//}
+
+  
+
+
+
+  
 function sendPush(title, body) {
 if (Notification && Notification.permission === `granted`) new Notification(title, { body });
 }
