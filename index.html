@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0720-2</title>
+<title>TJCPM 員工系統0720</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2063,7 +2063,7 @@ if (!isOnline) {
   addNotif(`system`, `${type}離線打卡成功 ${record.time} 📍 (待同步)`);
   showToast(`✅ 離線${type}打卡成功！已加入補傳佇列`);
 } else {
-  syncToSheet(record);
+  await syncToSheet(record);
   addNotif(`system`, `${type}打卡成功 ${record.time} 📍`);
   showToast(type === `上班` ? `✅ 上班打卡成功` : `👋 下班打卡成功`);
 }
@@ -2246,7 +2246,7 @@ if (filesToUpload.length > 0) {
   await uploadProofFiles(clientId, filesToUpload, `加班`);
 }
   
-syncToSheet(record);
+await syncToSheet(record);
 addNotif(`pending`, `加班申請已送出（${record.date}），等待主管審核`);
 showToast(`🌙 加班申請已送出`);
 }
@@ -2285,7 +2285,7 @@ if (filesToUpload.length > 0) {
   await uploadProofFiles(clientId, filesToUpload, `補打卡`);
 }
   
-syncToSheet(record);
+await syncToSheet(record);
 addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
 showToast(`🔄 補打卡申請已送出`);
 }
@@ -2335,7 +2335,7 @@ if (filesToUpload.length > 0) {
   await uploadProofFiles(clientId, filesToUpload, `班別調整`);
 }
   
-syncToSheet(record);
+await syncToSheet(record);
 addNotif(`pending`, `班別調整申請已送出（${record.date} ${record.subType}），等待主管審核`);
 showToast(`⚙️ 班別調整申請已送出`);
 }
@@ -2479,7 +2479,7 @@ function submitAdminAdjust() {
   records.unshift(record);
   saveRecords();
   renderAllList();
-  syncToSheet(record);
+  await syncToSheet(record);
   
   showToast(`✓ 班別異動指派成功並已直接生效！`);
   document.getElementById(`adminAdjustReason`).value = ``;
@@ -2496,7 +2496,7 @@ status: `待審`, timestamp: new Date().toISOString()
 records.unshift(record);
 saveRecords();
 renderAllList();
-syncToSheet(record);
+await syncToSheet(record);
 addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
 closeModal(`leave`);
 showToast(`📝 請假申請已送出`);
