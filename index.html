@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0720-1</title>
+<title>TJCPM 員工系統0720-2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2178,9 +2178,10 @@ renderAllList();
     await uploadProofFiles(clientId, filesToUpload);
   }
 
-syncToSheet(record);
+await syncToSheet(record);
 addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
 showToast(`📝 請假申請已送出`);
+  window.submitLeaveInFlight = false;  // ← 7/20也要加這行解除鎖定
 }
 
   
