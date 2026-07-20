@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07210</title>
+<title>TJCPM 員工系統07211</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2192,8 +2192,8 @@ async function submitLeave() {
       currentUser?.holidayStrings || []
     );
     // 計算補休餘額
-    const compensationBalance = calculateCompensationBalance();
-    
+    //const compensationBalance = calculateCompensationBalance();
+    const compensationBalance = calculateCompensationBalance(leaveStartVal);
     if (requestHours > compensationBalance) {
       showToast(`⚠️ 補休餘額不足！申請時數：${requestHours}h，餘額：${compensationBalance}h`);
       window.submitLeaveInFlight = false;
@@ -2244,7 +2244,7 @@ showToast(`📝 請假申請已送出`);
 }
 
   
-function calculateCompensationBalance() {
+/*function calculateCompensationBalance() {
   // 取得本年度所有核准的加班時數
   const approvedOTs = records.filter(r => 
     r.empId === currentUser.empId &&
@@ -2286,7 +2286,59 @@ function calculateCompensationBalance() {
   });
   
   return totalOTHours - totalUsedHours;
+}*/
+
+function calculateCompensationBalance(refDateStr) {
+  const baseBalance = currentUser?.quota?.compLeaveRemainingHours || 0;
+  // 「已申請」認定：待審中~已核准，只要不是被拒絕/取消，都要先扣掉
+  const activeStatuses = [`待審`, `補件`, `待第二次審查`, `同意`, `同意_補件後`];
+
+  const refDate = refDateStr ? safeNewDate(refDateStr) : new Date();
+  const y = refDate.getFullYear();
+  const m = refDate.getMonth();
+
+  // 1. 當月「已核准」的加班時數（要加回餘額）
+  const approvedOTsThisMonth = records.filter(r => {
+    if (r.empId !== currentUser.empId) return false;
+    if (r.type !== `加班` || !isFinalApproved(r.status)) return false;
+    const d = safeNewDate(r.date);
+    return d.getFullYear() === y && d.getMonth() === m;
+  });
+
+  let totalOTHours = 0;
+  approvedOTsThisMonth.forEach(r => {
+    const startMin = timeToMin(r.startTime || `09:00`);
+    const endMin = timeToMin(r.endTime || `18:00`);
+    let diffMin = endMin - startMin;
+    if (diffMin > 0) {
+      if (startMin <= 720 && endMin >= 780) diffMin -= 60; // 跨午休扣1小時
+      totalOTHours += diffMin / 60;
+    }
+  });
+
+  // 2. 當月「已申請」的補休時數（待審~已核准，都要先扣掉）
+  const usedCompThisMonth = records.filter(r => {
+    if (r.empId !== currentUser.empId) return false;
+    if (r.type !== `請假` || r.subType !== `加班補休`) return false;
+    if (activeStatuses.indexOf(r.status) === -1) return false;
+    const d = safeNewDate(r.date);
+    return d.getFullYear() === y && d.getMonth() === m;
+  });
+
+  let totalUsedHours = 0;
+  usedCompThisMonth.forEach(r => {
+    const startMin = timeToMin(r.startTime || `09:00`);
+    const endMin = timeToMin(r.endTime || `18:00`);
+    let diffMin = endMin - startMin;
+    if (diffMin > 0) {
+      if (startMin <= 720 && endMin >= 780) diffMin -= 60;
+      totalUsedHours += diffMin / 60;
+    }
+  });
+
+  return baseBalance + totalOTHours - totalUsedHours;
 }
+  
 async function submitOvertime() {
   // 💡 V63: 前端按鈕點擊防重複防抖機制
   if (window.submitOvertimeInFlight) return;
