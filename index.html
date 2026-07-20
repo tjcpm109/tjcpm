@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統07207</title>
+<title>TJCPM 員工系統07208</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -2233,6 +2233,7 @@ showToast(`📝 請假申請已送出`);
 function calculateCompensationBalance() {
   // 取得本年度所有核准的加班時數
   const approvedOTs = records.filter(r => 
+    r.empId === currentUser.empId &&
     r.type === `加班` && isFinalApproved(r.status)
   );
   
@@ -2245,6 +2246,7 @@ function calculateCompensationBalance() {
   
   // 取得本年度所有核准的補休時數
   const usedCompensation = records.filter(r =>
+    r.empId === currentUser.empId &&
     r.type === `請假` && r.subType === `加班補休` && isFinalApproved(r.status)
   );
   
