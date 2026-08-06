@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0804</title>
+<title>TJCPM 員工系統0806</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -3877,6 +3877,7 @@ async function loadAdminData() {
   
   // 💡 V37-v28: 本地快取降級顯示
   let pending = records.filter(r => (r.status === `待審` || r.status === `待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡`));
+  pending.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // ← 新增：舊的在上、新的在下
   adminPendingCache = pending; // 🔧 修復：快取起來，供 approveRecord() 查找
   document.getElementById(`statLeave`).innerHTML = records.filter(r => r.type === `請假` && (r.status === `待審` || r.status === `待第二次審查`)).length + `<span>筆</span>`;
   document.getElementById(`statOT`).innerHTML = records.filter(r => (r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`) && (r.status === `待審` || r.status === `待第二次審查`)).length + `<span>筆</span>`;
@@ -3896,6 +3897,7 @@ async function loadAdminData() {
     // 💡 V37-v28: 若後台有傳回實時所有員工的待審核清單，直接用後台數據更新
     if (data && data.pending) {
       const pendingList = data.pending;
+      pendingList.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // ← 新增：舊的在上
       adminPendingCache = pendingList; // 🔧 修復：以伺服器最新待審清單更新快取
       const leavePendingCount = pendingList.filter(r => r.type === `請假`).length;
       const otPendingCount = pendingList.filter(r => r.type === `加班` || r.type === `補打卡`).length;
@@ -4739,8 +4741,8 @@ async function syncProfileAndAccumulatedLeaves() {
 
       // 只累加到「上個月最後一天」為止，且限定在「服務週年」這個週期內（不是自然年1/1~12/31）
       // 特休那一列不受這個影響——它是直接吃 quota.specialLeaveUsedHours（下面會覆蓋），跟這個迴圈算法不同
-      const cutoffD = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-      const cutoffStr = `${cutoffD.getFullYear()}-${String(cutoffD.getMonth() + 1).padStart(2, `0`)}-${String(cutoffD.getDate()).padStart(2, `0`)}`;
+      // 8/6 const cutoffD = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+      // 8/6 const cutoffStr = `${cutoffD.getFullYear()}-${String(cutoffD.getMonth() + 1).padStart(2, `0`)}-${String(cutoffD.getDate()).padStart(2, `0`)}`;
 
       let anniversaryStartStr = null;
       if (currentUser && currentUser.joinDate) {
@@ -4751,8 +4753,9 @@ async function syncProfileAndAccumulatedLeaves() {
       }
 
       records.forEach(r => {
-        if (r.type === `請假` && isFinalApproved(r.status) && r.date && r.date <= cutoffStr && (!anniversaryStartStr || r.date >= anniversaryStartStr)) {
-          const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
+       // if (r.type === `請假` && isFinalApproved(r.status) && r.date && r.date <= cutoffStr && (!anniversaryStartStr || r.date >= anniversaryStartStr)) {
+       if (r.type === `請假` && isFinalApproved(r.status) && r.date && (!anniversaryStartStr || r.date >= anniversaryStartStr)) {   
+         const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
           const hours = parseFloat(r.hours) || 0;
           if (leaveType === `特休`) annualLeaveUsed += hours;
           else if (leaveType === `補休`) compLeaveUsed += hours;
