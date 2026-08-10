@@ -2562,8 +2562,15 @@ async function retractRecord(recordId, type, clientId) {
       //location.reload(); // 重新加載頁面
       // 重新取得最新資料，不要整個頁面重新加載
 const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
-if (data.status === `ok` && data.records) {
-  records = data.records;
+if (data.status === `ok` && data.updates) {
+  data.updates.forEach(u => {
+    const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
+    if (existing) {
+      Object.assign(existing, u);
+    } else {
+      records.push(u);
+    }
+  });
   saveRecords();
   renderAllList();
 }
