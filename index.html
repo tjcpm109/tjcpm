@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0806</title>
+<title>TJCPM 員工系統0810</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -4617,109 +4617,7 @@ window.manualRefreshYearlyIssues = async function() {
   if (btn) { btn.disabled = false; btn.textContent = `🔄 更新`; }
 };
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
-/* 0716 async function syncProfileAndAccumulatedLeaves() {
-  try {
-    const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
-    if (data.status === `ok` && data.updates) {
-      // 💡 V63: 實裝高階髒檢查 (Dirty Check) 機制！比對本次拉取到的 updates 與原本本地快取的 records
-const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
-const newSnapshotStr = JSON.stringify({ updates: data.updates, quota: data.quota || null });
-const oldSnapshotStr = localStorage.getItem(snapshotKey) || ``;
-const isChanged = oldSnapshotStr !== newSnapshotStr;
 
-if (!isChanged) {
-  console.log(`[Dirty Check] 偵測到雲端資料與上次拉取結果完全一致，自動免除重繪`);
-  return { ok: true, changed: false };
-}
-localStorage.setItem(snapshotKey, newSnapshotStr);
-
-      // 💡 修正：不再整批覆蓋 records，改為「合併」——
-    const keepRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
-    records = [...keepRecords, ...data.updates];
-    saveRecords();
-
-      // 精算特休與補休餘額 (優先自後台 quota 獲取，保持與 Excel 絕對對齊)
-      let annualLeaveUsed = 0;
-      let compLeaveUsed = 0;
-      let sickLeaveUsed = 0;
-      let personalLeaveUsed = 0;
-      let officialLeaveUsed = 0;
-      let marriageLeaveUsed = 0;
-      let funeralLeaveUsed = 0;
-
-      records.forEach(r => {
-        if (r.type === `請假` && isFinalApproved(r.status)) {
-          const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
-          const hours = parseFloat(r.hours) || 0;
-          if (leaveType === `特休`) annualLeaveUsed += hours;
-          else if (leaveType === `補休`) compLeaveUsed += hours;
-          else if (leaveType === `病假`) sickLeaveUsed += hours;
-          else if (leaveType === `事假`) personalLeaveUsed += hours;
-          else if (leaveType === `公假`) officialLeaveUsed += hours;
-          else if (leaveType === `婚假`) marriageLeaveUsed += hours;
-          else if (leaveType === `喪假`) funeralLeaveUsed += hours;
-        }
-      });
-
-      let annualRemaining = 24;
-      let compRemaining = 16;
-
-      if (data.quota) {
-        annualRemaining = data.quota.specialLeaveRemainingHours;
-        compRemaining = data.quota.compLeaveRemainingHours;
-        annualLeaveUsed = data.quota.specialLeaveUsedHours;
-        
-        // 同步儲存至 currentUser 中，確保全系統共享
-        currentUser.quota = data.quota;
-        if (data.holidayStrings) {
-          currentUser.holidayStrings = data.holidayStrings;
-        }
-        if (data.specialShifts) {
-          currentUser.specialShifts = data.specialShifts;
-        }
-        if (data.defaultShift) {
-          currentUser.defaultShift = data.defaultShift;
-        }
-        if (data.settledAccumulated) {
-          currentUser.settledAccumulated = data.settledAccumulated;
-          localStorage.setItem(`tjcpm_settledAccumulated`, JSON.stringify(data.settledAccumulated));
-        }
-        if (data.hasOwnProperty(`isActiveProxy`)) {
-          currentUser.isActiveProxy = data.isActiveProxy;
-        }
-        applyAdminSubTabVisibility();
-        sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
-      } else {
-        // 舊版或無 quota 回傳時之手動估算
-        let annualBase = currentUser.empId === `115` ? 24 : (currentUser.empId === `111` ? 112 : 80);
-        let compBase = 16;
-        annualRemaining = Math.max(0, annualBase - annualLeaveUsed);
-        compRemaining = Math.max(0, compBase - compLeaveUsed);
-      }
-
-      document.getElementById(`profileAnnualLeave`).textContent = `${annualRemaining} 小時`;
-      document.getElementById(`profileCompensatoryLeave`).textContent = `${compRemaining} 小時`;
-
-      // 寫入勞基法說明卡中的「今年已請」累計時數
-      document.getElementById(`accumAnnual`).textContent = `${annualLeaveUsed}h`;
-      document.getElementById(`accumComp`).textContent = `${compLeaveUsed}h`;
-      document.getElementById(`accumSick`).textContent = `${sickLeaveUsed}h`;
-      document.getElementById(`accumPersonal`).textContent = `${personalLeaveUsed}h`;
-      document.getElementById(`accumOfficial`).textContent = `${officialLeaveUsed}h`;
-      document.getElementById(`accumMarriage`).textContent = `${marriageLeaveUsed}h`;
-      document.getElementById(`accumFuneral`).textContent = `${funeralLeaveUsed}h`;
-      
-     // 💡 V37-v31: 同步完最新 quota (含 correction) 之後，必須立刻重新執行出勤統計與頁面重繪！
-      calcAttendance();
-      return { ok: true, changed: true };
-    }
-    return { ok: true, changed: false };
-  } catch (e) {
-    console.error(`拉取雲端考勤餘額與累計失敗:`, e);
-    showToast('⚠️ 雲端同步逾時，畫面可能顯示過期資料，請稍後重新整理');
-    return { ok: false, changed: false };
-  }
-}*/
 async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
