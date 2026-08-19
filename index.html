@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0819-2</title>
+<title>TJCPM 員工系統0819-3</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -931,18 +931,24 @@ display: inline-block;
       </tbody>
     </table>
   </div>
+<div style="display:none;">
   <p class="section-title" style="margin-top:16px;">⚠️ 到職年度出勤異常明細</p>
   <div id="empYearIssueList">
     <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">載入中…</div></div>
   </div>
-
+</div>
   <!-- 📌 查詢表單：只選月份，不用選年度（預設查今年） -->
-  <p class="section-title" style="margin-top:28px;">🔍 查詢特定月份</p>
+  <!-- 📌 查詢表單：年度＋月份 -->
+  <p class="section-title" style="margin-top:28px;">🔍 查詢特定年月</p>
   <div class="profile-card" style="padding:14px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+    <div style="flex:1; min-width:100px;">
+      <label class="input-label">年度</label>
+      <select class="select-field" id="queryYearSelect"></select>
+    </div>
     <div style="flex:1; min-width:140px;">
       <label class="input-label">月份</label>
       <select class="select-field" id="queryMonthSelect">
-        <option value="">全年（今年）</option>
+       <!-- <option value="">全年</option>-->
         <option value="1">1月</option><option value="2">2月</option>
         <option value="3">3月</option><option value="4">4月</option>
         <option value="5">5月</option><option value="6">6月</option>
@@ -2721,10 +2727,11 @@ function switchRecordSubTab(sub) {
 
   if (sub === `year`) {
     renderEmploymentYearSummary();          // ✅ 上方固定資料，每次切分頁都重新載入
+    initYearMonthQuerySelectors();          // 💡 補上：每次切到此分頁都重建「年度」下拉，從到職年排到今年
     const resultArea = document.getElementById(`queryResultArea`);
     if (resultArea) resultArea.style.display = `none`;   // ✅ 查詢結果先隱藏，等使用者按查詢才顯示
     const monthSel = document.getElementById(`queryMonthSelect`);
-    if (monthSel) monthSel.value = ``;       // 重置成「全年（今年）」
+    if (monthSel) monthSel.value = ``;       // 重置成「全年」
   }
 
   renderAllList();
@@ -4857,7 +4864,7 @@ function renderEmploymentYearSummary() {
   if (lateEl) lateEl.textContent = lateEarlyCount + ` 次`;
 
   const range = getCurrentEmploymentYearRange();
-  renderAttendanceIssuesForRange(range.start, range.end, `empYearIssueList`);
+  // if disply not onne:  renderAttendanceIssuesForRange(range.start, range.end, `empYearIssueList`);
 }
  // 💡 改成通用版本：傳入 start/end，不再寫死「目前到職週年」
 // calcAttendance() 內建自動呼叫時，仍傳入 getCurrentEmploymentYearRange()，行為不變
@@ -5571,29 +5578,24 @@ function countMissedLateEarlyInRange(start, end) {
   return { missedCount, lateEarlyCount };
 }
 
-// 主查詢入口
 function queryYearMonthRecords() {
   if (!currentUser) return;
-  const year = new Date().getFullYear(); // 表單只選月份，年度固定查今年
+  const yearVal = document.getElementById(`queryYearSelect`).value;
+  const year = yearVal ? parseInt(yearVal, 10) : new Date().getFullYear();
   const monthVal = document.getElementById(`queryMonthSelect`).value;
   const month = monthVal ? parseInt(monthVal, 10) : null;
-
   const { start, end } = getQueryDateRange(year, month);
-
   const rangeSpan = document.getElementById(`y-range-span`);
   if (rangeSpan) rangeSpan.textContent = month ? `(${year}/${month} 全月)` : `(${year} 全年)`;
-
   const otHours = sumApprovedHoursInRange(`加班`, start, end);
   const leaveHours = sumApprovedHoursInRange(`請假`, start, end);
   const { missedCount, lateEarlyCount } = countMissedLateEarlyInRange(start, end);
-
   document.getElementById(`y-ot`).textContent = otHours.toFixed(1) + ` h`;
   document.getElementById(`y-miss`).textContent = missedCount + ` 次`;
   document.getElementById(`y-lateearly`).textContent = lateEarlyCount + ` 次`;
   document.getElementById(`y-leave`).textContent = leaveHours.toFixed(1) + ` h`;
-
-  document.getElementById(`queryResultArea`).style.display = `block`; // 💡補上：查完要打開才看得到
-  renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`); // 💡改成按月分組
+  document.getElementById(`queryResultArea`).style.display = `block`;
+  renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`);
 }
 </script>
 </body>
