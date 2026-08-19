@@ -145,7 +145,6 @@
             <span id="compDetailUsed" class="detail-value text-red">— h</span>
           </div>
           <div id="compDetailWarning" class="warning-box" style="display:none;">
-            ⚠️ 補休採服務週年制，逾期未休將歸零，如需保留請洽人資辦理校正登記。
           </div>
         </div>
       </div>
@@ -433,14 +432,26 @@
         <div class="record-list" id="allRecordsList"></div>
       </div>
 
-      <div id="record-apply-content" style="display:none;">
+<div id="record-apply-content" style="display:none;">
         <p class="section-title">📋 申請單明細 <span id="apply-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
-        <div class="filter-bar" style="margin-bottom: 16px;">
-          <div class="filter-chip active" onclick="filterApplyRecords('請假',this)">🌴 請假</div>
-          <div class="filter-chip" onclick="filterApplyRecords('加班',this)">⏰ 加班</div>
-          <div class="filter-chip" onclick="filterApplyRecords('補打卡',this)">🔄 補打卡</div>
-          <div class="filter-chip" onclick="filterApplyRecords('班別調整',this)">⚙️ 班別調整</div>
+        
+        <!-- 主要類型選擇器 -->
+        <div class="filter-bar" style="margin-bottom: 10px;">
+          <div class="filter-chip active" onclick="filterApplyMainCategory('請假', this)">🌴 請假單</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('加班', this)">⏰ 加班單</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('補打卡', this)">🔄 補打卡</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('班別調整', this)">⚙️ 班別調整</div>
         </div>
+
+        <!-- 請假專屬的細項假別二次篩選器 -->
+        <div class="filter-bar" id="leaveSubFilterBar" style="margin-bottom: 16px; gap: 6px;">
+          <div class="subtab-chip active" onclick="filterLeaveSubCategory('全部', this)" style="font-size:12px; padding:4px 10px;">全選</div>
+          <div class="subtab-chip" onclick="filterLeaveSubCategory('特休', this)" style="font-size:12px; padding:4px 10px;">🌴 特休</div>
+          <div class="subtab-chip" onclick="filterLeaveSubCategory('加班補休', this)" style="font-size:12px; padding:4px 10px;">⏰ 補休</div>
+          <div class="subtab-chip" onclick="filterLeaveSubCategory('公假', this)" style="font-size:12px; padding:4px 10px;">🏛️ 公假</div>
+          <div class="subtab-chip" onclick="filterLeaveSubCategory('其他假別', this)" style="font-size:12px; padding:4px 10px;">📁 其他假別</div>
+        </div>
+
         <div class="record-list" id="applyRecordsList"></div>
       </div>
     </div>
@@ -501,18 +512,6 @@
             <input type="password" class="input-field" id="pwConfirm" placeholder="再次輸入新密碼" />
           </div>
           <button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
-        </div>
-      </div>
-
-      <p class="section-title">🌴 特休與補休賸餘額度</p>
-      <div class="profile-card" style="padding: 16px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
-          <span style="font-weight: bold; color: var(--green-light);">🌴 特休賸餘</span>
-          <span id="profileAnnualLeave" style="font-size: 18px; font-weight: bold; color: var(--text-primary);">— 小時</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
-          <span style="font-weight: bold; color: var(--accent-purple);">⏰ 補休賸餘</span>
-          <span id="profileCompensatoryLeave" style="font-size: 18px; font-weight: bold; color: var(--text-primary);">— 小時</span>
         </div>
       </div>
 
