@@ -908,18 +908,41 @@ display: inline-block;
     </div>
 
     <!-- 0819年度累計頁籤內容 -->
+<!-- 年度彙整頁籤內容 -->
 <div id="record-year-content" style="display:none;">
 
-  <!-- 查詢列 -->
+  <!-- 📌 上方：固定顯示「到職年度」彙整資料，切到此分頁自動載入 -->
+  <p class="section-title">📊 到職年度出勤彙整 <span id="emp-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+  <div class="profile-card" style="padding:12px; overflow-x:auto;">
+    <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
+      <thead>
+        <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
+          <th style="padding:8px;">⏰ 加班時數</th>
+          <th style="padding:8px;">🔄 漏打卡次數</th>
+          <th style="padding:8px;">⚠️ 遲到/早退次數</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="color:var(--text-primary); font-weight:bold;">
+          <td id="emp-ot" style="padding:8px; color:var(--blue-main);">— h</td>
+          <td id="emp-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
+          <td id="emp-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="section-title" style="margin-top:16px;">⚠️ 到職年度出勤異常明細</p>
+  <div id="empYearIssueList">
+    <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">載入中…</div></div>
+  </div>
+
+  <!-- 📌 查詢表單：只選月份，不用選年度（預設查今年） -->
+  <p class="section-title" style="margin-top:28px;">🔍 查詢特定月份</p>
   <div class="profile-card" style="padding:14px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
-    <div style="flex:1; min-width:100px;">
-      <label class="input-label">年度</label>
-      <select class="select-field" id="queryYearSelect"></select>
-    </div>
-    <div style="flex:1; min-width:100px;">
+    <div style="flex:1; min-width:140px;">
       <label class="input-label">月份</label>
       <select class="select-field" id="queryMonthSelect">
-        <option value="">全年</option>
+        <option value="">全年（今年）</option>
         <option value="1">1月</option><option value="2">2月</option>
         <option value="3">3月</option><option value="4">4月</option>
         <option value="5">5月</option><option value="6">6月</option>
@@ -931,32 +954,33 @@ display: inline-block;
     <button class="submit-btn blue" style="margin-top:0; width:auto; padding:12px 20px;" onclick="queryYearMonthRecords()">🔍 查詢</button>
   </div>
 
-  <p class="section-title">📊 查詢期間出勤彙整 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
-  <div class="profile-card" style="padding:12px; overflow-x:auto;">
-    <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
-      <thead>
-        <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
-          <th style="padding:8px;">⏰ 加班時數</th>
-          <th style="padding:8px;">🔄 漏打卡次數</th>
-          <th style="padding:8px;">⚠️ 遲到/早退次數</th>
-          <th style="padding:8px;">🌴 請假時數</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="color:var(--text-primary); font-weight:bold;">
-          <td id="y-ot" style="padding:8px; color:var(--blue-main);">— h</td>
-          <td id="y-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
-          <td id="y-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
-          <td id="y-leave" style="padding:8px; color:var(--green-main);">— h</td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- 📌 查詢結果：按查詢後才顯示 -->
+  <div id="queryResultArea" style="display:none;">
+    <p class="section-title">📊 查詢結果 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+    <div class="profile-card" style="padding:12px; overflow-x:auto;">
+      <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
+        <thead>
+          <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
+            <th style="padding:8px;">⏰ 加班時數</th>
+            <th style="padding:8px;">🔄 漏打卡次數</th>
+            <th style="padding:8px;">⚠️ 遲到/早退次數</th>
+            <th style="padding:8px;">🌴 請假時數</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="color:var(--text-primary); font-weight:bold;">
+            <td id="y-ot" style="padding:8px; color:var(--blue-main);">— h</td>
+            <td id="y-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
+            <td id="y-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
+            <td id="y-leave" style="padding:8px; color:var(--green-main);">— h</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-title" style="margin-top:24px;">⚠️ 查詢期間出勤異常明細</p>
+    <div id="yearIssueList"></div>
   </div>
 
-  <p class="section-title" style="margin-top:24px;">⚠️ 查詢期間出勤異常明細</p>
-  <div id="yearIssueList">
-    <div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">請選擇年月後點擊查詢</div></div>
-  </div>
 </div>
 
     <!-- 打卡明細 (純打卡日曆) -->
@@ -1645,9 +1669,6 @@ function getYearRangeString(joinDateStr, quota) {
 function updateAllYearRanges() {
   if (!currentUser || !currentUser.joinDate) return;
   const rangeStr = getYearRangeString(currentUser.joinDate, currentUser.quota);
-  
-  const yRangeEl = document.getElementById(`y-range-span`);
-  if (yRangeEl) yRangeEl.textContent = `(${rangeStr})`;
   
   const applyRangeEl = document.getElementById(`apply-range-span`);
   if (applyRangeEl) applyRangeEl.textContent = `(${rangeStr})`;
@@ -2698,11 +2719,13 @@ function switchRecordSubTab(sub) {
     if (elTab) elTab.classList.toggle(`active`, s === sub);
     if (elCont) elCont.style.display = s === sub ? `block` : `none`;
   });
+
   if (sub === `year`) {
-    if (!document.getElementById(`queryYearSelect`).options.length) {
-      initYearMonthQuerySelectors();
-    }
-    queryYearMonthRecords();
+    renderEmploymentYearSummary();          // ✅ 上方固定資料，每次切分頁都重新載入
+    const resultArea = document.getElementById(`queryResultArea`);
+    if (resultArea) resultArea.style.display = `none`;   // ✅ 查詢結果先隱藏，等使用者按查詢才顯示
+    const monthSel = document.getElementById(`queryMonthSelect`);
+    if (monthSel) monthSel.value = ``;       // 重置成「全年（今年）」
   }
 
   renderAllList();
@@ -4577,29 +4600,6 @@ function renderProfile() {
   updateAllYearRanges(); // 💡 V37-v29: 實時更新年度區間
 }
 
-  // 💡 年度異常明細：每月僅需自動同步一次(月初)，其餘時間用本地快取即可
-  function getMonthKey(d) {
-  const now = d || new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, `0`)}`;
-}
-  
-function manualRefreshYearlyIssues() {
-  const btn = document.getElementById('yearIssueRefreshBtn');
-  if (btn) btn.disabled = true;
-  
-  renderYearlyIssues();
-  
-  const syncEl = document.getElementById('yearIssueLastSync');
-  if (syncEl) {
-    const now = new Date();
-    syncEl.textContent = `最後更新：${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-  }
-  
-  setTimeout(() => {
-    if (btn) btn.disabled = false;
-  }, 1000);
-}
-
   function shouldSyncRecordsNow() {
   const lastSyncStr = localStorage.getItem(`tjcpm_recordsLastSyncTime`);
   if (!lastSyncStr) return true; // 從沒同步過（例如新裝置第一次登入）→ 一定要同步
@@ -4610,19 +4610,6 @@ function markRecordsSynced() {
   localStorage.setItem(`tjcpm_recordsLastSyncTime`, new Date().toISOString());
 }
 
-// 手動按下 🔄 按鈕：強制重新同步，不管本月是否已同步過
-window.manualRefreshYearlyIssues = async function() {
-  const btn = document.getElementById(`yearIssueRefreshBtn`);
-  if (btn) { btn.disabled = true; btn.textContent = `⏳ 更新中…`; }
-  const result = await syncProfileAndAccumulatedLeaves();
-  if (result && result.ok) {
-    markYearlyIssuesSynced();
-    showToast(result.changed ? `✅ 已更新最新出勤異常資料` : `ℹ️ 資料沒有變動，已是最新`);
-  } else {
-    showToast(`⚠️ 更新失敗，請確認網路連線`);
-  }
-  if (btn) { btn.disabled = false; btn.textContent = `🔄 更新`; }
-};
 // 實時向後端拉取最新的特休、補休餘額與年度假別累加時數
 
 async function syncProfileAndAccumulatedLeaves() {
@@ -4847,16 +4834,42 @@ function calculateLeaveHoursLocal(r, holidays) {
   return totalHours > 0 ? Math.ceil(totalHours) : 0;
 }
 
+
+  // 📌 上方固定顯示：到職年度彙整資料（用後端已結算的 settledAccumulated，跟個人資料頁邏輯一致）
+function renderEmploymentYearSummary() {
+  if (!currentUser) return;
+
+  const rangeStr = getYearRangeString(currentUser.joinDate, currentUser.quota);
+  const rangeSpan = document.getElementById(`emp-range-span`);
+  if (rangeSpan) rangeSpan.textContent = rangeStr ? `(${rangeStr})` : ``;
+
+  let otHours = 0, missedCount = 0, lateEarlyCount = 0;
+  if (currentUser.settledAccumulated) {
+    otHours = currentUser.settledAccumulated.yOtHours || 0;
+    missedCount = currentUser.settledAccumulated.yMissedCount || 0;
+    lateEarlyCount = currentUser.settledAccumulated.yLateEarlyCount || 0;
+  }
+
+  const otEl = document.getElementById(`emp-ot`);
+  const missEl = document.getElementById(`emp-miss`);
+  const lateEl = document.getElementById(`emp-lateearly`);
+  if (otEl) otEl.textContent = otHours.toFixed(1) + ` h`;
+  if (missEl) missEl.textContent = missedCount + ` 次`;
+  if (lateEl) lateEl.textContent = lateEarlyCount + ` 次`;
+
+  const range = getCurrentEmploymentYearRange();
+  renderAttendanceIssuesForRange(range.start, range.end, `empYearIssueList`);
+}
  // 💡 改成通用版本：傳入 start/end，不再寫死「目前到職週年」
 // calcAttendance() 內建自動呼叫時，仍傳入 getCurrentEmploymentYearRange()，行為不變
 // 查詢按鈕呼叫時，改傳入使用者選的年/月區間
-function renderAttendanceIssuesForRange(startDate, endDate) {
-  const el = document.getElementById(`yearIssueList`);
+function renderAttendanceIssuesForRange(startDate, endDate, targetElId) {
+  const el = document.getElementById(targetElId || `yearIssueList`);
   if (!el) return;
   if (!currentUser || currentUser.empType === `兼任`) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">兼任同仁不計算漏打卡與遲到/早退</div></div>`;
     return;
-  }
+  } 
 
   const earliestD = getEarliestCheckDate();
   const now = new Date();
@@ -5124,11 +5137,6 @@ function calcAttendance() {
         return { start: leaveStartMin, end: leaveEndMin };
       });
 
-      // 2. Helper functions
-     function isRangeExempted(start, end, dayLeaves) {
-     return dayLeaves.some(leave => leave.start < end && leave.end > start);
-      }
-
       // 💡 V37-v34: 自動依據『特別排班』工作表適應上下班起迄，不再寫死 09:00 - 18:00
       const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
       const isFullDayExempted = isRangeExempted(shift.start, shift.end, dayLeaves);
@@ -5191,40 +5199,6 @@ function calcAttendance() {
   if (mLateEl) mLateEl.textContent = lateCount + ` 次`;
   if (mEarlyEl) mEarlyEl.textContent = earlyCount + ` 次`;
   if (mLeaveEl) mLeaveEl.textContent = leaveHours.toFixed(1) + ` h`;
-
-  // Update yearly summary elements
-  const yOtEl = document.getElementById(`y-ot`);
-  const yMissEl = document.getElementById(`y-miss`);
-  const yLateEarlyEl = document.getElementById(`y-lateearly`);
-
-  // 💡 V37-v44: 直接讀取由每月出缺勤統計加總得出的年度已結算指標 (到職月~前一個月)
-  let yOtHours = 0;
-  let yMissedCount = 0;
-  let yLateCount = 0;
-  let yEarlyCount = 0;
-
-  if (currentUser && currentUser.settledAccumulated) {
-    yOtHours = currentUser.settledAccumulated.yOtHours || 0;
-    yMissedCount = currentUser.settledAccumulated.yMissedCount || 0;
-    // 遲到與早退合併統計為 yLateCount
-    yLateCount = currentUser.settledAccumulated.yLateEarlyCount || 0;
-  }
-  if (currentUser) {
-    if (currentUser.settledAccumulated) {
-      if (yOtEl) yOtEl.textContent = yOtHours.toFixed(1) + ` h`;
-      if (yMissEl) yMissEl.textContent = yMissedCount + ` 次`;
-      if (yLateEarlyEl) yLateEarlyEl.textContent = yLateCount + ` 次`;
-    } else {
-      if (yOtEl) yOtEl.textContent = `登入中…`;
-      if (yMissEl) yMissEl.textContent = `登入中…`;
-      if (yLateEarlyEl) yLateEarlyEl.textContent = `登入中…`;
-    }
-  }
-    // 💡 只有停留在「年度彙整」分頁時，calcAttendance 才順帶重繪異常明細（避免蓋掉使用者剛查詢的其他年月結果）
-  if (currentRecordSubTab === `year` && typeof renderAttendanceIssuesForRange === `function`) {
-    const range = getCurrentEmploymentYearRange();
-    renderAttendanceIssuesForRange(range.start, range.end);
-  }
 }
 // 💡 V37-v29: 取得格式化後的年度考勤區間字串 (智慧大腦：歷史校正與到職年月合併考量)
 // 共用：從到職日往後推算，找出「截至上個月底」目前落在哪一個服務週年區間
