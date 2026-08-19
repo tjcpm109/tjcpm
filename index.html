@@ -9,11 +9,10 @@
   <meta name="apple-mobile-web-app-title" content="TJCPM">
   <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
   <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-  <title>TJCPM 員工系統</title>
+  <title>TJCPM 員工系統 v1</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <!-- Login -->
   <div id="loginScreen">
     <div class="login-logo">
@@ -128,23 +127,6 @@
             <div class="balance-title purple">⏰ 補休</div>
             <div id="leaveCompBalance" class="balance-value">— <span class="unit">小時</span></div>
             <div id="leaveCompPending" class="balance-pending"></div>
-          </div>
-        </div>
-
-        <div class="detail-toggle-wrapper">
-          <button type="button" class="btn-toggle-detail" onclick="toggleCompDetail()">查看補休明細 ▾</button>
-        </div>
-
-        <div id="compDetailArea" class="comp-detail-area">
-          <div class="detail-row">
-            <span>加班轉入</span>
-            <span id="compDetailOt" class="detail-value">— h</span>
-          </div>
-          <div class="detail-row">
-            <span>請假扣抵</span>
-            <span id="compDetailUsed" class="detail-value text-red">— h</span>
-          </div>
-          <div id="compDetailWarning" class="warning-box" style="display:none;">
           </div>
         </div>
       </div>
@@ -445,11 +427,11 @@
 
         <!-- 請假專屬的細項假別二次篩選器 -->
         <div class="filter-bar" id="leaveSubFilterBar" style="margin-bottom: 16px; gap: 6px;">
-          <div class="subtab-chip active" onclick="filterLeaveSubCategory('全部', this)" style="font-size:12px; padding:4px 10px;">全選</div>
-          <div class="subtab-chip" onclick="filterLeaveSubCategory('特休', this)" style="font-size:12px; padding:4px 10px;">🌴 特休</div>
+          <div class="subtab-chip active" onclick="filterLeaveSubCategory('特休', this)" style="font-size:12px; padding:4px 10px;">🌴 特休</div>
           <div class="subtab-chip" onclick="filterLeaveSubCategory('加班補休', this)" style="font-size:12px; padding:4px 10px;">⏰ 補休</div>
           <div class="subtab-chip" onclick="filterLeaveSubCategory('公假', this)" style="font-size:12px; padding:4px 10px;">🏛️ 公假</div>
           <div class="subtab-chip" onclick="filterLeaveSubCategory('其他假別', this)" style="font-size:12px; padding:4px 10px;">📁 其他假別</div>
+          <div class="subtab-chip" onclick="filterLeaveSubCategory('全部', this)" style="font-size:12px; padding:4px 10px;">全選</div>
         </div>
 
         <div class="record-list" id="applyRecordsList"></div>
