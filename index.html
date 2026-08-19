@@ -1022,9 +1022,17 @@ display: inline-block;
     <span style="font-weight:bold; color:var(--green-light);">🌴 特休賸餘</span>
     <span id="leaveAnnualBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
   </div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:8px;">
+    <span style="font-size:13px; color:var(--text-muted);">　└ 已申請未核准</span>
+    <span id="leaveAnnualPending" style="font-size:13px; font-weight:600; color:var(--accent-orange);">0 小時</span>
+  </div>
   <div style="display:flex; justify-content:space-between;">
     <span style="font-weight:bold; color:var(--accent-purple);">⏰ 補休賸餘</span>
     <span id="leaveCompBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
+  </div>
+  <div style="display:flex; justify-content:space-between;">
+    <span style="font-size:13px; color:var(--text-muted);">　└ 已申請未核准</span>
+    <span id="leaveCompPending" style="font-size:13px; font-weight:600; color:var(--accent-orange);">0 小時</span>
   </div>
 </div>
 <p class="section-title">請假申請</p>
@@ -2846,16 +2854,7 @@ function getGpsDistanceMeters(l1, n1, l2, n2) {
   return R * c;
 }
 
-/*function buildPunchRemarkParts(dayPunches) {
-  return dayPunches
-    .filter(p => p.remark && String(p.remark).trim() !== ``)
-    .map(p => {
-      const badge = p.type === `上班`
-        ? `<span class="badge badge-green">上班</span>`
-        : `<span class="badge badge-red">下班</span>`;
-      return `${badge} 💬 ${String(p.remark).trim()}`;
-    });
-}*/
+
   function buildPunchRemarkParts(dayPunches) {
   return dayPunches
     .map(p => {
@@ -3586,50 +3585,6 @@ window.autoFillSupp = function(dateStr, type, event) {
   showToast(`🔄 已為您自動填入 ${dateStr} ${type} 漏卡資訊！`);
 }
 
-//function getConciseDateText(dateStr) {
-//  if (!dateStr) return ``;
-//  const d = safeNewDate(dateStr);
-//  if (isNaN(d.getTime())) return dateStr;
-//  const m = String(d.getMonth() + 1).padStart(2, `0`);
-//  const dateVal = String(d.getDate()).padStart(2, `0`);
-//  const weekdays = [`日`, `一`, `二`, `三`, `四`, `五`, `六`];
-//  const w = weekdays[d.getDay()];
-//  return `${m}/${dateVal} (${w})`;
-//}
-
-//async function retractApplication(id) {
-//  const rec = records.find(r => r.id === id);
-//  if (!rec) return;
-//  if (!confirm(`確定要撤回此筆 ${rec.type} 申請嗎？`)) return;
-
- // // Optimistically set to `已撤回`
- // rec.status = `已撤回`;
-//  saveRecords();
-//  renderAllList();
-  
-//  try {
-//    const res = await callGAS({
-//      action: `cancel`,
-//      clientId: rec.clientId || String(rec.id),
-//      empId: rec.empId,
-//      type: rec.type
-//    });
-//    if (res.status === `ok`) {
-//      showToast(`🛑 申請已成功撤回並同步`);
-//    } else {
-//      showToast(`⚠️ 撤回同步失敗，請確認後台`);
-//    }
-//  } catch (e) {
-//    showToast(`🛑 申請已在本地撤回（離線）`);
-//  }
-//  if (typeof syncProfileAndAccumulatedLeaves === `function`) {
-//    syncProfileAndAccumulatedLeaves();
-//  } else {
-//    renderAllList();
-//  }
-//}
-
-
 
 
 function getShiftMinutesForDate(dateStr, empId, shiftsList) {
@@ -3715,9 +3670,7 @@ function formatDateTimeRange(r) {
     const h = parseFloat(r.hours);
     hoursVal = isNaN(h) ? r.hours : String(h).replace(/\.0$/, ``);
   }
-  // 💡 0716 修補（更正版）：請假/加班畫面預覽都改成「不依賴目前登入者個人班別資料」的單純起訖時間計算
-  // （原本改用 calculateLeaveHoursLocal() 內部會抓 currentUser.specialShifts，
-  //   但主管審核清單顯示的是「員工」的申請，用「主管自己」的班別資料算會算錯，所以退回這個安全版本）
+
   let hoursText = ``;
   if (startT && endT && (r.type === `請假` || r.type === `加班`)) {
     const [sh, sm] = startT.split(':').map(Number);
@@ -5577,7 +5530,32 @@ function countMissedLateEarlyInRange(start, end) {
   }
   return { missedCount, lateEarlyCount };
 }
-
+function calculatePendingLeaveHours(subType) {
+  if (!currentUser) return 0;
+  const pendingStatuses = [`待審`, `補件`, `待第二次審查`];
+  let total = 0;
+  records.forEach(r => {
+    if (!matchEmpId(r.empId, currentUser.empId)) return;
+    if (r.type !== `請假` || r.subType !== subType) return;
+    if (pendingStatuses.indexOf(r.status) === -1) return;
+    if (r.hours !== undefined && r.hours !== null && r.hours !== ``) {
+      total += parseFloat(r.hours) || 0;
+    } else {
+      total += calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
+    }
+  });
+  return total;
+}
+function hasAnyRecordInRange(start, end) {
+  if (!currentUser) return false;
+  return records.some(r => {
+    if (!matchEmpId(r.empId, currentUser.empId)) return false;
+    if (![`上班`, `下班`, `補打卡`, `請假`, `加班`].includes(r.type)) return false;
+    const d = safeNewDate(r.date || r.timestamp);
+    if (isNaN(d.getTime())) return false;
+    return d >= start && d <= end;
+  });
+}          
 function queryYearMonthRecords() {
   if (!currentUser) return;
   const yearVal = document.getElementById(`queryYearSelect`).value;
@@ -5585,18 +5563,56 @@ function queryYearMonthRecords() {
   const monthVal = document.getElementById(`queryMonthSelect`).value;
   const month = monthVal ? parseInt(monthVal, 10) : null;
   const { start, end } = getQueryDateRange(year, month);
+
   const rangeSpan = document.getElementById(`y-range-span`);
   if (rangeSpan) rangeSpan.textContent = month ? `(${year}/${month} 全月)` : `(${year} 全年)`;
+
+  const msgEl = document.getElementById(`queryResultMessage`);
+  const msgTextEl = document.getElementById(`queryResultMessageText`);
+  const contentEl = document.getElementById(`queryResultContent`);
+
+  document.getElementById(`queryResultArea`).style.display = `block`;
+
+  if (month) {
+    const now = new Date();
+    const nowY = now.getFullYear();
+    const nowM = now.getMonth() + 1;
+
+    if (year > nowY || (year === nowY && month > nowM)) {
+      msgTextEl.textContent = `無打卡資料`;
+      msgEl.style.display = `block`;
+      contentEl.style.display = `none`;
+      return;
+    }
+    if (year === nowY && month === nowM) {
+      msgTextEl.textContent = `📌 本月尚未統整，請至「本月打卡紀錄」查詢即時資料`;
+      msgEl.style.display = `block`;
+      contentEl.style.display = `none`;
+      return;
+    }
+    if (!hasAnyRecordInRange(start, end)) {
+      msgTextEl.textContent = `無打卡資料`;
+      msgEl.style.display = `block`;
+      contentEl.style.display = `none`;
+      return;
+    }
+  }
+
+  msgEl.style.display = `none`;
+  contentEl.style.display = `block`;
+
   const otHours = sumApprovedHoursInRange(`加班`, start, end);
   const leaveHours = sumApprovedHoursInRange(`請假`, start, end);
   const { missedCount, lateEarlyCount } = countMissedLateEarlyInRange(start, end);
+
   document.getElementById(`y-ot`).textContent = otHours.toFixed(1) + ` h`;
   document.getElementById(`y-miss`).textContent = missedCount + ` 次`;
   document.getElementById(`y-lateearly`).textContent = lateEarlyCount + ` 次`;
   document.getElementById(`y-leave`).textContent = leaveHours.toFixed(1) + ` h`;
-  document.getElementById(`queryResultArea`).style.display = `block`;
+
   renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`);
 }
+            
 </script>
 </body>
 </html>
