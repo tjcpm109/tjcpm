@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="TJCPM">
   <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
   <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-  <title>TJCPM 員工系統 v1</title>
+  <title>TJCPM 員工系統 v2</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -443,25 +443,36 @@
       <p class="section-title">基本資料</p>
       <div class="profile-card">
         <div class="profile-meta-row">
+          <div class="profile-meta-icon">🏷️</div>
+          <div class="profile-meta-label">員編</div>
+          <div class="profile-meta-value" id="profileEmpIdVal">—</div>
+        </div>
+        <div class="profile-meta-row">
           <div class="profile-meta-icon">👤</div>
           <div class="profile-meta-label">姓名</div>
           <div class="profile-meta-value" id="profileNameVal">—</div>
         </div>
+          <div class="profile-meta-row">
+          <div class="profile-meta-icon">💼</div>
+          <div class="profile-meta-label">在職類型</div>
+          <div class="profile-meta-value" id="profileEmpType">—</div>
+        </div>
+
         <div class="profile-meta-row">
           <div class="profile-meta-icon">📅</div>
           <div class="profile-meta-label">到職日</div>
           <div class="profile-meta-value" id="profileJoinDate">—</div>
         </div>
         <div class="profile-meta-row">
-          <div class="profile-meta-icon">🏷️</div>
-          <div class="profile-meta-label">員編</div>
-          <div class="profile-meta-value" id="profileEmpIdVal">—</div>
+         <div class="profile-meta-icon">📆</div>
+          <div class="profile-meta-label">年資</div>
+          <div class="profile-meta-value" id="profileSeniority">—</div>
         </div>
-        <div class="profile-meta-row">
-          <div class="profile-meta-icon">💼</div>
-          <div class="profile-meta-label">在職類型</div>
-          <div class="profile-meta-value" id="profileEmpType">—</div>
-        </div>
+      <div class="profile-meta-row">
+        <div class="profile-meta-icon">🌴</div>
+        <div class="profile-meta-label">特休應有時數</div>
+        <div class="profile-meta-value" id="profileAnnualEntitlement">—</div>
+      </div>
         <div class="profile-meta-row">
           <div class="profile-meta-icon">🏢</div>
           <div class="profile-meta-label">預設班別</div>
