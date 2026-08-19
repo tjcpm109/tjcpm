@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0819</title>
+<title>TJCPM 員工系統0819-1</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1008,7 +1008,7 @@ display: inline-block;
 <div class="info-box">
 <div class="info-icon">📅</div>
 <div class="info-text">
-<strong>請假說明：</strong>請假以<strong>小時</strong>為單位，請填寫開始與結束時間。
+<strong>請假說明：</strong>請假以<strong>小時</strong>為單位，請填寫開始與結束時間。</div>
 </div>
   <!-- 8/19✅ 新增：假別餘額顯示卡片 -->
 <div class="profile-card" id="leaveBalanceCard" style="padding:16px; margin-bottom:16px;">
@@ -5012,7 +5012,167 @@ function renderAttendanceIssuesForRange(startDate, endDate, targetElId) {
   html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
+function renderAttendanceIssuesForRangeByMonth(startDate, endDate, targetElId) {
+  const el = document.getElementById(targetElId || `yearIssueList`);
+  if (!el) return;
+  if (!currentUser || currentUser.empType === `兼任`) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">兼任同仁不計算漏打卡與遲到/早退</div></div>`;
+    return;
+  }
 
+  const earliestD = getEarliestCheckDate();
+  const now = new Date();
+  const settleEndDate = new Date(now.getFullYear(), now.getMonth(), 0);
+  settleEndDate.setHours(23, 59, 59, 999);
+  const endCheckDate = endDate < settleEndDate ? endDate : settleEndDate;
+
+  if (earliestD) {
+    const compareD = new Date(earliestD);
+    compareD.setHours(0, 0, 0, 0);
+    if (compareD > endCheckDate) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">此期間無出勤異常！</div></div>`;
+      return;
+    }
+  }
+
+  let dIndex = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const issues = [];
+
+  const myPunches = records.filter(r => matchEmpId(r.empId, currentUser?.empId) && (r.type === `上班` || r.type === `下班`));
+  const mySupps = records.filter(r => matchEmpId(r.empId, currentUser?.empId) && r.type === `補打卡`);
+  const myLeaves = records.filter(r => matchEmpId(r.empId, currentUser?.empId) && r.type === `請假` && isFinalApproved(r.status));
+
+  const dailyPunches = {};
+  myPunches.forEach(r => {
+    const normD = normalizeDate(r.date);
+    if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
+    if (r.type === `上班`) { if (!dailyPunches[normD].in || r.time < dailyPunches[normD].in) dailyPunches[normD].in = r.time; }
+    else { if (!dailyPunches[normD].out || r.time > dailyPunches[normD].out) dailyPunches[normD].out = r.time; }
+  });
+  mySupps.filter(r => isFinalApproved(r.status)).forEach(r => {
+    const normD = normalizeDate(r.date);
+    if (!dailyPunches[normD]) dailyPunches[normD] = { in: null, out: null };
+    if (r.subType === `上班`) dailyPunches[normD].in = r.time;
+    if (r.subType === `下班`) dailyPunches[normD].out = r.time;
+  });
+
+  let loopCount = 0;
+  while (dIndex <= endCheckDate && loopCount < 400) {
+    loopCount++;
+    if (earliestD) {
+      const curD = new Date(dIndex); curD.setHours(0,0,0,0);
+      if (curD < earliestD) { dIndex.setDate(dIndex.getDate() + 1); continue; }
+    }
+    const dayOfWeek = dIndex.getDay();
+    const dateStr = `${dIndex.getFullYear()}-${String(dIndex.getMonth() + 1).padStart(2, `0`)}-${String(dIndex.getDate()).padStart(2, `0`)}`;
+    const dateQueryStr = `${dIndex.getFullYear()}/${dIndex.getMonth() + 1}/${dIndex.getDate()}`;
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    const isHoliday = currentUser.holidayStrings && currentUser.holidayStrings.includes(dateStr);
+
+    if (!isWeekend && !isHoliday) {
+      const punch = dailyPunches[dateQueryStr] || dailyPunches[dateStr] || { in: null, out: null };
+
+      const dayLeaves = myLeaves.filter(r => {
+        const sD = safeNewDate(r.date), eD = safeNewDate(r.endDate || r.date);
+        return dIndex >= sD && dIndex <= eD;
+      }).map(r => {
+        const sD = safeNewDate(r.date), eD = safeNewDate(r.endDate || r.date);
+        const isStart = dIndex.getFullYear() === sD.getFullYear() && dIndex.getMonth() === sD.getMonth() && dIndex.getDate() === sD.getDate();
+        const isEnd = dIndex.getFullYear() === eD.getFullYear() && dIndex.getMonth() === eD.getMonth() && dIndex.getDate() === eD.getDate();
+        let ls = 540, le = 1080;
+        if (isStart && isEnd) { ls = timeToMin(r.startTime || `09:00`); le = timeToMin(r.endTime || `18:00`); }
+        else if (isStart) { ls = timeToMin(r.startTime || `09:00`); le = 1080; }
+        else if (isEnd) { ls = 540; le = timeToMin(r.endTime || `18:00`); }
+        return { start: ls, end: le };
+      });
+
+      const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
+      const isFullDayExempted = isRangeExempted(shift.start, shift.end, dayLeaves);
+
+      if (!isFullDayExempted) {
+        let isProblem = false;
+        let reason = [];
+        let checkinHTML = punch.in || `—`;
+        let checkoutHTML = punch.out || `—`;
+
+        if (!punch.in && !punch.out) {
+          isProblem = true; reason.push(`雙簽漏卡`);
+          checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
+          checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
+        } else {
+          if (!punch.in) {
+            isProblem = true; reason.push(`上班漏卡`);
+            checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
+          } else {
+            const punchInMin = timeToMin(punch.in);
+            if (punchInMin > shift.start && !isRangeExempted(shift.start, punchInMin, dayLeaves)) {
+              isProblem = true; reason.push(`遲到`);
+              checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.in} ⚠️遲到</span>`;
+            }
+          }
+          if (!punch.out) {
+            isProblem = true; reason.push(`下班漏卡`);
+            checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
+          } else {
+            const punchOutMin = timeToMin(punch.out);
+            if (punchOutMin < shift.end && !isRangeExempted(punchOutMin, shift.end, dayLeaves)) {
+              isProblem = true; reason.push(`早退`);
+              checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.out} ⚠️早退</span>`;
+            }
+          }
+        }
+
+        if (isProblem) {
+          issues.push({ date: dateStr, inHTML: checkinHTML, outHTML: checkoutHTML, reason: reason.join(`、`) });
+        }
+      }
+    }
+    dIndex.setDate(dIndex.getDate() + 1);
+  }
+
+  if (issues.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">此期間無出勤異常！</div></div>`;
+    return;
+  }
+
+  const groups = {};
+  issues.forEach(item => {
+    const ym = item.date.slice(0, 7);
+    if (!groups[ym]) groups[ym] = [];
+    groups[ym].push(item);
+  });
+  const sortedYm = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  let html = ``;
+  sortedYm.forEach(ym => {
+    const [yy, mm] = ym.split(`-`);
+    const monthIssues = groups[ym].sort((a,b) => b.date.localeCompare(a.date));
+    html += `
+      <p class="section-title" style="margin-top:16px; font-size:14px;">📅 ${yy}年${parseInt(mm,10)}月（共 ${monthIssues.length} 筆異常）</p>
+      <div class="calendar-table-container">
+        <table class="calendar-table">
+          <thead>
+            <tr><th>📅 日期</th><th>🟢 上班時間</th><th>🏁 下班時間</th><th>⚠️ 異常類別</th></tr>
+          </thead>
+          <tbody>
+    `;
+    monthIssues.forEach(item => {
+      const weekdayStr = [`日`,`一`,`二`,`三`,`四`,`五`,`六`][new Date(item.date).getDay()];
+      const dateDisplay = `${item.date.slice(5)} (${weekdayStr})`;
+      html += `
+        <tr>
+          <td style="font-weight:bold; color:var(--text-secondary);">${dateDisplay}</td>
+          <td>${item.inHTML}</td>
+          <td>${item.outHTML}</td>
+          <td><span class="badge ${item.reason.includes(`漏卡`) ? `badge-red` : `badge-orange`}">${item.reason}</span></td>
+        </tr>
+      `;
+    });
+    html += `</tbody></table></div>`;
+  });
+
+  el.innerHTML = html;
+}
 function calcAttendance() {
   if (!currentUser) return;
   const now = new Date();
@@ -5433,7 +5593,9 @@ function queryYearMonthRecords() {
   document.getElementById(`y-lateearly`).textContent = lateEarlyCount + ` 次`;
   document.getElementById(`y-leave`).textContent = leaveHours.toFixed(1) + ` h`;
 
-  renderAttendanceIssuesForRange(start, end);
+  document.getElementById(`queryResultArea`).style.display = `block`; // 💡補上：查完要打開才看得到
+  renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`); // 💡改成按月分組
+
 }
 </script>
 </body>
