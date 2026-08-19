@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0819-3</title>
+<title>TJCPM 員工系統0819-4</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1018,23 +1018,36 @@ display: inline-block;
 </div>
   <!-- 8/19✅ 新增：假別餘額顯示卡片 -->
 <div class="profile-card" id="leaveBalanceCard" style="padding:16px; margin-bottom:16px;">
-  <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:8px;">
-    <span style="font-weight:bold; color:var(--green-light);">🌴 特休賸餘</span>
-    <span id="leaveAnnualBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
+  <!-- 特休卡 -->
+  <div style="text-align:center; padding-bottom:16px; border-bottom:1px solid var(--card-border); margin-bottom:16px;">
+    <div style="font-weight:bold; color:var(--green-light); margin-bottom:8px;">🌴 特休</div>
+    <div id="leaveAnnualBalance" style="font-size:32px; font-weight:bold; color:var(--text-primary);">— 小時</div>
+    <div id="leaveAnnualPending" style="font-size:13px; color:var(--accent-orange); margin-top:6px; display:none;"></div>
   </div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:8px;">
-    <span style="font-size:13px; color:var(--text-muted);">　└ 已申請未核准</span>
-    <span id="leaveAnnualPending" style="font-size:13px; font-weight:600; color:var(--accent-orange);">0 小時</span>
-  </div>
-  <div style="display:flex; justify-content:space-between;">
-    <span style="font-weight:bold; color:var(--accent-purple);">⏰ 補休賸餘</span>
-    <span id="leaveCompBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
-  </div>
-  <div style="display:flex; justify-content:space-between;">
-    <span style="font-size:13px; color:var(--text-muted);">　└ 已申請未核准</span>
-    <span id="leaveCompPending" style="font-size:13px; font-weight:600; color:var(--accent-orange);">0 小時</span>
+  <!-- 補休卡 -->
+  <div style="text-align:center;">
+    <div style="font-weight:bold; color:var(--accent-purple); margin-bottom:8px;">⏰ 補休</div>
+    <div id="leaveCompBalance" style="font-size:32px; font-weight:bold; color:var(--text-primary);">— 小時</div>
+    <div id="leaveCompPending" style="font-size:13px; color:var(--accent-orange); margin-top:6px; display:none;"></div>
   </div>
 </div>
+  <div style="text-align:center; margin-top:12px;">
+  <span onclick="toggleCompDetail()" style="font-size:13px; color:var(--blue-light); cursor:pointer; text-decoration:underline;">查看補休明細 ▾</span>
+</div>
+<div id="compDetailArea" style="display:none; margin-top:12px; padding-top:12px; border-top:1px dashed var(--card-border); font-size:13px;">
+  <div style="display:flex; justify-content:space-between; padding:4px 0;">
+    <span style="color:var(--text-secondary);">加班轉入</span>
+    <span id="compDetailOt" style="font-weight:600;">— h</span>
+  </div>
+  <div style="display:flex; justify-content:space-between; padding:4px 0;">
+    <span style="color:var(--text-secondary);">請假扣抵</span>
+    <span id="compDetailUsed" style="font-weight:600; color:var(--accent-red);">— h</span>
+  </div>
+  <div id="compDetailWarning" style="display:none; margin-top:8px; padding:8px; background:var(--accent-orange-pale); border-radius:6px; color:var(--accent-orange); font-size:12px;">
+    ⚠️ 補休採服務週年制，逾期未休將歸零，如需保留請洽人資辦理校正登記
+  </div>
+</div>
+
 <p class="section-title">請假申請</p>
 <div class="input-group">
 <label class="input-label">假別</label>
@@ -1624,6 +1637,27 @@ function parseLocalDate(d) { return safeNewDate(d); }
   const appendNote = noteText ? ` (${noteText})` : ``;
   return `年度區間: ${sy}.${sm}.${sd} ~ ${ey}.${em}.${ed}${appendNote}`;
 } */
+
+function toggleCompDetail() {
+  const area = document.getElementById(`compDetailArea`);
+  if (!area) return;
+  const isOpen = area.style.display === `block`;
+  area.style.display = isOpen ? `none` : `block`;
+  if (!isOpen) renderCompDetail();
+}
+
+function renderCompDetail() {
+  if (!currentUser || !currentUser.quota) return;
+  const q = currentUser.quota;
+  document.getElementById(`compDetailOt`).textContent = `${q.totalOtHoursAcc || 0} h`;
+  document.getElementById(`compDetailUsed`).textContent = `-${q.compLeaveUsedHours || 0} h`;
+
+  // 週年剩不到 60 天且還有賸餘才顯示提醒（服務週年結束日要另外算，可先簡化用 correction 判斷有無即可）
+  const warnEl = document.getElementById(`compDetailWarning`);
+  if (warnEl && q.compLeaveRemainingHours > 0) {
+    warnEl.style.display = `block`;
+  }
+}  
 function getYearRangeString(joinDateStr, quota) {
   if (!joinDateStr) return ``;
   const win = getCurrentAnniversaryWindow(joinDateStr);
@@ -4624,7 +4658,15 @@ async function syncProfileAndAccumulatedLeaves() {
           else if (leaveType === `喪假`) funeralLeaveUsed += hours;
         }
       });
-
+// 8.19【新增】先跟舊邏輯並存比對，確認一致後才刪除舊迴圈
+if (data.leaveHoursBySubType) {
+  console.log('新舊比對 - 補休:', data.leaveHoursBySubType['補休'], 'vs', compLeaveUsed);
+  console.log('新舊比對 - 病假:', data.leaveHoursBySubType['病假'], 'vs', sickLeaveUsed);
+  console.log('新舊比對 - 事假:', data.leaveHoursBySubType['事假'], 'vs', personalLeaveUsed);
+  console.log('新舊比對 - 公假:', data.leaveHoursBySubType['公假'], 'vs', officialLeaveUsed);
+  console.log('新舊比對 - 婚假:', data.leaveHoursBySubType['婚假'], 'vs', marriageLeaveUsed);
+  console.log('新舊比對 - 喪假:', data.leaveHoursBySubType['喪假'], 'vs', funeralLeaveUsed);
+}
       let annualRemaining = null;
       let compRemaining = null;
 
@@ -5397,7 +5439,7 @@ showToast(`⚠️ ` + (res.message || `舊密碼不正確`));
 showToast(`⚠️ 連線失敗，請確認網路後再試`);
 }
 }
-  function updateLeaveBalanceDisplay() {
+function updateLeaveBalanceDisplay() {
   const annualEl = document.getElementById(`leaveAnnualBalance`);
   const compEl = document.getElementById(`leaveCompBalance`);
   if (!annualEl || !compEl) return;
@@ -5407,6 +5449,28 @@ showToast(`⚠️ 連線失敗，請確認網路後再試`);
   } else {
     annualEl.textContent = `— 小時`;
     compEl.textContent = `— 小時`;
+  }
+
+  const annualPendingEl = document.getElementById(`leaveAnnualPending`);
+  const compPendingEl = document.getElementById(`leaveCompPending`);
+  const annualPending = calculatePendingLeaveHours(`特休`);
+  const compPending = calculatePendingLeaveHours(`加班補休`);
+
+  if (annualPendingEl) {
+    if (annualPending > 0) {
+      annualPendingEl.textContent = `審核中：${annualPending.toFixed(1)} 小時`;
+      annualPendingEl.style.display = `block`;
+    } else {
+      annualPendingEl.style.display = `none`;
+    }
+  }
+  if (compPendingEl) {
+    if (compPending > 0) {
+      compPendingEl.textContent = `審核中：${compPending.toFixed(1)} 小時`;
+      compPendingEl.style.display = `block`;
+    } else {
+      compPendingEl.style.display = `none`;
+    }
   }
 }
   // 年份下拉：從到職年到今年
