@@ -532,6 +532,7 @@ async function checkApprovalUpdates() {
           sendPush(`TJCPM 審批結果`, msg);
           saveRecords();
           renderAllList();
+          updateLeaveBalanceDisplay();   // ←8/20 新增
         }
       });
     }
@@ -693,6 +694,7 @@ async function submitLeave() {
   await syncToSheet(record);
   addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
   showToast(`📝 請假申請已送出`);
+  updateLeaveBalanceDisplay();   // 8/20 ← 新增
   window.submitLeaveInFlight = false;
 }
 
@@ -936,6 +938,7 @@ async function confirmResubmit(id, clientId, type) {
       if (rec) rec.status = `待第二次審查`;
       saveRecords();
       renderAllList();
+      updateLeaveBalanceDisplay();   // ← 8/20新增
     } else {
       showToast(`⚠️ 補件送出失敗：` + (res.message || `請稍後再試`));
     }
@@ -2164,10 +2167,10 @@ function renderProfile() {
   if (emailEl) emailEl.textContent = currentUser.email || `—`;
 
   calcAttendance();
-  if (currentUser.quota) {
-    document.getElementById(`profileAnnualLeave`).textContent = `${currentUser.quota.specialLeaveRemainingHours} 小時`;
-    document.getElementById(`profileCompensatoryLeave`).textContent = `${currentUser.quota.compLeaveRemainingHours} 小時`;
-  }
+  //8/20 if (currentUser.quota) {
+  //  document.getElementById(`profileAnnualLeave`).textContent = `${currentUser.quota.specialLeaveRemainingHours} 小時`;
+  //  document.getElementById(`profileCompensatoryLeave`).textContent = `${currentUser.quota.compLeaveRemainingHours} 小時`;
+  //}
   syncProfileAndAccumulatedLeaves();
   updateAllYearRanges();
 }
@@ -2224,8 +2227,8 @@ async function syncProfileAndAccumulatedLeaves() {
         sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
       }
 
-      document.getElementById(`profileAnnualLeave`).textContent = `${data.quota ? data.quota.specialLeaveRemainingHours : '—'} 小時`;
-      document.getElementById(`profileCompensatoryLeave`).textContent = `${data.quota ? data.quota.compLeaveRemainingHours : '—'} 小時`;
+      //8/20 document.getElementById(`profileAnnualLeave`).textContent = `${data.quota ? data.quota.specialLeaveRemainingHours : '—'} 小時`;
+      //8/20 document.getElementById(`profileCompensatoryLeave`).textContent = `${data.quota ? data.quota.compLeaveRemainingHours : '—'} 小時`;
 
       document.getElementById(`accumAnnual`).textContent = `${data.quota ? data.quota.specialLeaveUsedHours : annualLeaveUsed}h`;
       document.getElementById(`accumComp`).textContent = `${compLeaveUsed}h`;
