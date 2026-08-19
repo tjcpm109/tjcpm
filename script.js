@@ -105,6 +105,7 @@ let gpsLat = null, gpsLng = null;
 let currentFilter = `打卡`;
 let currentRecordSubTab = `detail`;
 let currentApplyFilter = `請假`;
+let currentLeaveSubFilter = '全部';
 const localNow = new Date();
 const localYear = localNow.getFullYear();
 const localMonth = String(localNow.getMonth() + 1).padStart(2, `0`);
@@ -119,7 +120,70 @@ if (`serviceWorker` in navigator) {
       .catch(err => console.error(`SW-v90 註冊失敗:`, err));
   });
 }
+// ── 主類別切換（請假/加班/補打卡/班別調整） ──
+function filterApplyMainCategory(type, chip) {
+  currentApplyFilter = type;
+  currentLeaveSubFilter = '全部'; // 切換主類別時重置子篩選
+  
+  // 更新主標籤 UI
+  document.querySelectorAll('#record-apply-content .filter-bar:first-of-type .filter-chip').forEach(c => c.classList.remove('active'));
+  if (chip) chip.classList.add('active');
 
+  // 控制請假子標籤列的顯示/隱藏
+  const subBar = document.getElementById('leaveSubFilterBar');
+  if (subBar) {
+    subBar.style.display = (type === '請假') ? 'flex' : 'none';
+    // 重置子標籤 UI 為全選
+    document.querySelectorAll('#leaveSubFilterBar .subtab-chip').forEach((c, idx) => {
+      c.classList.toggle('active', idx === 0);
+    });
+  }
+
+  renderAllList();
+}
+// ── 請假細項標籤切換（特休/補休/公假/其他假別） ──
+function filterLeaveSubCategory(subType, chip) {
+  currentLeaveSubFilter = subType;
+  document.querySelectorAll('#leaveSubFilterBar .subtab-chip').forEach(c => c.classList.remove('active'));
+  if (chip) chip.classList.add('active');
+  
+  renderAllList();
+}
+
+// ── 修正 renderAllList 中 apply 分頁的渲染邏輯 ──
+// 請找到 renderAllList() 中 currentRecordSubTab === 'apply' 的處理段落，替換為：
+if (currentRecordSubTab === 'apply') {
+  const el = document.getElementById('applyRecordsList');
+  if (!el) return;
+  
+  let mine = records.filter(r => matchEmpId(r.empId, currentUser?.empId));
+  mine = mine.filter(r => r.type === currentApplyFilter);
+  
+  // 若選擇「請假」，再進行子假別過濾
+  if (currentApplyFilter === '請假' && currentLeaveSubFilter !== '全部') {
+    mine = mine.filter(r => {
+      const sub = r.subType === '加班補休' ? '加班補休' : (r.subType || '');
+      if (currentLeaveSubFilter === '其他假別') {
+        return !['特休', '加班補休', '公假'].includes(sub);
+      }
+      return sub === currentLeaveSubFilter;
+    });
+  }
+
+  const range = getCurrentEmploymentYearRange();
+  mine = mine.filter(r => {
+    const dStr = r.date || r.timestamp;
+    if (!dStr) return false;
+    const d = safeNewDate(dStr);
+    return d >= range.start && d <= range.end;
+  });
+  
+  const subLabelText = (currentApplyFilter === '請假' && currentLeaveSubFilter !== '全部') ? `【${currentLeaveSubFilter}】` : '';
+  
+  el.innerHTML = mine.length 
+    ? mine.map(r => recordHTML(r)).join('') 
+    : `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無${currentApplyFilter}${subLabelText}紀錄</div></div>`;
+}
 // ── JSONP caller ──
 function callGAS(params, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
