@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="TJCPM">
 <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
 <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-<title>TJCPM 員工系統0819-1</title>
+<title>TJCPM 員工系統0819-2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -1020,7 +1020,6 @@ display: inline-block;
     <span style="font-weight:bold; color:var(--accent-purple);">⏰ 補休賸餘</span>
     <span id="leaveCompBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
   </div>
-</div>
 </div>
 <p class="section-title">請假申請</p>
 <div class="input-group">
@@ -5574,10 +5573,10 @@ function countMissedLateEarlyInRange(start, end) {
 
 // 主查詢入口
 function queryYearMonthRecords() {
-  const year = parseInt(document.getElementById(`queryYearSelect`).value, 10);
+  if (!currentUser) return;
+  const year = new Date().getFullYear(); // 表單只選月份，年度固定查今年
   const monthVal = document.getElementById(`queryMonthSelect`).value;
   const month = monthVal ? parseInt(monthVal, 10) : null;
-  if (!year || !currentUser) { showToast(`⚠️ 請選擇年度`); return; }
 
   const { start, end } = getQueryDateRange(year, month);
 
@@ -5595,7 +5594,6 @@ function queryYearMonthRecords() {
 
   document.getElementById(`queryResultArea`).style.display = `block`; // 💡補上：查完要打開才看得到
   renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`); // 💡改成按月分組
-
 }
 </script>
 </body>
