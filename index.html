@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TJCPM">
+  <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+  <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+  <title>TJCPM 員工系統</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="loginScreen">
+    <div class="login-logo">
+      <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
+      <div id="logoTextLogin" class="logo-fallback">TJCPM</div>
+    </div>
+    <div class="login-title">TJCPM</div>
+    <div class="login-sub">員工管理系統</div>
+    <div class="login-box">
+      <div class="login-err" id="loginErr"></div>
+      <div class="input-group">
+        <label class="input-label">員工編號</label>
+        <input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">密碼</label>
+        <input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="mainApp" style="display:none">
+    <div class="header">
+      <div class="header-left">
+        <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextHeader').style.display='inline-block'" />
+        <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
+      </div>
+      <div class="header-right">
+        <div class="notif-bell" id="notifBell" style="display:none !important">
+          🔔<span class="notif-badge" id="notifCount" style="display:none !important">!</span>
+        </div>
+        <span class="header-user" id="headerUser"></span>
+        <span class="header-clock" id="headerClock" style="display:none !important">--:--:--</span>
+        <button class="logout-btn" onclick="doLogout()">登出</button>
+      </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav" id="mainNav">
+      <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="switchTab('admin')">👨💼 主管</div>
+      <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
+      <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
+      <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
+      <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
+      <div class="nav-tab" data-tab="adjust" onclick="switchTab('adjust')">⚙️ 班別調整</div>
+      <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
+      <div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
+    </div>
+
+    <!-- 打卡頁面 -->
+    <div class="page active" id="page-home">
+      <div class="clock-card">
+        <div class="clock-time" id="mainClock">00:00:00</div>
+        <div class="clock-date" id="mainDate"></div>
+        <div class="clock-user" id="clockUser"></div>
+      </div>
+
+      <div class="gps-bar">
+        <div class="gps-dot" id="gpsDot"></div>
+        <span class="gps-text" id="gpsText">取得位置中…</span>
+        <span class="gps-coords" id="gpsCoords"></span>
+      </div>
+
+      <div class="input-group" style="margin-top: 14px; margin-bottom: 14px;">
+        <label class="input-label" style="font-weight: 800;">📝 簽到退詳細說明（若非在雙和簽到退請說明）</label>
+        <textarea class="input-field" id="punchRemark" rows="3"
+                  placeholder="若非在雙和簽到退請說明，例：人才課程至重慶上班、人才課程文大下班...等詳細說明"
+                  style="height: 100px; padding: 12px 14px; font-size: var(--fs-label); border: 2.5px solid var(--blue-main) !important; border-radius: var(--radius); resize: none; background: #ffffff; color: var(--text-primary); font-weight: 500; width: 100%; outline: none;"></textarea>
+      </div>
+
+      <div class="offline-banner" id="offlineBanner">
+        ⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試
+      </div>
+      <div style="text-align:right;font-size:14px;margin-bottom:12px;min-height:18px;">
+        <span id="syncStatus" style="transition:color 0.3s;"></span>
+      </div>
+
+      <div class="action-grid">
+        <div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
+          <span class="btn-icon">✅</span>
+          <div class="btn-label">上班</div>
+          <div class="btn-sub" id="checkinSub">打卡上班</div>
+        </div>
+        <div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction('下班')">
+          <span class="btn-icon">🏁</span>
+          <div class="btn-label">下班</div>
+          <div class="btn-sub" id="checkoutSub">打卡下班</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 請假頁面（優化視覺版） -->
+    <div class="page" id="page-leave">
+      <div class="info-banner">
+        <span class="info-icon">📅</span>
+        <div>
+          <strong>請假說明：</strong>請假單位為<strong>小時</strong>，請選取完整的起訖時間。
+        </div>
+      </div>
+
+      <!-- 假別餘額顯示卡片 -->
+      <div class="balance-card">
+        <div class="balance-grid">
+          <div class="balance-item border-right">
+            <div class="balance-title green">🌴 特休</div>
+            <div id="leaveAnnualBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveAnnualPending" class="balance-pending"></div>
+          </div>
+          <div class="balance-item">
+            <div class="balance-title purple">⏰ 補休</div>
+            <div id="leaveCompBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveCompPending" class="balance-pending"></div>
+          </div>
+        </div>
+
+        <div class="detail-toggle-wrapper">
+          <button type="button" class="btn-toggle-detail" onclick="toggleCompDetail()">查看補休明細 ▾</button>
+        </div>
+
+        <div id="compDetailArea" class="comp-detail-area">
+          <div class="detail-row">
+            <span>加班轉入</span>
+            <span id="compDetailOt" class="detail-value">— h</span>
+          </div>
+          <div class="detail-row">
+            <span>請假扣抵</span>
+            <span id="compDetailUsed" class="detail-value text-red">— h</span>
+          </div>
+          <div id="compDetailWarning" class="warning-box" style="display:none;">
+            ⚠️ 補休採服務週年制，逾期未休將歸零，如需保留請洽人資辦理校正登記。
+          </div>
+        </div>
+      </div>
+
+      <!-- 請假申請表單 -->
+      <div class="form-card">
+        <h3 class="section-title">請假申請表單</h3>
+
+        <div class="input-group">
+          <label class="input-label" for="leaveType">假別</label>
+          <select class="select-field" id="leaveType">
+            <option value="特休">特休</option>
+            <option value="加班補休">補休</option>
+            <option value="事假">事假</option>
+            <option value="病假">病假</option>
+            <option value="公假">公假</option>
+            <option value="婚假">婚假</option>
+            <option value="喪假">喪假</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="leaveStart">開始日期</label>
+            <input type="date" class="input-field" id="leaveStart" />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="leaveStartTime">開始時間</label>
+            <select class="select-field" id="leaveStartTime"></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="leaveEnd">結束日期</label>
+            <input type="date" class="input-field" id="leaveEnd" />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="leaveEndTime">結束時間</label>
+            <select class="select-field" id="leaveEndTime"></select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="leaveReason">請假事由（選填）</label>
+          <input type="text" class="input-field" id="leaveReason" placeholder="例如：個人私事處理、身體不適" />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">證明文件 <span class="hint">（病假/公假需上傳，單檔限 5MB）</span></label>
+          <div class="file-upload-box">
+            <input type="file" id="leaveProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'leave')" />
+            <label for="leaveProofFiles" class="file-label">📎 點擊選擇檔案 (圖片或 PDF)</label>
+          </div>
+          <div id="leaveProofFileList" class="file-list"></div>
+        </div>
+
+        <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
+      </div>
+    </div>
+
+    <!-- 加班頁面 -->
+    <div class="page" id="page-overtime">
+      <div class="info-box">
+        <div class="info-icon">⏰</div>
+        <div class="info-text">
+          <strong>加班說明：</strong>滿<strong>1 小時</strong>後起算，以<strong>0.5 小時</strong>為單位遞增。<br>
+          例：1h、1.5h、2h、2.5h…
+        </div>
+      </div>
+      <p class="section-title">加班申請</p>
+      <div class="input-group">
+        <label class="input-label">加班日期</label>
+        <input type="date" class="input-field" id="otDate" />
+      </div>
+      <div class="form-row">
+        <div class="input-group">
+          <label class="input-label">開始時間</label>
+          <select class="select-field" id="otStart"></select>
+        </div>
+        <div class="input-group">
+          <label class="input-label">結束時間</label>
+          <select class="select-field" id="otEnd"></select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">加班原因</label>
+        <input class="input-field" id="otReason" placeholder="加班原因" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 5MB）</span></label>
+        <div class="file-upload-box">
+          <input type="file" id="overtimeProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'overtime')" />
+          <label for="overtimeProofFiles" class="file-label">📎 點擊選擇檔案</label>
+        </div>
+        <div id="overtimeProofFileList" class="file-list"></div>
+      </div>
+      <button class="submit-btn purple" onclick="submitOvertime()">送出加班申請</button>
+    </div>
+
+    <!-- 補打卡頁面 -->
+    <div class="page" id="page-supp">
+      <div class="info-box">
+        <div class="info-icon">🔄</div>
+        <div class="info-text">
+          <strong>補打卡說明：</strong>若因離開辦公室忘記打卡，請在此填寫補打卡申請，送出後由主管審核確認。
+        </div>
+      </div>
+      <p class="section-title">補打卡申請</p>
+      <div class="input-group">
+        <label class="input-label">上班或下班</label>
+        <select class="select-field" id="suppType">
+          <option>上班</option>
+          <option>下班</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="input-group">
+          <label class="input-label">日期</label>
+          <input type="date" class="input-field" id="suppDate" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">時間</label>
+          <select class="select-field" id="suppTime"></select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">未打卡原因</label>
+        <input class="input-field" id="suppReason" placeholder="請說明未打卡原因" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 3MB）</span></label>
+        <div class="file-upload-box">
+          <input type="file" id="punchfixProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'punchfix')" />
+          <label for="punchfixProofFiles" class="file-label">📎 點擊選擇檔案</label>
+        </div>
+        <div id="punchfixProofFileList" class="file-list"></div>
+      </div>
+      <button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
+    </div>
+
+    <!-- 班別調整頁面 -->
+    <div class="page" id="page-adjust">
+      <div class="info-box">
+        <div class="info-icon">⚙️</div>
+        <div class="info-text">
+          <strong>班別調整說明：</strong>若因特殊公務或個人特殊排班需求，請在此申請調整當日或特定日期班別，送出後由主管核准後自動生效。
+        </div>
+      </div>
+      <p class="section-title">班別調整申請</p>
+      <div class="input-group">
+        <label class="input-label">調整日期</label>
+        <input type="date" class="input-field" id="adjustDate" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">班別選擇</label>
+        <select class="select-field" id="adjustShiftType">
+          <option value="08:00-17:00">08:00 - 17:00</option>
+          <option value="08:30-17:30">08:30 - 17:30</option>
+          <option value="09:00-18:00" selected>09:00 - 18:00</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">調整原因</label>
+        <input class="input-field" id="adjustReason" placeholder="請說明調整班別原因" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 10MB）</span></label>
+        <div class="file-upload-box">
+          <input type="file" id="scheduleProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'schedule')" />
+          <label for="scheduleProofFiles" class="file-label">📎 點擊選擇檔案</label>
+        </div>
+        <div id="scheduleProofFileList" class="file-list"></div>
+      </div>
+      <button class="submit-btn orange" onclick="submitAdjust()">送出班別調整申請</button>
+    </div>
+
+    <!-- 我的紀錄 -->
+    <div class="page" id="page-records">
+      <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
+        <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
+        <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab('apply')">申請單明細</div>
+        <div class="subtab-chip" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
+        <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab('year')">年度彙整</div>
+      </div>
+      
+      <div id="record-month-content" style="display:none;">
+        <p class="section-title">📊 本月至今即時考勤（動態累計）</p>
+        <div class="profile-card" style="padding:12px; overflow-x:auto;">
+          <table class="attendance-table" id="monthSummaryTable" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+              <tr style="border-bottom: 1.5px solid var(--card-border); color: var(--text-secondary);">
+                <th style="padding: 8px;">加班時數</th>
+                <th style="padding: 8px;">漏打卡次數</th>
+                <th style="padding: 8px;">補打卡次數</th>
+                <th style="padding: 8px;">遲到次數</th>
+                <th style="padding: 8px;">早退次數</th>
+                <th style="padding: 8px;">請假時數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="color: var(--text-primary); font-weight: bold;">
+                <td id="m-ot" style="padding: 8px;">0.0 h</td>
+                <td id="m-miss" style="padding: 8px; color: var(--accent-red);">0 次</td>
+                <td id="m-supp" style="padding: 8px;">0 次</td>
+                <td id="m-late" style="padding: 8px;">0 次</td>
+                <td id="m-early" style="padding: 8px;">0 次</td>
+                <td id="m-leave" style="padding: 8px;">0.0 h</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="record-year-content" style="display:none;">
+        <p class="section-title">📊 到職年度出勤彙整 <span id="emp-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+        <div class="profile-card" style="padding:12px; overflow-x:auto;">
+          <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
+            <thead>
+              <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
+                <th style="padding:8px;">⏰ 加班時數</th>
+                <th style="padding:8px;">🔄 漏打卡次數</th>
+                <th style="padding:8px;">⚠️ 遲到/早退次數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="color:var(--text-primary); font-weight:bold;">
+                <td id="emp-ot" style="padding:8px; color:var(--blue-main);">— h</td>
+                <td id="emp-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
+                <td id="emp-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="section-title" style="margin-top:28px;">🔍 查詢特定年月</p>
+        <div class="profile-card" style="padding:14px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+          <div style="flex:1; min-width:100px;">
+            <label class="input-label">年度</label>
+            <select class="select-field" id="queryYearSelect"></select>
+          </div>
+          <div style="flex:1; min-width:140px;">
+            <label class="input-label">月份</label>
+            <select class="select-field" id="queryMonthSelect">
+              <option value="1">1月</option><option value="2">2月</option>
+              <option value="3">3月</option><option value="4">4月</option>
+              <option value="5">5月</option><option value="6">6月</option>
+              <option value="7">7月</option><option value="8">8月</option>
+              <option value="9">9月</option><option value="10">10月</option>
+              <option value="11">11月</option><option value="12">12月</option>
+            </select>
+          </div>
+          <button class="submit-btn blue" style="margin-top:0; width:auto; padding:12px 20px;" onclick="queryYearMonthRecords()">🔍 查詢</button>
+        </div>
+
+        <div id="queryResultArea" style="display:none;">
+          <p class="section-title">📊 查詢結果 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+          <div class="profile-card" style="padding:12px; overflow-x:auto;">
+            <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
+              <thead>
+                <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
+                  <th style="padding:8px;">⏰ 加班時數</th>
+                  <th style="padding:8px;">🔄 漏打卡次數</th>
+                  <th style="padding:8px;">⚠️ 遲到/早退次數</th>
+                  <th style="padding:8px;">🌴 請假時數</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="color:var(--text-primary); font-weight:bold;">
+                  <td id="y-ot" style="padding:8px; color:var(--blue-main);">— h</td>
+                  <td id="y-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
+                  <td id="y-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
+                  <td id="y-leave" style="padding:8px; color:var(--green-main);">— h</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="section-title" style="margin-top:24px;">⚠️ 查詢期間出勤異常明細</p>
+          <div id="yearIssueList"></div>
+        </div>
+      </div>
+
+      <div id="record-detail-content" style="display:block;">
+        <p class="section-title">📅 本月打卡紀錄</p>
+        <div class="record-list" id="allRecordsList"></div>
+      </div>
+
+      <div id="record-apply-content" style="display:none;">
+        <p class="section-title">📋 申請單明細 <span id="apply-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+        <div class="filter-bar" style="margin-bottom: 16px;">
+          <div class="filter-chip active" onclick="filterApplyRecords('請假',this)">🌴 請假</div>
+          <div class="filter-chip" onclick="filterApplyRecords('加班',this)">⏰ 加班</div>
+          <div class="filter-chip" onclick="filterApplyRecords('補打卡',this)">🔄 補打卡</div>
+          <div class="filter-chip" onclick="filterApplyRecords('班別調整',this)">⚙️ 班別調整</div>
+        </div>
+        <div class="record-list" id="applyRecordsList"></div>
+      </div>
+    </div>
+
+    <!-- 個人資料頁面 -->
+    <div class="page" id="page-profile">
+      <p class="section-title">基本資料</p>
+      <div class="profile-card">
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">👤</div>
+          <div class="profile-meta-label">姓名</div>
+          <div class="profile-meta-value" id="profileNameVal">—</div>
+        </div>
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">📅</div>
+          <div class="profile-meta-label">到職日</div>
+          <div class="profile-meta-value" id="profileJoinDate">—</div>
+        </div>
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🏷️</div>
+          <div class="profile-meta-label">員編</div>
+          <div class="profile-meta-value" id="profileEmpIdVal">—</div>
+        </div>
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">💼</div>
+          <div class="profile-meta-label">在職類型</div>
+          <div class="profile-meta-value" id="profileEmpType">—</div>
+        </div>
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🏢</div>
+          <div class="profile-meta-label">預設班別</div>
+          <div class="profile-meta-value" id="profileDefaultShift">—</div>
+        </div>
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">📧</div>
+          <div class="profile-meta-label">Email</div>
+          <div class="profile-meta-value" id="profileEmailVal">—</div>
+        </div>
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🔑</div>
+          <div class="profile-meta-label">密碼</div>
+          <div class="profile-meta-value" style="display:flex;align-items:center;gap:8px;">
+            <span>••••••</span>
+            <button class="pw-toggle-btn" onclick="togglePwChange()">修改密碼</button>
+          </div>
+        </div>
+        <div class="pw-change-area" id="pwChangeArea">
+          <div class="input-group" style="margin-bottom:10px;">
+            <label class="input-label">舊密碼</label>
+            <input type="password" class="input-field" id="pwOld" placeholder="請輸入舊密碼" />
+          </div>
+          <div class="input-group" style="margin-bottom:10px;">
+            <label class="input-label">新密碼</label>
+            <input type="password" class="input-field" id="pwNew" placeholder="請輸入新密碼" />
+          </div>
+          <div class="input-group" style="margin-bottom:10px;">
+            <label class="input-label">確認新密碼</label>
+            <input type="password" class="input-field" id="pwConfirm" placeholder="再次輸入新密碼" />
+          </div>
+          <button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
+        </div>
+      </div>
+
+      <p class="section-title">🌴 特休與補休賸餘額度</p>
+      <div class="profile-card" style="padding: 16px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
+          <span style="font-weight: bold; color: var(--green-light);">🌴 特休賸餘</span>
+          <span id="profileAnnualLeave" style="font-size: 18px; font-weight: bold; color: var(--text-primary);">— 小時</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
+          <span style="font-weight: bold; color: var(--accent-purple);">⏰ 補休賸餘</span>
+          <span id="profileCompensatoryLeave" style="font-size: 18px; font-weight: bold; color: var(--text-primary);">— 小時</span>
+        </div>
+      </div>
+
+      <p class="section-title" style="margin-top: 24px;">⚖️ 勞基法常用假別與給薪說明 <span id="profile-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+      <div class="profile-card" style="padding: 16px; overflow-x: auto;">
+        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; padding: 10px; background: var(--card-bg-soft); border-radius: var(--radius); border-left: 4px solid var(--blue-main);">
+          <strong>💡 系統請假規範：</strong>請假一律以<strong>小時</strong>為單位，全天假登記為 8 小時。
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; color: var(--text-primary);">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--card-border); color: var(--text-secondary);">
+              <th style="padding: 6px 4px;">假別</th>
+              <th style="padding: 6px 4px;">今年已請</th>
+              <th style="padding: 6px 4px;">勞基法規定與給薪說明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--green-light);">🌴 特休假</td>
+              <td id="accumAnnual" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。天數依到職年資遞增發給。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-purple);">⏰ 補休</td>
+              <td id="accumComp" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。加班時數 1:1 兌換，限當年度休畢。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-orange);">🩹 普通病假</td>
+              <td id="accumSick" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);"><span style="color:var(--accent-orange); font-weight:bold;">折半發給 (半薪)</span>。未住院者一年上限 30 天。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: #f87171;">💼 事假</td>
+              <td id="accumPersonal" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);"><span style="color:#f87171; font-weight:bold;">期間不給薪 (無薪)</span>。一年累計最多請 14 天。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">🏛️ 公假</td>
+              <td id="accumOfficial" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">💍 婚假</td>
+              <td id="accumMarriage" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">🕯️ 喪假</td>
+              <td id="accumFuneral" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 主管頁面 -->
+    <div class="page" id="page-admin">
+      <div class="filter-bar" style="margin-bottom: 20px;">
+        <div class="filter-chip active" id="adminSubTab-pending" onclick="switchAdminSubTab('pending')">⏳ 待審核</div>
+        <div class="filter-chip" id="adminSubTab-board" onclick="switchAdminSubTab('board')">📊 考勤與假別看板</div>
+        <div class="filter-chip" id="adminSubTab-adjust" onclick="switchAdminSubTab('adjust')">⚙️ 排班異動</div>
+        <div class="filter-chip" id="adminSubTab-agent" onclick="switchAdminSubTab('agent')">👥 代理人</div>
+      </div>
+
+      <div class="admin-subpage" id="adminSubPage-pending">
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr) !important;">
+          <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審請假</div>
+            <div class="stat-value" id="statLeave" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid var(--accent-purple); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審加班</div>
+            <div class="stat-value" id="statOT" style="color:var(--accent-purple); font-size: 20px;">—<span>筆</span></div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid var(--blue-light); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審補卡</div>
+            <div class="stat-value" id="statSupp" style="color:var(--blue-light); font-size: 20px;">—<span>筆</span></div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審排班</div>
+            <div class="stat-value" id="statAdjust" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
+          </div>
+        </div>
+        <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
+        <div class="record-list" id="pendingList"></div>
+      </div>
+
+      <div class="admin-subpage" id="adminSubPage-board" style="display:none;">
+        <div class="record-list" id="adminFieldPunches" style="margin-bottom:24px;display: none !important;"></div>
+        <p class="section-title">📊 全體專任同仁考勤與假別看板</p>
+        <div class="profile-card" style="padding:16px; overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px; border: 1.5px solid var(--card-border);">
+            <thead>
+              <tr style="background:#2a3650; border-bottom:2px solid var(--card-border); color:#ffffff; font-weight:bold; text-align:center;">
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">員編</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">姓名</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">到職日</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">當前年資</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休總額</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休已請</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休賸餘</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
+                <th style="padding:8px;">穿透對帳</th>
+              </tr>
+            </thead>
+            <tbody id="adminEmployeeOverviewBody">
+              <tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">資料載入中…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
+            <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
+              <option value="">-- 請選擇員工 --</option>
+            </select>
+          </div>
+          <div id="adminQueryResults" style="display:none; margin-top:16px;">
+            <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
+            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
+            <div class="stats-grid" style="margin-bottom:16px;">
+              <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
+                <div class="stat-label">年度累計加班</div>
+                <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
+              </div>
+              <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
+                <div class="stat-label">年度累計漏卡</div>
+                <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
+              </div>
+              <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
+                <div class="stat-label">年度累計遲到/早退</div>
+                <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
+              </div>
+            </div>
+            
+            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡紀錄：</p>
+            <div id="aq-calendar-container"></div>
+          </div>
+        </div>
+        <div class="record-list" id="adminRecords" style="display:none;"></div>
+      </div>
+
+      <div class="admin-subpage" id="adminSubPage-adjust" style="display:none;">
+        <p class="section-title">⚙️ 指派同仁特別排班異動 (免審核直接生效)</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">選擇同仁</label>
+            <select class="select-field" id="adminAdjustEmpId">
+              <option value="">-- 請選擇員工 --</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">異動日期</label>
+            <input type="date" class="input-field" id="adminAdjustDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">班別選擇</label>
+            <select class="select-field" id="adminAdjustShiftType">
+              <option value="08:00-17:00">08:00 - 17:00</option>
+              <option value="08:30-17:30">08:30 - 17:30</option>
+              <option value="09:00-18:00" selected>09:00 - 18:00</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">異動原因/備註</label>
+            <input type="text" class="input-field" id="adminAdjustReason" placeholder="例：理監事會議、公務排班調整" />
+          </div>
+          <button class="submit-btn blue" style="margin-top:8px;" onclick="submitAdminAdjust()">✓ 儲存並直接生效</button>
+        </div>
+      </div>
+
+      <div class="admin-subpage" id="adminSubPage-agent" style="display:none;">
+        <p class="section-title">👥 主管代理人設定 (代理期間擁有審核權限)</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">選擇代理同仁</label>
+            <select class="select-field" id="adminAgentEmpId">
+              <option value="">-- 請選擇代理主管 --</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理開始日期</label>
+            <input type="date" class="input-field" id="adminAgentStartDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理結束日期</label>
+            <input type="date" class="input-field" id="adminAgentEndDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理狀態</label>
+            <select class="select-field" id="adminAgentStatus">
+              <option value="啟用">啟用 (代理中)</option>
+              <option value="停用">停用 (收回授權)</option>
+            </select>
+          </div>
+          <button class="submit-btn blue" style="margin-top:8px;" onclick="submitAdminAgent()">✓ 儲存代理設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Modals -->
+  <div class="modal-overlay" id="modal-leave">
+    <div class="modal">
+      <div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal('leave')">×</button></div>
+      <div class="input-group">
+        <label class="input-label">假別</label>
+        <select class="select-field" id="modalLeaveType">
+          <option>特休</option>
+          <option value="加班補休">補休</option>
+          <option>事假</option>
+          <option>病假</option>
+          <option>公假</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">日期</label>
+        <input type="date" class="input-field" id="modalLeaveDate" />
+      </div>
+      <button class="submit-btn orange" onclick="quickLeave()">確認送出</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-overtime">
+    <div class="modal">
+      <div class="modal-title">🌙 加班申請<button class="modal-close" onclick="closeModal('overtime')">×</button></div>
+      <div class="input-group">
+        <label class="input-label">加班時數</label>
+        <select class="select-field" id="modalOTHours">
+          <option>1 小時</option><option>1.5 小時</option><option>2 小時</option>
+          <option>2.5 小時</option><option>3 小時</option><option>3.5 小時</option>
+          <option>4 小時</option><option>4.5 小時</option><option>5 小時</option>
+          <option>5.5 小時</option><option>6 小時</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">原因</label>
+        <input class="input-field" id="modalOTReason" placeholder="加班原因" />
+      </div>
+      <button class="submit-btn purple" onclick="quickOvertime()">確認送出</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- JavaScript Resource -->
+  <script src="script.js"></script>
+</body>
+</html>
