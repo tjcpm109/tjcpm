@@ -968,6 +968,17 @@ display: inline-block;
 <div class="info-text">
 <strong>請假說明：</strong>請假以<strong>小時</strong>為單位，請填寫開始與結束時間。
 </div>
+  <!-- 8/19✅ 新增：假別餘額顯示卡片 -->
+<div class="profile-card" id="leaveBalanceCard" style="padding:16px; margin-bottom:16px;">
+  <div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:8px;">
+    <span style="font-weight:bold; color:var(--green-light);">🌴 特休賸餘</span>
+    <span id="leaveAnnualBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
+  </div>
+  <div style="display:flex; justify-content:space-between;">
+    <span style="font-weight:bold; color:var(--accent-purple);">⏰ 補休賸餘</span>
+    <span id="leaveCompBalance" style="font-size:18px; font-weight:bold; color:var(--text-primary);">— 小時</span>
+  </div>
+</div>
 </div>
 <p class="section-title">請假申請</p>
 <div class="input-group">
@@ -2206,7 +2217,7 @@ async function submitLeave() {
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
     );
-    const annualBalance = currentUser?.quota?.annual || 0;  // 特休餘額
+   const annualBalance = currentUser?.quota?.specialLeaveRemainingHours || 0;  // 特休餘額
     
     if (requestHours > annualBalance) {
       showToast(`⚠️ 特休餘額不足！申請時數：${requestHours}h，餘額：${annualBalance}h`);
