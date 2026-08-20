@@ -5,7 +5,7 @@ function isTimeExempted(min, leaves) {
 }
 // script.js 新增：欄位變更時觸發預覽
 document.addEventListener('DOMContentLoaded', function() {
-  const inputs = ['leaveStarㄔ', 'leaveEnd', 'leaveStartTime', 'leaveEndTime'];
+  const inputs = ['leaveStar', 'leaveEnd', 'leaveStartTime', 'leaveEndTime'];
   
   inputs.forEach(id => {
     const el = document.getElementById(id);
