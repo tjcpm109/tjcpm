@@ -1112,7 +1112,11 @@ function quickLeave() {
   const clientId = pendingClientId || String(id);
   const record = {
     id, clientId: clientId, type: `請假`, subType: document.getElementById(`modalLeaveType`).value,
-    empId: currentUser.empId, name: currentUser.name, date: document.getElementById(`modalLeaveDate`).value,
+    empId: currentUser.empId, name: currentUser.name, 
+    date: document.getElementById(`modalLeaveDate`).value,
+    endDate: dateVal,           // ← 補上，跟 date 一樣（單日請假）
+    startTime: `09:00`,         // ← 補上預設開始時間
+    endTime: `18:00`,           // ← 補上預設結束時間
     status: `待審`, timestamp: new Date().toISOString()
   };
   records.unshift(record);
