@@ -237,25 +237,30 @@ if (`serviceWorker` in navigator) {
 }
 
 // ── 主類別切換（請假/加班/補打卡/班別調整） ──
+// ── 主類別切換（請假/加班/補打卡/班別調整） ──
 function filterApplyMainCategory(type, chip) {
   currentApplyFilter = type;
-  
-  // 若切換到「請假」，預設選取「特休」；若為其他類別，重置為「全部」
   currentLeaveSubFilter = (type === '請假') ? '特休' : '全部';
-  
-  // 更新主標籤 UI
+  currentStatusFilter = '全部'; // 切換主類別時重置狀態篩選
+
+  // 1. 更新主頁籤 UI 亮燈
   document.querySelectorAll('#record-apply-content .filter-bar:first-of-type .filter-chip').forEach(c => c.classList.remove('active'));
   if (chip) chip.classList.add('active');
 
-  // 控制請假子標籤列的顯示/隱藏
+  // 2. 控制「假別細項列」顯示/隱藏
   const subBar = document.getElementById('leaveSubFilterBar');
   if (subBar) {
     subBar.style.display = (type === '請假') ? 'flex' : 'none';
-    
-    // 同步更新子標籤 UI：自動把「特休」亮起
     document.querySelectorAll('#leaveSubFilterBar .subtab-chip').forEach(c => {
-      const isSpecial = c.textContent.includes('特休');
-      c.classList.toggle('active', isSpecial);
+      c.classList.toggle('active', c.textContent.includes('特休'));
+    });
+  }
+
+  // 3. 【關鍵修復】重置「狀態篩選列」UI 亮燈至『全部狀態』
+  const statusBar = document.getElementById('statusFilterBar');
+  if (statusBar) {
+    document.querySelectorAll('#statusFilterBar .subtab-chip').forEach(c => {
+      c.classList.toggle('active', c.textContent.includes('全部'));
     });
   }
 
