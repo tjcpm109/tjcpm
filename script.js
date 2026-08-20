@@ -14,6 +14,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// 渲染個人首頁與額度資料
+function renderUserProfile(quota, userData) {
+  // 填寫基本資料
+  document.getElementById('userName').innerText = userData.name || '-';
+  document.getElementById('userEmpId').innerText = userData.empId || '-';
+  document.getElementById('userSeniority').innerText = `年資：${userData.seniorityText || '計算中'}`;
+
+  if (quota) {
+    // 填寫特休
+    document.getElementById('specialRemaining').innerHTML = `${quota.specialLeaveRemainingHours} <small>小時</small>`;
+    document.getElementById('specialTotal').innerText = quota.specialLeaveTotalHours || 0;
+    document.getElementById('specialUsed').innerText = quota.specialLeaveUsedHours || 0;
+    document.getElementById('specialPending').innerText = quota.specialLeavePendingHours || 0; // 配合剛新增的待審
+
+    // 填寫補休
+    document.getElementById('compRemaining').innerHTML = `${quota.compLeaveRemainingHours} <small>小時</small>`;
+    document.getElementById('otAcc').innerText = quota.totalOtHoursAcc || 0;
+    document.getElementById('compUsed').innerText = quota.compLeaveUsedHours || 0;
+    document.getElementById('compPending').innerText = quota.compLeavePendingHours || 0;     // 配合剛新增的待審
+  }
+}
+
 function isRangeExempted(s, e, leaves) {
   for (let m = s; m < e; m++) {
     if (!isTimeExempted(m, leaves)) return false;
