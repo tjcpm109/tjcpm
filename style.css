@@ -878,3 +878,158 @@ body {
   color: #ffffff !important;
   box-shadow: 0 4px 10px rgba(26, 111, 196, 0.25) !important;
 }
+/* ============================================================
+   【分段控制器 & 簽核狀態全選項進階 UI 樣式】
+   ============================================================ */
+
+/* ── 控制器容器 ── */
+.filter-bar-segmented {
+  display: flex;
+  background: var(--card-bg-soft);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.filter-bar-segmented::-webkit-scrollbar { display: none; }
+
+/* ── 按鈕基本樣式 ── */
+.segment-btn {
+  flex: 1;
+  min-width: 68px;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.segment-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Active 高亮色彩設定 ── */
+.segment-btn.active {
+  background: var(--card-bg);
+  color: var(--blue-main);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  font-weight: 700;
+}
+/* 已同意高亮 (綠) */
+.segment-btn.active[data-status="agree"] {
+  background: var(--green-pale) !important;
+  color: var(--green-main) !important;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+/* 待審核高亮 (橘) */
+.segment-btn.active[data-status="pending"] {
+  background: var(--accent-orange-pale) !important;
+  color: var(--accent-orange) !important;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+/* 已拒絕高亮 (紅) */
+.segment-btn.active[data-status="reject"] {
+  background: var(--accent-red-pale) !important;
+  color: var(--accent-red) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+/* 已撤回高亮 (灰) */
+.segment-btn.active[data-status="cancel"] {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1px solid #cbd5e1;
+}
+
+/* ── 卡片四種狀態特定風格 ── */
+
+/* 1. 已同意 (綠) */
+.record-item.status-approved {
+  background: var(--card-bg);
+  border: 1.5px solid var(--green-border) !important;
+  border-left: 5px solid var(--green-main) !important;
+}
+.record-leave-hours.approved-hours {
+  color: var(--blue-main);
+  background: var(--blue-pale);
+  border: 1px solid rgba(26, 111, 196, 0.2);
+}
+
+/* 2. 待審核 / 簽核中 (橘/紫) */
+.record-item.status-pending {
+  background: var(--card-bg);
+  border: 1.5px solid var(--accent-orange) !important;
+  border-left: 5px solid var(--accent-orange) !important;
+}
+.record-item.status-pending-second {
+  background: var(--card-bg);
+  border: 1.5px solid var(--accent-purple) !important;
+  border-left: 5px solid var(--accent-purple) !important;
+}
+.record-leave-hours.pending-hours {
+  color: #b45309 !important;
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+}
+
+/* 3. 已拒絕 (紅) */
+.record-item.status-rejected {
+  background: var(--card-bg);
+  border: 1.5px solid var(--accent-red) !important;
+  border-left: 5px solid var(--accent-red) !important;
+  opacity: 0.9;
+}
+.record-leave-hours.rejected-hours {
+  color: var(--accent-red);
+  background: var(--accent-red-pale);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* 4. 已撤回 (灰) */
+.record-item.status-withdrawn {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1 !important;
+  border-left: 5px solid #94a3b8 !important;
+  opacity: 0.7;
+}
+
+/* ── 輔助元件與細節欄位 ── */
+.record-header-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.record-title-group { display: flex; align-items: center; gap: 8px; }
+.record-leave-hours { font-size: 14px; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+.record-date-range { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+
+.record-approve-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.approver-tag { color: var(--green-main); font-weight: 600; }
+.pending-tag { color: var(--accent-orange); font-weight: 600; }
+.reject-tag { color: var(--accent-red); font-weight: 600; }
+
+/* 撤回按鈕 */
+.btn-cancel-apply {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-cancel-apply:hover { background: var(--accent-red-pale); color: var(--accent-red); border-color: var(--accent-red); }
