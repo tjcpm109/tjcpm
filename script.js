@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 全域目前篩選狀態變數 (統一命名與管理)
 let currentApplyFilter = '請假';      // 第一層：主類別 (請假/加班/補打卡/班別調整)
-let currentSubCategory = 'ALL';       // 第二層：假別細項 (ALL/特休/補休/公假/其他假別)
+let currentSubCategory = '特休';       // 第二層：假別細項 (特休/補休/公假/其他假別)
 let currentStatus = '同意';           // 第三層：審核狀態 (同意/待審/拒絕/已撤回)
 
 // ── 第一層：主類別切換 ──
@@ -28,7 +28,7 @@ function filterApplyMainCategory(type, chip) {
   currentApplyFilter = type;
   
   // 切換時重置第二層與第三層
-  currentSubCategory = 'ALL';
+  currentSubCategory = '特休';
   currentStatus = (type === '請假') ? '同意' : 'ALL';
 
   // 1. 主頁籤 (第一層) UI 高亮
@@ -219,6 +219,19 @@ function renderLeaveRecords(leaveDataList) {
   applyCombinedFilter();
 }
 
+
+// 格式化申請時間（YYYY-MM-DD HH:mm）
+function formatApplyTimestamp(ts) {
+  if (!ts) return '—';
+  const d = safeNewDate(ts);
+  if (isNaN(d.getTime())) return '—';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${day} ${hh}:${mm}`;
+}
 // 輔助點色工具
 function getDotColorClass(subType) {
   if (subType === '特休') return 'dot-green';
