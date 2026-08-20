@@ -410,7 +410,8 @@ async function doLogin() {
     const data = await callGAS({ action: `login`, empId, password });
     if (data.status === `ok`) {
       currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || `專任`, defaultShift: data.defaultShift || `09:00-18:00`, quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false,  
-                   seniorityText: data.seniorityText || `—`,                              // 【新增】
+                     email: data.email || '',
+                     seniorityText: data.seniorityText || `—`,                              // 【新增】
                    specialLeaveEntitlementHours: data.specialLeaveEntitlementHours || 0   // 【新增】 
                    };
       try {
