@@ -2938,15 +2938,28 @@ function countMissedLateEarlyInRange(start, end) {
 
 function calculatePendingLeaveHours(subType) {
   if (!currentUser) return 0;
-  const pendingStatuses = [`待審`, `補件`, `待第二次審查`];
+  
+  // 1. 嚴格定義審核中狀態（未包含 '已撤回'、'同意'、'拒絕'）
+  const pendingStatuses = ['待審', '補件', '待第二次審查'];
+  
   let total = 0;
   records.forEach(r => {
-    if (!matchEmpId(r.empId, currentUser.empId) || r.type !== `請假` || r.subType !== subType || pendingStatuses.indexOf(r.status) === -1) return;
-    total += (r.hours !== undefined && r.hours !== null && r.hours !== ``) ? (parseFloat(r.hours) || 0) : calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
+    // 2. 條件檢查：工號符合 + 類型為請假 + 假別符合 + 狀態屬於審核中
+    if (!matchEmpId(r.empId, currentUser.empId) || 
+        r.type !== '請假' || 
+        r.subType !== subType || 
+        !pendingStatuses.includes(r.status)) {
+      return; // 狀態為 '已撤回' 會在這裡直接被剔除
+    }
+    
+    // 3. 加總審核中時數
+    total += (r.hours !== undefined && r.hours !== null && r.hours !== '') 
+      ? (parseFloat(r.hours) || 0) 
+      : calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
   });
+  
   return total;
 }
-
 function hasAnyRecordInRange(start, end) {
   if (!currentUser) return false;
   return records.some(r => {
