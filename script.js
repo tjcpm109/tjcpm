@@ -15,12 +15,49 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 // 【新增】切換審核狀態篩選
-function filterApplyStatus(status, chip) {
-  currentStatusFilter = status;
-  document.querySelectorAll('#statusFilterBar .subtab-chip').forEach(c => c.classList.remove('active'));
+// ── 主類別切換（請假/加班/補打卡/班別調整） ──
+function filterApplyMainCategory(type, chip) {
+  currentApplyFilter = type;
+  currentLeaveSubFilter = (type === '請假') ? '特休' : '全部';
+  currentStatusFilter = '全部';
+
+  // 主頁籤切換
+  document.querySelectorAll('#record-apply-content .filter-chip').forEach(c => c.classList.remove('active'));
+  if (chip) chip.classList.add('active');
+
+  // 控制假別細項列
+  const subBar = document.getElementById('leaveSubFilterBar');
+  if (subBar) {
+    subBar.style.display = (type === '請假') ? 'flex' : 'none';
+    document.querySelectorAll('#leaveSubFilterBar .segment-btn').forEach(c => {
+      c.classList.toggle('active', c.textContent.includes('特休'));
+    });
+  }
+
+  // 重置狀態篩選列
+  document.querySelectorAll('#statusFilterBar .segment-btn').forEach(c => {
+    c.classList.toggle('active', c.dataset.status === 'all');
+  });
+
+  renderAllList();
+}
+
+// ── 請假細項標籤切換 ──
+function filterLeaveSubCategory(subType, chip) {
+  currentLeaveSubFilter = subType;
+  document.querySelectorAll('#leaveSubFilterBar .segment-btn').forEach(c => c.classList.remove('active'));
   if (chip) chip.classList.add('active');
   renderAllList();
 }
+
+// ── 切換審核狀態篩選 ──
+function filterApplyStatus(status, chip) {
+  currentStatusFilter = status;
+  document.querySelectorAll('#statusFilterBar .segment-btn').forEach(c => c.classList.remove('active'));
+  if (chip) chip.classList.add('active');
+  renderAllList();
+}
+
 // 渲染個人首頁與額度資料
 function renderUserProfile(quota, userData) {
   // 填寫基本資料
@@ -236,45 +273,8 @@ if (`serviceWorker` in navigator) {
   });
 }
 
-// ── 主類別切換（請假/加班/補打卡/班別調整） ──
-// ── 主類別切換（請假/加班/補打卡/班別調整） ──
-function filterApplyMainCategory(type, chip) {
-  currentApplyFilter = type;
-  currentLeaveSubFilter = (type === '請假') ? '特休' : '全部';
-  currentStatusFilter = '全部'; // 切換主類別時重置狀態篩選
 
-  // 1. 更新主頁籤 UI 亮燈
-  document.querySelectorAll('#record-apply-content .filter-bar:first-of-type .filter-chip').forEach(c => c.classList.remove('active'));
-  if (chip) chip.classList.add('active');
 
-  // 2. 控制「假別細項列」顯示/隱藏
-  const subBar = document.getElementById('leaveSubFilterBar');
-  if (subBar) {
-    subBar.style.display = (type === '請假') ? 'flex' : 'none';
-    document.querySelectorAll('#leaveSubFilterBar .subtab-chip').forEach(c => {
-      c.classList.toggle('active', c.textContent.includes('特休'));
-    });
-  }
-
-  // 3. 【關鍵修復】重置「狀態篩選列」UI 亮燈至『全部狀態』
-  const statusBar = document.getElementById('statusFilterBar');
-  if (statusBar) {
-    document.querySelectorAll('#statusFilterBar .subtab-chip').forEach(c => {
-      c.classList.toggle('active', c.textContent.includes('全部'));
-    });
-  }
-
-  renderAllList();
-}
-
-// ── 請假細項標籤切換 ──
-function filterLeaveSubCategory(subType, chip) {
-  currentLeaveSubFilter = subType;
-  document.querySelectorAll('#leaveSubFilterBar .subtab-chip').forEach(c => c.classList.remove('active'));
-  if (chip) chip.classList.add('active');
-  
-  renderAllList();
-}
 
 // ── JSONP caller ──
 function callGAS(params, timeoutMs = 15000) {
