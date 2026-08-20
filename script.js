@@ -16,90 +16,114 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 // 【新增】切換審核狀態篩選
 // ── 主類別切換（請假/加班/補打卡/班別調整） ──
+
+
+// 全域目前篩選狀態變數 (統一命名與管理)
+let currentApplyFilter = '請假';      // 第一層：主類別 (請假/加班/補打卡/班別調整)
+let currentSubCategory = 'ALL';       // 第二層：假別細項 (ALL/特休/補休/公假/其他假別)
+let currentStatus = '同意';           // 第三層：審核狀態 (同意/待審/拒絕/已撤回)
+
+// ── 第一層：主類別切換 ──
 function filterApplyMainCategory(type, chip) {
   currentApplyFilter = type;
-  currentLeaveSubFilter = (type === '請假') ? '特休' : '全部';
-  currentStatusFilter = '全部';
+  
+  // 切換時重置第二層與第三層
+  currentSubCategory = 'ALL';
+  currentStatus = (type === '請假') ? '同意' : 'ALL';
 
-  // 主頁籤切換
+  // 1. 主頁籤 (第一層) UI 高亮
   document.querySelectorAll('#record-apply-content .filter-chip').forEach(c => c.classList.remove('active'));
   if (chip) chip.classList.add('active');
 
-  // 控制假別細項列
+  // 2. 控制第二層 (假別細項列) 顯示與重置
   const subBar = document.getElementById('leaveSubFilterBar');
   if (subBar) {
     subBar.style.display = (type === '請假') ? 'flex' : 'none';
-    document.querySelectorAll('#leaveSubFilterBar .segment-btn').forEach(c => {
-      c.classList.toggle('active', c.textContent.includes('特休'));
+    subBar.querySelectorAll('.segment-btn').forEach(btn => {
+      // 預設將「全部」設為 active
+      btn.classList.toggle('active', btn.getAttribute('onclick')?.includes("'ALL'"));
     });
   }
 
-  // 重置狀態篩選列
-  document.querySelectorAll('#statusFilterBar .segment-btn').forEach(c => {
-    c.classList.toggle('active', c.dataset.status === 'all');
-  });
+  // 3. 控制第三層 (狀態列) UI 重置
+  const statusBar = document.getElementById('statusFilterBar');
+  if (statusBar) {
+    statusBar.querySelectorAll('.segment-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('onclick')?.includes("'同意'"));
+    });
+  }
 
-  renderAllList();
+  // 執行過濾
+  applyCombinedFilter();
 }
 
-// 全域目前篩選狀態變數
-let currentSubCategory = 'ALL';
-let currentStatus = '同意';
-
-// 1. 第二層：假別篩選點擊
+// ── 第二層：假別細項點擊 ──
 function filterLeaveSubCategory(subTypeTarget, el) {
+  // 切換 Active UI 樣式
   const parent = el.parentElement;
-  parent.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  if (parent) {
+    parent.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  }
   el.classList.add('active');
 
+  // 設定全域變數並過濾
   currentSubCategory = subTypeTarget;
   applyCombinedFilter();
 }
 
-// 2. 第三層：狀態篩選點擊
+// ── 第三層：審核狀態點擊 ──
 function filterApplyStatus(statusTarget, el) {
+  // 切換 Active UI 樣式
   const parent = el.parentElement;
-  parent.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  if (parent) {
+    parent.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  }
   el.classList.add('active');
 
+  // 設定全域變數並過濾
   currentStatus = statusTarget;
   applyCombinedFilter();
 }
 
-// 3. 核心組合篩選邏輯
+// ── 核心組合篩選邏輯 (三層連動) ──
 function applyCombinedFilter() {
-  const mainCategories = ['特休', '補休', '公假'];
+  const mainCategories = ['特休', '補休', '加班補休', '公假'];
   const recordItems = document.querySelectorAll('#leaveRecordList .record-item');
 
   let visibleCount = 0;
 
   recordItems.forEach(item => {
-    const itemType = item.getAttribute('data-type') || '';
-    const itemStatus = item.getAttribute('data-status') || '';
+    const itemType = item.getAttribute('data-type') || '';     // 假別，如：特休、事假
+    const itemStatus = item.getAttribute('data-status') || ''; // 狀態，如：同意、待審
 
-    // (A) 假別條件判斷
+    // (A) 第二層：假別條件判斷
     let passType = false;
     if (currentSubCategory === 'ALL') {
       passType = true;
     } else if (currentSubCategory === '其他假別') {
-      passType = !mainCategories.includes(itemType); // 非特補公皆屬「其他」
+      // 非特補公皆屬「其他」
+      passType = !mainCategories.includes(itemType); 
+    } else if (currentSubCategory === '補休') {
+      passType = (itemType === '補休' || itemType === '加班補休');
     } else {
       passType = (itemType === currentSubCategory);
     }
 
-    // (B) 審核狀態條件判斷
+    // (B) 第三層：審核狀態條件判斷
     let passStatus = false;
-    if (currentStatus === '同意') {
+    if (currentStatus === 'ALL') {
+      passStatus = true;
+    } else if (currentStatus === '同意') {
       passStatus = (itemStatus === '同意' || itemStatus === '同意_補件後');
     } else if (currentStatus === '待審') {
-      passStatus = (itemStatus === '待審' || itemStatus === '待第二次審查');
+      passStatus = (itemStatus === '待審' || itemStatus === '補件' || itemStatus === '待第二次審查');
     } else if (currentStatus === '拒絕') {
       passStatus = (itemStatus === '拒絕' || itemStatus === '拒絕_補件後');
     } else if (currentStatus === '已撤回') {
       passStatus = (itemStatus === '已撤回');
     }
 
-    // (C) 雙條件顯示控制
+    // (C) 雙條件結合顯示控制
     if (passType && passStatus) {
       item.style.display = 'flex';
       visibleCount++;
@@ -108,9 +132,11 @@ function applyCombinedFilter() {
     }
   });
 
-  // 空狀態處置
+  // 無資料時的空狀態顯示
   showEmptyStateIfNeeded(visibleCount);
 }
+
+
 
 // 4. 動態渲染請假卡片函式 (從後端 API 取得資料後呼叫)
 function renderLeaveRecords(leaveDataList) {
