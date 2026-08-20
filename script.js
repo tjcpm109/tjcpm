@@ -14,7 +14,19 @@ function isRangeExempted(s, e, leaves) {
 const GAS_URL = `https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec`;
 
 function parseLocalDate(d) { return safeNewDate(d); }
-
+// ── 個人資料頁面：開關班別調整表單 ──
+function toggleProfileAdjustForm() {
+  const area = document.getElementById('profileAdjustArea');
+  if (!area) return;
+  const isOpen = area.classList.contains('open');
+  area.classList.toggle('open', !isOpen);
+  
+  if (!isOpen) {
+    // 開啟時預設設定日期為今天
+    const dateInput = document.getElementById('profileAdjustDate');
+    if (dateInput && !dateInput.value) dateInput.value = todayStr;
+  }
+}
 function toggleCompDetail() {
   const area = document.getElementById(`compDetailArea`);
   if (!area) return;
