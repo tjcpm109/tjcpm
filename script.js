@@ -191,26 +191,30 @@ function renderLeaveRecords(leaveDataList) {
       detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
     }
 
-    html += `
-      <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
-        <div class="record-header-row">
-          <div class="record-title-group">
-            <span class="record-dot ${getDotColorClass(subType)}"></span>
-            <span class="record-type">${subType}</span>
-            ${badgeHtml}
-          </div>
-          <span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>
-        </div>
-
-        <div class="record-date-range">
-          📅 ${item.date} ${item.startTime} ～ ${item.endDate || item.date} ${item.endTime}
-        </div>
-
-        <div class="record-approve-detail">
-          ${detailHtml}
-        </div>
+html += `
+  <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
+    <div class="record-header-row">
+      <div class="record-title-group">
+        <span class="record-dot ${getDotColorClass(subType)}"></span>
+        <span class="record-type">${subType}</span>
+        ${badgeHtml}
       </div>
-    `;
+      <span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>
+    </div>
+
+    <div class="record-date-range">
+      📅 ${item.date} ${item.startTime} ～ ${item.endDate || item.date} ${item.endTime}
+    </div>
+
+    <div class="record-apply-time" style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+      🕐 申請時間：${formatApplyTimestamp(item.timestamp)}
+    </div>
+
+    <div class="record-approve-detail">
+      ${detailHtml}
+    </div>
+  </div>
+`;
   });
 
   container.innerHTML = html;
