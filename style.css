@@ -367,17 +367,19 @@ body {
 .file-list { margin-top: 6px; font-size: 12px; color: var(--text-muted); }
 
 /* ── Action buttons ── */
-.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; width: 100%;          /* 確保容器滿版 */
+  box-sizing: border-box;}
 .action-btn {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
-  padding: 24px 16px;
+  padding: 20px 12px;
   cursor: pointer;
   text-align: center;
   transition: all 0.18s;
   user-select: none;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow);width: 100%;          /* 強制填滿 Grid 欄位 */
+  box-sizing: border-box;
 }
 .action-btn:hover { background: var(--card-bg-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .action-btn:active { transform: scale(0.97); }
