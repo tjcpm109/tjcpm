@@ -5,7 +5,7 @@ function isTimeExempted(min, leaves) {
 }
 // script.js 新增：欄位變更時觸發預覽
 document.addEventListener('DOMContentLoaded', function() {
-  const inputs = ['leaveStartDate', 'leaveEndDate', 'leaveStartTime', 'leaveEndTime'];
+  const inputs = ['leaveStarㄔ', 'leaveEnd', 'leaveStartTime', 'leaveEndTime'];
   
   inputs.forEach(id => {
     const el = document.getElementById(id);
@@ -46,6 +46,13 @@ function isRangeExempted(s, e, leaves) {
 
 const GAS_URL = `https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec`;
 
+function getTodayStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, `0`);
+  const d = String(now.getDate()).padStart(2, `0`);
+  return `${y}-${m}-${d}`;
+}
 // 初始化時間選擇器
 function initTimeSelects() {
   const times = [];
@@ -2388,12 +2395,12 @@ function timeToMin(timeStr) {
 }
 
 // script.js 新增：向後端請求預覽時數
-function previewLeaveHours() {
-  const startDate = document.getElementById('leaveStartDate').value;
-  const endDate = document.getElementById('leaveEndDate').value || startDate;
+async function previewLeaveHours() {
+  const startDate = document.getElementById('leaveStart').value;
+  const endDate = document.getElementById('leaveEnd').value || startDate;
   const startTime = document.getElementById('leaveStartTime').value;
   const endTime = document.getElementById('leaveEndTime').value;
-  const empId = getCurrentEmpId(); // 取得當前登入者的工號
+  const empId = currentUser?.empId; // 取得當前登入者的工號
 
   // 欄位未填完整前不發送請求
   if (!startDate || !startTime || !endTime) return;
@@ -2401,24 +2408,27 @@ function previewLeaveHours() {
   const displayEl = document.getElementById('previewHoursDisplay');
   if (displayEl) displayEl.innerText = '計算中...';
 
-  // 透過 google.script.run 呼叫後端 code.gs 的 getLeaveHoursFromRow
-  google.script.run
-    .withSuccessHandler(function(hours) {
-      if (displayEl) {
-        displayEl.innerText = `預計扣除時數：${hours} 小時`;
-      }
-    })
-    .withFailureHandler(function(err) {
-      console.error('預覽時數失敗:', err);
-      if (displayEl) displayEl.innerText = '時數計算失敗';
-    })
-    .getLeaveHoursFromRow({
+  // 透過 callGAS（fetch/JSONP）呼叫後端 previewLeaveHours action，
+  // 由後端的 getLeaveHoursFromRow 計算權威時數（不能用 google.script.run，
+  // 因為前端是架在 GitHub Pages，跟後端 Apps Script 是不同網域）
+  try {
+    const res = await callGAS({
+      action: `previewLeaveHours`,
       empId: empId,
       date: startDate,
       endDate: endDate,
       startTime: startTime,
       endTime: endTime
     });
+    if (res && res.status === `ok`) {
+      if (displayEl) displayEl.innerText = `預計扣除時數：${res.hours} 小時`;
+    } else {
+      if (displayEl) displayEl.innerText = `時數計算失敗`;
+    }
+  } catch (err) {
+    console.error('預覽時數失敗:', err);
+    if (displayEl) displayEl.innerText = '時數計算失敗';
+  }
 }
 
 function renderEmploymentYearSummary() {
