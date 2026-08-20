@@ -387,20 +387,20 @@
           <div class="filter-chip" onclick="filterApplyMainCategory('班別調整', this)">⚙️ 班別調整</div>
         </div>
 
-       <!-- 請假專屬的細項假別二次篩選器 -->
-<div class="filter-bar" id="leaveSubFilterBar" style="margin-bottom: 10px; gap: 6px;">
-  <div class="subtab-chip active" onclick="filterLeaveSubCategory('特休', this)" style="font-size:12px; padding:4px 10px;">🌴 特休</div>
-  <div class="subtab-chip" onclick="filterLeaveSubCategory('加班補休', this)" style="font-size:12px; padding:4px 10px;">⏰ 補休</div>
-  <div class="subtab-chip" onclick="filterLeaveSubCategory('公假', this)" style="font-size:12px; padding:4px 10px;">🏛️ 公假</div>
-  <div class="subtab-chip" onclick="filterLeaveSubCategory('其他假別', this)" style="font-size:12px; padding:4px 10px;">📁 其他假別</div>
+<!-- 第二層：假別細項篩選（分段控制器） -->
+<div class="filter-bar-segmented" id="leaveSubFilterBar">
+  <div class="segment-btn active" onclick="filterLeaveSubCategory('特休', this)">🌴 特休</div>
+  <div class="segment-btn" onclick="filterLeaveSubCategory('加班補休', this)">⏰ 補休</div>
+  <div class="segment-btn" onclick="filterLeaveSubCategory('公假', this)">🏛️ 公假</div>
+  <div class="segment-btn" onclick="filterLeaveSubCategory('其他假別', this)">📁 其他</div>
 </div>
 
-<!-- 【新增】審核狀態篩選器 -->
-<div class="filter-bar" id="statusFilterBar" style="margin-bottom: 16px; gap: 6px;">
-  <div class="subtab-chip" onclick="filterApplyStatus('同意', this)" style="font-size:12px; padding:4px 10px; color:#10b981;">✓ 已同意</div>
-  <div class="subtab-chip" onclick="filterApplyStatus('待審', this)" style="font-size:12px; padding:4px 10px; color:#f59e0b;">⏳ 待審核</div>
-  <div class="subtab-chip" onclick="filterApplyStatus('拒絕', this)" style="font-size:12px; padding:4px 10px; color:#ef4444;">✗ 已拒絕</div>
-  <div class="subtab-chip" onclick="filterApplyStatus('已撤回', this)" style="font-size:12px; padding:4px 10px; color:#6b7280;">🔙 已撤回</div>
+<!-- 第三層：審核狀態篩選（分段控制器） -->
+<div class="filter-bar-segmented" id="statusFilterBar">
+  <div class="segment-btn" data-status="agree" onclick="filterApplyStatus('同意', this)">✓ 已同意</div>
+  <div class="segment-btn" data-status="pending" onclick="filterApplyStatus('待審', this)">⏳ 待審核</div>
+  <div class="segment-btn" data-status="reject" onclick="filterApplyStatus('拒絕', this)">✗ 已拒絕</div>
+  <div class="segment-btn" data-status="cancel" onclick="filterApplyStatus('已撤回', this)">🔙 已撤回</div>
 </div>
 
         <div class="record-list" id="applyRecordsList"></div>
