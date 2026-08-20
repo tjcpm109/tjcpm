@@ -739,7 +739,59 @@ function hasLocalOverlap(type, startDate, endDate, subTypeFilter) {
     return newStart <= rowEnd && newEnd >= rowStart;
   });
 }
+// 補上缺失的 calculateLeaveHoursLocal 函式
+function calculateLeaveHoursLocal(record, holidayStrings = []) {
+  if (!record || !record.date) return 0;
+  
+  // 若 record 本身已有明確的 hours 數值，直接回傳
+  if (record.hours !== undefined && record.hours !== null && record.hours !== '') {
+    return parseFloat(record.hours) || 0;
+  }
 
+  const startDate = safeNewDate(record.date);
+  const endDate = safeNewDate(record.endDate || record.date);
+  const startTime = record.startTime || '09:00';
+  const endTime = record.endTime || '18:00';
+
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
+
+  let totalHours = 0;
+  let cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const endLimit = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+  while (cur <= endLimit) {
+    const dayOfWeek = cur.getDay();
+    const y = cur.getFullYear();
+    const m = String(cur.getMonth() + 1).padStart(2, '0');
+    const d = String(cur.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
+
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    const isHoliday = holidayStrings.includes(dateStr);
+
+    // 排除週末與國定假日
+    if (!isWeekend && !isHoliday) {
+      let sMin = timeToMin(startTime);
+      let eMin = timeToMin(endTime);
+
+      // 若為跨多天請假，中間全天以 09:00 - 18:00 計算
+      if (cur.getTime() !== startDate.getTime()) sMin = 540; // 09:00
+      if (cur.getTime() !== endLimit.getTime()) eMin = 1080;  // 18:00
+
+      let diffMin = eMin - sMin;
+      if (diffMin > 0) {
+        // 扣除 12:00 ~ 13:00 午休 60 分鐘
+        if (sMin <= 720 && eMin >= 780) {
+          diffMin -= 60;
+        }
+        totalHours += Math.max(0, diffMin / 60);
+      }
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  return totalHours;
+}
 async function submitLeave() {
   if (window.submitLeaveInFlight) return;
   window.submitLeaveInFlight = true;
