@@ -660,3 +660,87 @@ body {
   .clock-time { font-size: 64px; }
 }
 .record-type .badge { font-size: 14px !important; padding: 4px 10px !important; border-radius: 6px !important; }
+
+/* ── Hero 形象卡片樣式 (概念三) ── */
+.profile-hero-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.profile-hero-card::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 100px;
+  height: 100px;
+  background: rgba(37, 99, 235, 0.15);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero-avatar {
+  width: 56px;
+  height: 56px;
+  background: var(--blue-main);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(26, 111, 196, 0.3);
+  flex-shrink: 0;
+}
+.hero-info { flex: 1; }
+.hero-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.hero-name { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
+.hero-id-row { font-size: 14px; color: #94a3b8; }
+
+/* ── 榮譽質感風卡片微調 ── */
+.profile-card-dark {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.card-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
+.btn-adjust-toggle {
+  background: var(--blue-pale);
+  color: var(--blue-light);
+  border: 1px solid var(--blue-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-adjust-toggle:hover { background: var(--blue-light); color: #ffffff; }
+
+/* ── 嵌入式班別調整表單展開區 ── */
+.profile-adjust-area {
+  display: none;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--card-border);
+  animation: fadeInDown 0.25s ease-out;
+}
+.profile-adjust-area.open { display: block; }
+.adjust-form-title { font-size: 14px; font-weight: 700; color: var(--accent-orange); margin-bottom: 12px; }
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
