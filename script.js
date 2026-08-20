@@ -444,7 +444,6 @@ let pendingApproveDecision = {};
 let gpsLat = null, gpsLng = null;
 let currentFilter = `打卡`;
 let currentRecordSubTab = `detail`;
-let currentApplyFilter = `請假`;
 let currentLeaveSubFilter = '特休';
 const localNow = new Date();
 const localYear = localNow.getFullYear();
@@ -1395,7 +1394,7 @@ function quickLeave() {
     id, clientId: clientId, type: `請假`, subType: document.getElementById(`modalLeaveType`).value,
     empId: currentUser.empId, name: currentUser.name, 
     date: document.getElementById(`modalLeaveDate`).value,
-    endDate: dateVal,           // ← 補上，跟 date 一樣（單日請假）
+    endDate: document.getElementById(`modalLeaveDate`).value,           // ← 補上，跟 date 一樣（單日請假）
     startTime: `09:00`,         // ← 補上預設開始時間
     endTime: `18:00`,           // ← 補上預設結束時間
     status: `待審`, timestamp: new Date().toISOString()
@@ -1502,49 +1501,19 @@ function renderAllList() {
   calcAttendance();
   updateAllYearRanges();
   
-  if (currentRecordSubTab === `detail`) {
+  if (currentRecordSubTab === 'detail') {
     renderCalendarTable();
-} else if (currentRecordSubTab === `apply`) {
-    const el = document.getElementById(`applyRecordsList`);
+  } else if (currentRecordSubTab === 'apply') {
+    const el = document.getElementById('applyRecordsList');
     if (!el) return;
     
-    // 1. 取得登入者的紀錄
+    // 1. 取得登入者的全量紀錄
     let mine = records.filter(r => matchEmpId(r.empId, currentUser?.empId));
     
-    // 2. 篩選主要類型 (請假 / 加班 / 補打卡 / 班別調整)
+    // 2. 過濾主要類型 (請假 / 加班 / 補打卡 / 班別調整)
     mine = mine.filter(r => r.type === currentApplyFilter);
     
-    // 3. 若為「請假」，進行假別細項二次篩選
-    if (currentApplyFilter === '請假') {
-      if (currentLeaveSubFilter === '特休') {
-        mine = mine.filter(r => r.subType === '特休');
-      } else if (currentLeaveSubFilter === '加班補休') {
-        mine = mine.filter(r => r.subType === '加班補休' || r.subType === '補休');
-      } else if (currentLeaveSubFilter === '公假') {
-        mine = mine.filter(r => r.subType === '公假');
-      } else if (currentLeaveSubFilter === '其他假別') {
-        mine = mine.filter(r => !['特休', '加班補休', '補休', '公假'].includes(r.subType));
-      }
-      // 若為 '全部' 則不進行假別過濾
-    }
-
-    // 4. 【新增】狀態篩選 (同意 / 待審 / 拒絕 / 已撤回)
-    if (currentStatusFilter !== '全部') {
-      mine = mine.filter(r => {
-        if (currentStatusFilter === '同意') {
-          return isFinalApproved(r.status);
-        } else if (currentStatusFilter === '待審') {
-          return r.status === '待審' || r.status === '補件' || r.status === '待第二次審查';
-        } else if (currentStatusFilter === '拒絕') {
-          return r.status === '拒絕' || r.status === '拒絕_補件後';
-        } else if (currentStatusFilter === '已撤回') {
-          return r.status === '已撤回';
-        }
-        return r.status === currentStatusFilter;
-      });
-    }
-
-    // 5. 限制在目前到職年度區間內
+    // 3. 限制在目前到職年度區間內
     const range = getCurrentEmploymentYearRange();
     mine = mine.filter(r => {
       const dStr = r.date || r.timestamp;
@@ -1552,11 +1521,9 @@ function renderAllList() {
       const d = safeNewDate(dStr);
       return d >= range.start && d <= range.end;
     });
-    
-    // 渲染畫面
-    el.innerHTML = mine.length 
-      ? mine.map(r => recordHTML(r)).join(``) 
-      : `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">尚無相關申請紀錄</div></div>`;
+
+    // 4. 💡 關鍵修正：將過濾後的資料送入渲染函式，讓假別卡片完整產生！
+    renderLeaveRecords(mine);
   }
 }
 
