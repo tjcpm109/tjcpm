@@ -439,58 +439,115 @@
     </div>
 
     <!-- 個人資料頁面 -->
+  <!-- 個人資料頁面（概念三：Hero 形象卡片 + 班別調整整合 + 榮譽質感風） -->
     <div class="page" id="page-profile">
-      <p class="section-title">基本資料</p>
-      <div class="profile-card">
-        <div class="profile-meta-row">
-          <div class="profile-meta-icon">🏷️</div>
-          <div class="profile-meta-label">員編</div>
-          <div class="profile-meta-value" id="profileEmpIdVal">—</div>
+      
+      <!-- 1. Hero 頂部個人形象區塊 -->
+      <div class="profile-hero-card">
+        <div class="hero-avatar">👤</div>
+        <div class="hero-info">
+          <div class="hero-name-row">
+            <span class="hero-name" id="profileNameVal">—</span>
+            <span class="badge badge-blue" id="profileEmpType">—</span>
+          </div>
+          <div class="hero-id-row">
+            <span>員工編號：<strong id="profileEmpIdVal">—</strong></span>
+          </div>
         </div>
-        <div class="profile-meta-row">
-          <div class="profile-meta-icon">👤</div>
-          <div class="profile-meta-label">姓名</div>
-          <div class="profile-meta-value" id="profileNameVal">—</div>
-        </div>
-          <div class="profile-meta-row">
-          <div class="profile-meta-icon">💼</div>
-          <div class="profile-meta-label">在職類型</div>
-          <div class="profile-meta-value" id="profileEmpType">—</div>
-        </div>
-
-        <div class="profile-meta-row">
-          <div class="profile-meta-icon">📅</div>
-          <div class="profile-meta-label">到職日</div>
-          <div class="profile-meta-value" id="profileJoinDate">—</div>
-        </div>
-        <div class="profile-meta-row">
-         <div class="profile-meta-icon">📆</div>
-          <div class="profile-meta-label">年資</div>
-          <div class="profile-meta-value" id="profileSeniority">—</div>
-        </div>
-      <div class="profile-meta-row">
-        <div class="profile-meta-icon">🌴</div>
-        <div class="profile-meta-label">特休應有時數</div>
-        <div class="profile-meta-value" id="profileAnnualEntitlement">—</div>
       </div>
+
+      <!-- 2. 班別與考勤設定卡片 (含嵌入式班別調整表單) -->
+      <div class="profile-card profile-card-dark">
+        <div class="card-header-row">
+          <div class="card-title">🏢 班別與考勤設定</div>
+          <button class="btn-adjust-toggle" onclick="toggleProfileAdjustForm()">⚙️ 申請班別調整</button>
+        </div>
+        
         <div class="profile-meta-row">
-          <div class="profile-meta-icon">🏢</div>
+          <div class="profile-meta-icon">🕒</div>
           <div class="profile-meta-label">預設班別</div>
           <div class="profile-meta-value" id="profileDefaultShift">—</div>
         </div>
+
+        <!-- 嵌入式班別調整表單（點擊按鈕滑出展開） -->
+        <div class="profile-adjust-area" id="profileAdjustArea">
+          <div class="adjust-form-title">📝 班別調整申請表單</div>
+          
+          <div class="input-group">
+            <label class="input-label">調整日期</label>
+            <input type="date" class="input-field" id="profileAdjustDate" />
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">選擇新班別</label>
+            <select class="select-field" id="profileAdjustShiftType">
+              <option value="08:00-17:00">08:00 - 17:00</option>
+              <option value="08:30-17:30">08:30 - 17:30</option>
+              <option value="09:00-18:00" selected>09:00 - 18:00</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">調整原因</label>
+            <input class="input-field" id="profileAdjustReason" placeholder="請說明調整班別原因" />
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 10MB）</span></label>
+            <div class="file-upload-box">
+              <input type="file" id="profileScheduleProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'profileSchedule')" />
+              <label for="profileScheduleProofFiles" class="file-label">📎 點擊選擇檔案</label>
+            </div>
+            <div id="profileScheduleProofFileList" class="file-list"></div>
+          </div>
+
+          <button class="submit-btn orange" style="margin-top:10px;" onclick="submitProfileAdjust()">送出班別調整申請</button>
+        </div>
+      </div>
+
+      <!-- 3. 年資與假別權益 (榮譽質感風格：使用 🎖️ 勳章圖案) -->
+      <div class="profile-card profile-card-dark">
+        <div class="card-title" style="margin-bottom:12px;">🌴 年資與假別權益</div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">📅</div>
+          <div class="profile-meta-label">到職日期</div>
+          <div class="profile-meta-value" id="profileJoinDate">—</div>
+        </div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🎖️</div>
+          <div class="profile-meta-label">當前年資</div>
+          <div class="profile-meta-value" id="profileSeniority" style="color:var(--accent-orange); font-weight:700;">—</div>
+        </div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🌴</div>
+          <div class="profile-meta-label">年度特休應有</div>
+          <div class="profile-meta-value" id="profileAnnualEntitlement" style="color:var(--green-light); font-weight:700;">—</div>
+        </div>
+      </div>
+
+      <!-- 4. 帳號安全與通訊設定 -->
+      <div class="profile-card profile-card-dark">
+        <div class="card-title" style="margin-bottom:12px;">🔒 帳號安全與設定</div>
+
         <div class="profile-meta-row">
           <div class="profile-meta-icon">📧</div>
-          <div class="profile-meta-label">Email</div>
+          <div class="profile-meta-label">聯絡 Email</div>
           <div class="profile-meta-value" id="profileEmailVal">—</div>
         </div>
+
         <div class="profile-meta-row">
           <div class="profile-meta-icon">🔑</div>
-          <div class="profile-meta-label">密碼</div>
-          <div class="profile-meta-value" style="display:flex;align-items:center;gap:8px;">
-            <span>••••••</span>
+          <div class="profile-meta-label">登入密碼</div>
+          <div class="profile-meta-value" style="display:flex; align-items:center; gap:8px;">
+            <span>••••••••</span>
             <button class="pw-toggle-btn" onclick="togglePwChange()">修改密碼</button>
           </div>
         </div>
+
+        <!-- 密碼修改展開區 -->
         <div class="pw-change-area" id="pwChangeArea">
           <div class="input-group" style="margin-bottom:10px;">
             <label class="input-label">舊密碼</label>
@@ -507,6 +564,8 @@
           <button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
         </div>
       </div>
+
+    </div>
 
       <p class="section-title" style="margin-top: 24px;">⚖️ 勞基法常用假別與給薪說明 <span id="profile-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
       <div class="profile-card" style="padding: 16px; overflow-x: auto;">
