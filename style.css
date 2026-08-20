@@ -661,7 +661,7 @@ body {
 }
 .record-type .badge { font-size: 14px !important; padding: 4px 10px !important; border-radius: 6px !important; }
 
-/* ── Hero 形象卡片樣式 (概念三) ── */
+/* ── Hero 形象卡片樣式 ── */
 .profile-hero-card {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border: 1px solid var(--card-border);
@@ -704,7 +704,7 @@ body {
 .hero-name { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
 .hero-id-row { font-size: 14px; color: #94a3b8; }
 
-/* ── 榮譽質感風卡片微調 ── */
+/* ── 質感卡片微調 ── */
 .profile-card-dark {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -744,6 +744,8 @@ body {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ── 側滑標籤列 (Scroll Filter Bar) ── */
 .scroll-filter-bar {
   display: flex;
   gap: 8px;
@@ -752,11 +754,7 @@ body {
   margin-bottom: 12px;
   -webkit-overflow-scrolling: touch;
 }
-
-/* 隱藏滾動條 */
-.scroll-filter-bar::-webkit-scrollbar {
-  display: none;
-}
+.scroll-filter-bar::-webkit-scrollbar { display: none; }
 
 .scroll-chip {
   flex: 0 0 auto;
@@ -764,15 +762,16 @@ body {
   font-size: 12px;
   font-weight: 500;
   border-radius: 20px;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .scroll-chip.active {
-  background-color: #2563eb;
+  background-color: var(--blue-light);
   color: #ffffff;
   font-weight: 600;
+  border-color: var(--blue-light);
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
