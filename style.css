@@ -775,3 +775,106 @@ body {
   border-color: var(--blue-light);
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
+/* ============================================================
+   【專屬優化】「我的紀錄」與「已同意請假單」進階 UI 升級
+   ============================================================ */
+
+/* 1. 修正已同意標籤文字對比度 (可讀性提升) */
+.badge-green {
+  background: var(--green-pale) !important;
+  color: var(--green-main) !important; /* 從 light 改為 main，增強文字對比度 */
+  border: 1px solid rgba(5, 150, 105, 0.2) !important;
+}
+
+/* 2. 「已同意」請假單專屬卡片樣式 (強化視覺辨識) */
+.record-item.status-approved {
+  background: var(--card-bg);
+  border: 1.5px solid var(--green-border) !important; /* 綠色精緻外框 */
+  border-left: 5px solid var(--green-main) !important; /* 左側綠色強調條 */
+  position: relative;
+  overflow: hidden;
+}
+
+.record-item.status-approved::after {
+  content: '✓ 已核准';
+  position: absolute;
+  right: -20px;
+  bottom: -8px;
+  font-size: 42px;
+  font-weight: 900;
+  color: rgba(5, 150, 105, 0.05); /* 淡色水印 背景感 */
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 3. 卡片內部排版優化 */
+.record-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.record-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 強化時數標記與請假區間 */
+.record-leave-hours {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--blue-main);
+  background: var(--blue-pale);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(26, 111, 196, 0.15);
+}
+
+.record-date-range {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 簽核主管與時間備註欄位 */
+.record-approve-detail {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--bg-page-alt);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.approver-tag {
+  color: var(--green-main);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 4. Filter Bar 視覺層級修復 (降噪) */
+.scroll-filter-bar {
+  padding: 4px 2px 10px;
+}
+
+.scroll-chip {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.scroll-chip.active {
+  background-color: var(--blue-main) !important;
+  border-color: var(--blue-main) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(26, 111, 196, 0.25) !important;
+}
