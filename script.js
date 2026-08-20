@@ -13,6 +13,63 @@ function isRangeExempted(s, e, leaves) {
 
 const GAS_URL = `https://script.google.com/macros/s/AKfycbzNaxh9-4JRaOf7nirPOX9gTWo4n9KrWsuZVlXI7ohamS0HAnKatUToiuDy09kKdSxP/exec`;
 
+// 初始化時間選擇器
+function initTimeSelects() {
+  const times = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      times.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  
+  const startSel = document.getElementById('leaveStartTime');
+  const endSel = document.getElementById('leaveEndTime');
+  
+  if (startSel) {
+    startSel.innerHTML = times.map(t => 
+      `<option value="${t}" ${t === '09:00' ? 'selected' : ''}>${t}</option>`
+    ).join('');
+  }
+  
+  if (endSel) {
+    endSel.innerHTML = times.map(t => 
+      `<option value="${t}" ${t === '18:00' ? 'selected' : ''}>${t}</option>`
+    ).join('');
+  }
+}
+
+// 初始化日期欄位預設值
+function initFormDefaultValues() {
+  const today = getTodayStr(); // 或用 new Date().toISOString().split('T')[0]
+  
+  const dateFields = [
+    'leaveStart', 'leaveEnd', 'adminAdjustDate', 
+    'adminAgentStartDate', 'modalLeaveDate'
+  ];
+  
+  dateFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.value) {
+      el.value = today;
+    }
+  });
+  
+  // 代理結束日期特殊處理（預設 7 天後）
+  const endDateEl = document.getElementById('adminAgentEndDate');
+  if (endDateEl && !endDateEl.value) {
+    const sevenDaysLater = new Date();
+    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+    endDateEl.value = sevenDaysLater.toISOString().split('T')[0];
+  }
+}
+
+// 頁面載入時執行
+window.addEventListener('load', () => {
+  initTimeSelects();
+  initFormDefaultValues();
+  // ... 其他初始化邏輯
+});
+
 function parseLocalDate(d) { return safeNewDate(d); }
 // ── 個人資料頁面：開關班別調整表單 ──
 function toggleProfileAdjustForm() {
