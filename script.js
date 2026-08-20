@@ -330,7 +330,10 @@ async function doLogin() {
   try {
     const data = await callGAS({ action: `login`, empId, password });
     if (data.status === `ok`) {
-      currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || `專任`, defaultShift: data.defaultShift || `09:00-18:00`, quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false };
+      currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || `專任`, defaultShift: data.defaultShift || `09:00-18:00`, quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false,  
+                   seniorityText: data.seniorityText || `—`,                              // 【新增】
+                   specialLeaveEntitlementHours: data.specialLeaveEntitlementHours || 0   // 【新增】 
+                   };
       try {
         const cachedSettled = localStorage.getItem(`tjcpm_settledAccumulated`);
         if (cachedSettled) currentUser.settledAccumulated = JSON.parse(cachedSettled);
@@ -2165,7 +2168,13 @@ function renderProfile() {
   if (defaultShiftEl) defaultShiftEl.textContent = currentUser.defaultShift || `09:00-18:00`;
   const emailEl = document.getElementById(`profileEmailVal`);
   if (emailEl) emailEl.textContent = currentUser.email || `—`;
-
+  // 【修改】改成直接顯示 Sheet I/J 欄的值，不再前端計算
+  const seniorityEl = document.getElementById(`profileSeniority`);
+  if (seniorityEl) seniorityEl.textContent = currentUser.seniorityText || `—`;
+  const entitlementEl = document.getElementById(`profileAnnualEntitlement`);
+  if (entitlementEl) entitlementEl.textContent = (currentUser.specialLeaveEntitlementHours !== undefined) 
+    ? `${currentUser.specialLeaveEntitlementHours} 小時` 
+    : `—`;
   calcAttendance();
   //8/20 if (currentUser.quota) {
   //  document.getElementById(`profileAnnualLeave`).textContent = `${currentUser.quota.specialLeaveRemainingHours} 小時`;
@@ -2218,6 +2227,9 @@ async function syncProfileAndAccumulatedLeaves() {
         if (data.holidayStrings) currentUser.holidayStrings = data.holidayStrings;
         if (data.specialShifts) currentUser.specialShifts = data.specialShifts;
         if (data.defaultShift) currentUser.defaultShift = data.defaultShift;
+        if (data.hasOwnProperty(`seniorityText`)) currentUser.seniorityText = data.seniorityText;                              // 【新增】
+        if (data.hasOwnProperty(`specialLeaveEntitlementHours`)) currentUser.specialLeaveEntitlementHours = data.specialLeaveEntitlementHours; // 【新增】
+ 
         if (data.settledAccumulated) {
           currentUser.settledAccumulated = data.settledAccumulated;
           localStorage.setItem(`tjcpm_settledAccumulated`, JSON.stringify(data.settledAccumulated));
