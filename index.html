@@ -59,7 +59,7 @@
       <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
       <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
       <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
-      <div class="nav-tab" data-tab="adjust" onclick="switchTab('adjust') style="display: none !important;">⚙️ 班別調整</div>
+      <div class="nav-tab" data-tab="adjust" onclick="switchTab('adjust')" style="display: none !important;">⚙️ 班別調整</div>
       <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
       <div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
     </div>
@@ -267,43 +267,6 @@
       </div>
       <button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
     </div>
-
-    <!-- 班別調整頁面 -->
-    <div class="page" id="page-adjust">
-      <div class="info-box">
-        <div class="info-icon">⚙️</div>
-        <div class="info-text">
-          <strong>班別調整說明：</strong>若因特殊公務或個人特殊排班需求，請在此申請調整當日或特定日期班別，送出後由主管核准後自動生效。
-        </div>
-      </div>
-      <p class="section-title">班別調整申請</p>
-      <div class="input-group">
-        <label class="input-label">調整日期</label>
-        <input type="date" class="input-field" id="adjustDate" />
-      </div>
-      <div class="input-group">
-        <label class="input-label">班別選擇</label>
-        <select class="select-field" id="adjustShiftType">
-          <option value="08:00-17:00">08:00 - 17:00</option>
-          <option value="08:30-17:30">08:30 - 17:30</option>
-          <option value="09:00-18:00" selected>09:00 - 18:00</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label class="input-label">調整原因</label>
-        <input class="input-field" id="adjustReason" placeholder="請說明調整班別原因" />
-      </div>
-      <div class="input-group">
-        <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 10MB）</span></label>
-        <div class="file-upload-box">
-          <input type="file" id="scheduleProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'schedule')" />
-          <label for="scheduleProofFiles" class="file-label">📎 點擊選擇檔案</label>
-        </div>
-        <div id="scheduleProofFileList" class="file-list"></div>
-      </div>
-      <button class="submit-btn orange" onclick="submitAdjust()">送出班別調整申請</button>
-    </div>
-
     <!-- 我的紀錄 -->
     <div class="page" id="page-records">
       <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
