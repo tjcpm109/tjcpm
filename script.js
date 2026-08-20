@@ -42,20 +42,182 @@ function filterApplyMainCategory(type, chip) {
   renderAllList();
 }
 
-// ── 請假細項標籤切換 ──
-function filterLeaveSubCategory(subType, chip) {
-  currentLeaveSubFilter = subType;
-  document.querySelectorAll('#leaveSubFilterBar .segment-btn').forEach(c => c.classList.remove('active'));
-  if (chip) chip.classList.add('active');
-  renderAllList();
+// 全域目前篩選狀態變數
+let currentSubCategory = 'ALL';
+let currentStatus = '同意';
+
+// 1. 第二層：假別篩選點擊
+function filterLeaveSubCategory(subTypeTarget, el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  el.classList.add('active');
+
+  currentSubCategory = subTypeTarget;
+  applyCombinedFilter();
 }
 
-// ── 切換審核狀態篩選 ──
-function filterApplyStatus(status, chip) {
-  currentStatusFilter = status;
-  document.querySelectorAll('#statusFilterBar .segment-btn').forEach(c => c.classList.remove('active'));
-  if (chip) chip.classList.add('active');
-  renderAllList();
+// 2. 第三層：狀態篩選點擊
+function filterApplyStatus(statusTarget, el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  el.classList.add('active');
+
+  currentStatus = statusTarget;
+  applyCombinedFilter();
+}
+
+// 3. 核心組合篩選邏輯
+function applyCombinedFilter() {
+  const mainCategories = ['特休', '補休', '公假'];
+  const recordItems = document.querySelectorAll('#leaveRecordList .record-item');
+
+  let visibleCount = 0;
+
+  recordItems.forEach(item => {
+    const itemType = item.getAttribute('data-type') || '';
+    const itemStatus = item.getAttribute('data-status') || '';
+
+    // (A) 假別條件判斷
+    let passType = false;
+    if (currentSubCategory === 'ALL') {
+      passType = true;
+    } else if (currentSubCategory === '其他假別') {
+      passType = !mainCategories.includes(itemType); // 非特補公皆屬「其他」
+    } else {
+      passType = (itemType === currentSubCategory);
+    }
+
+    // (B) 審核狀態條件判斷
+    let passStatus = false;
+    if (currentStatus === '同意') {
+      passStatus = (itemStatus === '同意' || itemStatus === '同意_補件後');
+    } else if (currentStatus === '待審') {
+      passStatus = (itemStatus === '待審' || itemStatus === '待第二次審查');
+    } else if (currentStatus === '拒絕') {
+      passStatus = (itemStatus === '拒絕' || itemStatus === '拒絕_補件後');
+    } else if (currentStatus === '已撤回') {
+      passStatus = (itemStatus === '已撤回');
+    }
+
+    // (C) 雙條件顯示控制
+    if (passType && passStatus) {
+      item.style.display = 'flex';
+      visibleCount++;
+    } else {
+      item.style.display = 'none';
+    }
+  });
+
+  // 空狀態處置
+  showEmptyStateIfNeeded(visibleCount);
+}
+
+// 4. 動態渲染請假卡片函式 (從後端 API 取得資料後呼叫)
+function renderLeaveRecords(leaveDataList) {
+  const container = document.getElementById('leaveRecordList');
+  if (!container) return;
+
+  if (!leaveDataList || leaveDataList.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">尚無任何請假紀錄</div></div>';
+    return;
+  }
+
+  let html = '';
+  leaveDataList.forEach(item => {
+    const status = item.status || '待審';
+    const subType = item.subType || '請假';
+    const hours = item.hours || 0;
+    const clientId = item.clientId || '';
+    
+    // 判斷卡片樣式 Class 與標籤 Badge
+    let cardClass = '';
+    let badgeHtml = '';
+    let hoursClass = '';
+    let hoursPrefix = '';
+    let detailHtml = '';
+
+    if (status === '同意' || status === '同意_補件後') {
+      cardClass = 'status-approved';
+      badgeHtml = '<span class="badge badge-green">✓ 已同意</span>';
+      hoursClass = 'approved-hours';
+      detailHtml = `<span class="approver-tag">✓ 審核人：${item.approver || '主管'}</span><span class="record-time">簽核：${item.approveTime || ''}</span>`;
+    } else if (status === '待審') {
+      cardClass = 'status-pending';
+      badgeHtml = '<span class="badge badge-waiting">⏳ 待審核</span>';
+      hoursClass = 'pending-hours';
+      hoursPrefix = '預扣 ';
+      detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="cancelLeave('${clientId}')">撤回</button>`;
+    } else if (status === '待第二次審查') {
+      cardClass = 'status-pending-second';
+      badgeHtml = '<span class="badge badge-purple">🔄 待第二次審查</span>';
+      hoursClass = 'pending-hours';
+      hoursPrefix = '預扣 ';
+      detailHtml = `<span class="pending-tag">💬 補件審查中</span><span class="record-time">補件：${item.suppTime || ''}</span>`;
+    } else if (status === '拒絕' || status === '拒絕_補件後') {
+      cardClass = 'status-rejected';
+      badgeHtml = '<span class="badge badge-red">✗ 已拒絕</span>';
+      hoursClass = 'rejected-hours';
+      detailHtml = `<span class="reject-tag">原因：${item.approveComment || '無'}</span><span class="record-time">${item.approveTime || ''}</span>`;
+    } else if (status === '已撤回') {
+      cardClass = 'status-withdrawn';
+      badgeHtml = '<span class="badge badge-withdrawn">🔙 已撤回</span>';
+      hoursClass = '';
+      detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
+    }
+
+    html += `
+      <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
+        <div class="record-header-row">
+          <div class="record-title-group">
+            <span class="record-dot ${getDotColorClass(subType)}"></span>
+            <span class="record-type">${subType}</span>
+            ${badgeHtml}
+          </div>
+          <span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>
+        </div>
+
+        <div class="record-date-range">
+          📅 ${item.date} ${item.startTime} ～ ${item.endDate || item.date} ${item.endTime}
+        </div>
+
+        <div class="record-approve-detail">
+          ${detailHtml}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+  
+  // 渲染完成後自動套用當前篩選
+  applyCombinedFilter();
+}
+
+// 輔助點色工具
+function getDotColorClass(subType) {
+  if (subType === '特休') return 'dot-green';
+  if (subType === '補休') return 'dot-blue';
+  if (subType === '公假') return 'dot-purple';
+  if (subType === '病假') return 'dot-orange';
+  if (subType === '事假') return 'dot-red';
+  return 'dot-yellow';
+}
+
+function showEmptyStateIfNeeded(visibleCount) {
+  const container = document.getElementById('leaveRecordList');
+  let emptyDiv = container.querySelector('.filter-empty');
+  
+  if (visibleCount === 0) {
+    if (!emptyDiv) {
+      emptyDiv = document.createElement('div');
+      emptyDiv.className = 'empty-state filter-empty';
+      emptyDiv.innerHTML = '<div class="empty-icon">🔍</div><div class="empty-text">沒有符合該條件的請假單</div>';
+      container.appendChild(emptyDiv);
+    }
+    emptyDiv.style.display = 'block';
+  } else if (emptyDiv) {
+    emptyDiv.style.display = 'none';
+  }
 }
 
 // 渲染個人首頁與額度資料
