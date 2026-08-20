@@ -3,7 +3,17 @@ function isTimeExempted(min, leaves) {
   if (min >= 720 && min < 780) return true; // 午休固定豁免
   return leaves.some(l => min >= l.start && min < l.end);
 }
-
+// script.js 新增：欄位變更時觸發預覽
+document.addEventListener('DOMContentLoaded', function() {
+  const inputs = ['leaveStartDate', 'leaveEndDate', 'leaveStartTime', 'leaveEndTime'];
+  
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', previewLeaveHours);
+    }
+  });
+});
 function isRangeExempted(s, e, leaves) {
   for (let m = s; m < e; m++) {
     if (!isTimeExempted(m, leaves)) return false;
@@ -2349,45 +2359,38 @@ function timeToMin(timeStr) {
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || 0, 10);
 }
 
-function calculateLeaveHoursLocal(r, holidays) {
-  if (r.hours !== undefined && r.hours !== null) return parseFloat(r.hours);
-  const startD = safeNewDate(r.date);
-  const endD = safeNewDate(r.endDate || r.date);
-  if (isNaN(startD.getTime())) return 0;
-  
-  let sh = 9, sm = 0, eh = 18, em = 0;
-  if (r.startTime && r.startTime.includes(`:`)) { sh = parseInt(r.startTime.split(`:`)[0], 10); sm = parseInt(r.startTime.split(`:`)[1], 10); }
-  if (r.endTime && r.endTime.includes(`:`)) { eh = parseInt(r.endTime.split(`:`)[0], 10); em = parseInt(r.endTime.split(`:`)[1], 10); }
+// script.js 新增：向後端請求預覽時數
+function previewLeaveHours() {
+  const startDate = document.getElementById('leaveStartDate').value;
+  const endDate = document.getElementById('leaveEndDate').value || startDate;
+  const startTime = document.getElementById('leaveStartTime').value;
+  const endTime = document.getElementById('leaveEndTime').value;
+  const empId = getCurrentEmpId(); // 取得當前登入者的工號
 
-  let totalHours = 0, curr = safeNewDate(startD), loops = 0;
-  const hList = holidays || currentUser?.holidayStrings || [];
-  
-  while (curr <= endD && loops < 100) {
-    loops++;
-    const dateStr = formatLocalDateStr(curr);
-    const dayOfWeek = curr.getDay();
-    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !hList.includes(dateStr)) {
-      const shift = getShiftMinutesForDate(dateStr, r.empId, currentUser?.specialShifts || []);
-      let leaveStartMin = shift.start, leaveEndMin = shift.end;
-      const startDateStr = formatLocalDateStr(startD), endDateStr = formatLocalDateStr(endD);
+  // 欄位未填完整前不發送請求
+  if (!startDate || !startTime || !endTime) return;
 
-      if (startDateStr === endDateStr) {
-        leaveStartMin = Math.max(shift.start, sh * 60 + sm);
-        leaveEndMin = Math.min(shift.end, eh * 60 + em);
-      } else {
-        if (dateStr === startDateStr) { leaveStartMin = Math.max(shift.start, sh * 60 + sm); leaveEndMin = shift.end; }
-        else if (dateStr === endDateStr) { leaveStartMin = shift.start; leaveEndMin = Math.min(shift.end, eh * 60 + em); }
+  const displayEl = document.getElementById('previewHoursDisplay');
+  if (displayEl) displayEl.innerText = '計算中...';
+
+  // 透過 google.script.run 呼叫後端 code.gs 的 getLeaveHoursFromRow
+  google.script.run
+    .withSuccessHandler(function(hours) {
+      if (displayEl) {
+        displayEl.innerText = `預計扣除時數：${hours} 小時`;
       }
-
-      let diffMin = leaveEndMin - leaveStartMin;
-      if (diffMin > 0) {
-        if (leaveStartMin <= 720 && leaveEndMin >= 780) diffMin -= 60;
-        totalHours += Math.max(0, diffMin / 60);
-      }
-    }
-    curr.setDate(curr.getDate() + 1);
-  } 
-  return totalHours > 0 ? Math.ceil(totalHours) : 0;
+    })
+    .withFailureHandler(function(err) {
+      console.error('預覽時數失敗:', err);
+      if (displayEl) displayEl.innerText = '時數計算失敗';
+    })
+    .getLeaveHoursFromRow({
+      empId: empId,
+      date: startDate,
+      endDate: endDate,
+      startTime: startTime,
+      endTime: endTime
+    });
 }
 
 function renderEmploymentYearSummary() {
