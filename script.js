@@ -211,34 +211,38 @@ function renderLeaveRecords(leaveDataList) {
     let hoursPrefix = '';
     let detailHtml = '';
 
-    if (status === '同意' || status === '同意_補件後') {
-      cardClass = 'status-approved';
-      badgeHtml = '<span class="badge badge-green">✓ 已同意</span>';
-      hoursClass = 'approved-hours';
-      detailHtml = `<span class="approver-tag">✓ 審核人：${item.approver || '主管'}</span><span class="record-time">簽核：${item.approveTime || ''}</span>`;
-    } else if (status === '待審') {
-      cardClass = 'status-pending';
-      badgeHtml = '<span class="badge badge-waiting">⏳ 待審核</span>';
-      hoursClass = 'pending-hours';
-      hoursPrefix = '預扣 ';
-      detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="cancelLeave('${clientId}')">撤回</button>`;
-    } else if (status === '待第二次審查') {
-      cardClass = 'status-pending-second';
-      badgeHtml = '<span class="badge badge-purple">🔄 待第二次審查</span>';
-      hoursClass = 'pending-hours';
-      hoursPrefix = '預扣 ';
-      detailHtml = `<span class="pending-tag">💬 補件審查中</span><span class="record-time">補件：${item.suppTime || ''}</span>`;
-    } else if (status === '拒絕' || status === '拒絕_補件後') {
-      cardClass = 'status-rejected';
-      badgeHtml = '<span class="badge badge-red">✗ 已拒絕</span>';
-      hoursClass = 'rejected-hours';
-      detailHtml = `<span class="reject-tag">原因：${item.approveComment || '無'}</span><span class="record-time">${item.approveTime || ''}</span>`;
-    } else if (status === '已撤回') {
-      cardClass = 'status-withdrawn';
-      badgeHtml = '<span class="badge badge-withdrawn">🔙 已撤回</span>';
-      hoursClass = '';
-      detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
-    }
+  leaveDataList.forEach(item => {
+  const status = item.status || '待審';
+  const subType = item.subType || '請假';
+  const hours = item.hours || 0;
+  const clientId = item.clientId || '';
+
+  const cfg = APPLY_STATUS_CONFIG[status] || APPLY_STATUS_CONFIG['待審'];
+  const cardClass = cfg.cardClass;
+  const badgeHtml = cfg.badge;
+  const hoursClass = cfg.hoursClass;
+  const hoursPrefix = cfg.hoursPrefix;
+
+  // detailHtml 涉及每個狀態不同的動態內容（審核人、撤回按鈕等），保留獨立判斷
+  let detailHtml = '';
+  if (status === '同意' || status === '同意_補件後') {
+    detailHtml = `<span class="approver-tag">✓ 審核人：${item.approver || '主管'}</span><span class="record-time">簽核：${item.approveTime || ''}</span>`;
+  } else if (status === '待審') {
+    detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="cancelLeave('${clientId}')">撤回</button>`;
+  } else if (status === '待第二次審查') {
+    detailHtml = `<span class="pending-tag">💬 補件審查中</span><span class="record-time">補件：${item.suppTime || ''}</span>`;
+  } else if (status === '補件') {
+    detailHtml = `
+      <span class="reject-tag" style="width:100%;">💬 主管意見：${item.approveComment || '請補充說明或上傳證明文件'}</span>
+      <button class="btn-cancel-apply" style="background:#ec4899;color:#fff;border:none;" onclick="toggleResubmitBox('${item.id}')">📝 補件重新申請</button>
+      ${buildResubmitBoxHtml(item.id, clientId, '請假')}
+    `;
+  } else if (status === '拒絕' || status === '拒絕_補件後') {
+    detailHtml = `<span class="reject-tag">原因：${item.approveComment || '無'}</span><span class="record-time">${item.approveTime || ''}</span>`;
+  } else if (status === '已撤回') {
+    detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
+  }
+
 
 html += `
   <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
@@ -286,6 +290,34 @@ function formatApplyTimestamp(ts) {
   return `${y}-${m}-${day} ${hh}:${mm}`;
 }
 // 輔助點色工具
+// ── 請假/申請狀態的顯示設定：badge、卡片樣式、時數樣式統一由這裡定義 ──
+const APPLY_STATUS_CONFIG = {
+  '同意':        { cardClass: 'status-approved',       hoursClass: 'approved-hours', hoursPrefix: '',
+                   badge: '<span class="badge badge-green">✓ 已同意</span>' },
+  '同意_補件後': { cardClass: 'status-approved',       hoursClass: 'approved-hours', hoursPrefix: '',
+                   badge: '<span class="badge badge-green">✓ 已同意</span>' },
+  '待審':        { cardClass: 'status-pending',        hoursClass: 'pending-hours',  hoursPrefix: '預扣 ',
+                   badge: '<span class="badge badge-waiting">⏳ 待審核</span>' },
+  '待第二次審查': { cardClass: 'status-pending-second', hoursClass: 'pending-hours',  hoursPrefix: '預扣 ',
+                   badge: '<span class="badge badge-purple">🔄 待第二次審查</span>' },
+  '補件':        { cardClass: 'status-supplement',     hoursClass: 'pending-hours',  hoursPrefix: '預扣 ',
+                   badge: '<span class="badge" style="background:#eff6ff;color:#3b82f6;border:1px solid #3b82f6;border-radius:6px;padding:4px 8px;">🔄 需補件</span>' },
+  '拒絕':        { cardClass: 'status-rejected',       hoursClass: 'rejected-hours', hoursPrefix: '',
+                   badge: '<span class="badge badge-red">✗ 已拒絕</span>' },
+  '拒絕_補件後': { cardClass: 'status-rejected',       hoursClass: 'rejected-hours', hoursPrefix: '',
+                   badge: '<span class="badge badge-red">✗ 已拒絕</span>' },
+  '已撤回':      { cardClass: 'status-withdrawn',      hoursClass: '',               hoursPrefix: '',
+                   badge: '<span class="badge badge-withdrawn">🔙 已撤回</span>' }
+};
+
+// ── 補件重新申請的表單區塊，兩處共用 ──
+function buildResubmitBoxHtml(id, clientId, type) {
+  return `
+    <div id="resubmitBox-${id}" style="display:none; margin-top:8px;">
+      <textarea id="resubmitText-${id}" placeholder="請輸入補充說明或證明文件連結" style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
+      <button class="approve-btn ok" style="margin-top:6px; background:#2563eb; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${id}', '${clientId}', '${type}')">送出補件</button>
+    </div>`;
+}
 function getDotColorClass(subType) {
   if (subType === '特休') return 'dot-green';
   if (subType === '補休') return 'dot-blue';
@@ -2248,7 +2280,7 @@ function recordHTML(r, showName = false, showApprove = false) {
   if (!showApprove && r.status === `待審`) {
     actionOrStatusHtml = `<button class="retract-btn" style="background:transparent; color:#dc2626; border:1.5px solid #dc2626; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px;" onclick="retractRecord('${r.id}','${r.type}','${r.clientId || ''}')">🔙 撤回</button>`;
   } else if (!showApprove && r.status === `補件`) {
-    actionOrStatusHtml = `<div><button class="approve-btn ok" style="background:#ec4899; color:#ffffff; border:none; font-weight:600;" onclick="toggleResubmitBox('${r.id}')">📝 補件重新申請</button><div id="resubmitBox-${r.id}" style="display:none; margin-top:8px;"><textarea id="resubmitText-${r.id}" placeholder="請輸入補充說明或證明文件連結" style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea><button class="approve-btn ok" style="margin-top:6px; background:#2563eb; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${r.id}', '${r.clientId || ''}', '${r.type}')">送出補件</button></div></div>`;
+    actionOrStatusHtml = `<div><button class="approve-btn ok" style="background:#ec4899; color:#ffffff; border:none; font-weight:600;" onclick="toggleResubmitBox('${r.id}')">📝 補件重新申請</button>${buildResubmitBoxHtml(r.id, r.clientId || '', r.type)}</div>`;
   } else if (!showApprove && r.status) {
     let badgeClass = `badge-gray`;
     if (r.status === `同意` || r.status === `同意_補件後`) badgeClass = `badge-green`;
