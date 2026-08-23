@@ -3255,6 +3255,41 @@ function calculatePendingLeaveHours(subType) {
   
   return total;
 }
+async function manualResyncPending() {
+  if (!currentUser) return;
+
+  const pending = records.filter(r => 
+    matchEmpId(r.empId, currentUser.empId) && r._pendingSync
+  );
+
+  if (pending.length === 0) {
+    showToast(`✅ 目前沒有待補同步的資料`);
+    return;
+  }
+
+  if (!confirm(`發現 ${pending.length} 筆尚未確認同步雲端的紀錄，是否立即嘗試補傳？`)) {
+    return;
+  }
+
+  let queue = JSON.parse(localStorage.getItem(`tjcpm_offline_queue`) || `[]`);
+  const queueKeys = new Set(queue.map(r => String(r.clientId || r.id)));
+  let addedCount = 0;
+
+  pending.forEach(r => {
+    const key = String(r.clientId || r.id);
+    if (!queueKeys.has(key)) {
+      queue.push(r);
+      queueKeys.add(key);
+      addedCount++;
+    }
+  });
+
+  localStorage.setItem(`tjcpm_offline_queue`, JSON.stringify(queue));
+  showToast(`📤 已加入補傳佇列 ${addedCount} 筆，開始同步…`);
+
+  await processOfflineQueue();
+  renderAllList();
+}
 function hasAnyRecordInRange(start, end) {
   if (!currentUser) return false;
   return records.some(r => {
