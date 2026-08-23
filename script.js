@@ -203,79 +203,58 @@ function renderLeaveRecords(leaveDataList) {
     const subType = item.subType || '請假';
     const hours = item.hours || 0;
     const clientId = item.clientId || '';
-    
-    // 判斷卡片樣式 Class 與標籤 Badge
-    let cardClass = '';
-    let badgeHtml = '';
-    let hoursClass = '';
-    let hoursPrefix = '';
+
+    const cfg = APPLY_STATUS_CONFIG[status] || APPLY_STATUS_CONFIG['待審'];
+    const cardClass = cfg.cardClass;
+    const badgeHtml = cfg.badge;
+    const hoursClass = cfg.hoursClass;
+    const hoursPrefix = cfg.hoursPrefix;
+
     let detailHtml = '';
+    if (status === '同意' || status === '同意_補件後') {
+      detailHtml = `<span class="approver-tag">✓ 審核人：${item.approver || '主管'}</span><span class="record-time">簽核：${item.approveTime || ''}</span>`;
+    } else if (status === '待審') {
+      detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="cancelLeave('${clientId}')">撤回</button>`;
+    } else if (status === '待第二次審查') {
+      detailHtml = `<span class="pending-tag">💬 補件審查中</span><span class="record-time">補件：${item.suppTime || ''}</span>`;
+    } else if (status === '補件') {
+      detailHtml = `
+        <span class="reject-tag" style="width:100%;">💬 主管意見：${item.approveComment || '請補充說明或上傳證明文件'}</span>
+        <button class="btn-cancel-apply" style="background:#ec4899;color:#fff;border:none;" onclick="toggleResubmitBox('${item.id}')">📝 補件重新申請</button>
+        ${buildResubmitBoxHtml(item.id, clientId, '請假')}
+      `;
+    } else if (status === '拒絕' || status === '拒絕_補件後') {
+      detailHtml = `<span class="reject-tag">原因：${item.approveComment || '無'}</span><span class="record-time">${item.approveTime || ''}</span>`;
+    } else if (status === '已撤回') {
+      detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
+    }
 
-  leaveDataList.forEach(item => {
-  const status = item.status || '待審';
-  const subType = item.subType || '請假';
-  const hours = item.hours || 0;
-  const clientId = item.clientId || '';
-
-  const cfg = APPLY_STATUS_CONFIG[status] || APPLY_STATUS_CONFIG['待審'];
-  const cardClass = cfg.cardClass;
-  const badgeHtml = cfg.badge;
-  const hoursClass = cfg.hoursClass;
-  const hoursPrefix = cfg.hoursPrefix;
-
-  // detailHtml 涉及每個狀態不同的動態內容（審核人、撤回按鈕等），保留獨立判斷
-  let detailHtml = '';
-  if (status === '同意' || status === '同意_補件後') {
-    detailHtml = `<span class="approver-tag">✓ 審核人：${item.approver || '主管'}</span><span class="record-time">簽核：${item.approveTime || ''}</span>`;
-  } else if (status === '待審') {
-    detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="cancelLeave('${clientId}')">撤回</button>`;
-  } else if (status === '待第二次審查') {
-    detailHtml = `<span class="pending-tag">💬 補件審查中</span><span class="record-time">補件：${item.suppTime || ''}</span>`;
-  } else if (status === '補件') {
-    detailHtml = `
-      <span class="reject-tag" style="width:100%;">💬 主管意見：${item.approveComment || '請補充說明或上傳證明文件'}</span>
-      <button class="btn-cancel-apply" style="background:#ec4899;color:#fff;border:none;" onclick="toggleResubmitBox('${item.id}')">📝 補件重新申請</button>
-      ${buildResubmitBoxHtml(item.id, clientId, '請假')}
-    `;
-  } else if (status === '拒絕' || status === '拒絕_補件後') {
-    detailHtml = `<span class="reject-tag">原因：${item.approveComment || '無'}</span><span class="record-time">${item.approveTime || ''}</span>`;
-  } else if (status === '已撤回') {
-    detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
-  }
-
-
-html += `
-  <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
-    <div class="record-header-row">
-      <div class="record-title-group">
-        <span class="record-dot ${getDotColorClass(subType)}"></span>
-        <span class="record-type">${subType}</span>
-        ${badgeHtml}
+    html += `
+      <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
+        <div class="record-header-row">
+          <div class="record-title-group">
+            <span class="record-dot ${getDotColorClass(subType)}"></span>
+            <span class="record-type">${subType}</span>
+            ${badgeHtml}
+          </div>
+          <span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>
+        </div>
+        <div class="record-date-range">
+          📅 ${item.date} ${item.startTime} ～ ${item.endDate || item.date} ${item.endTime}
+        </div>
+        <div class="record-apply-time" style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
+          🕐 申請時間：${formatApplyTimestamp(item.timestamp)}
+        </div>
+        <div class="record-approve-detail">
+          ${detailHtml}
+        </div>
       </div>
-      <span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>
-    </div>
-
-    <div class="record-date-range">
-      📅 ${item.date} ${item.startTime} ～ ${item.endDate || item.date} ${item.endTime}
-    </div>
-
-    <div class="record-apply-time" style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
-      🕐 申請時間：${formatApplyTimestamp(item.timestamp)}
-    </div>
-
-    <div class="record-approve-detail">
-      ${detailHtml}
-    </div>
-  </div>
-`;
+    `;
   });
 
   container.innerHTML = html;
-  
-  // 渲染完成後自動套用當前篩選
   applyCombinedFilter();
 }
-
 
 // 格式化申請時間（YYYY-MM-DD HH:mm）
 function formatApplyTimestamp(ts) {
@@ -1204,7 +1183,7 @@ async function submitLeave() {
   //await syncToSheet(record);
   //addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
   //showToast(`📝 請假申請已送出`);
-  if (synced) addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
+    if (synced) addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
   updateLeaveBalanceDisplay();   // 8/20 ← 新增
   window.submitLeaveInFlight = false;
 }
@@ -1319,18 +1298,21 @@ async function submitSupp() {
     date: document.getElementById(`suppDate`).value, time: document.getElementById(`suppTime`).value,
     reason: document.getElementById(`suppReason`).value, status: `待審`, timestamp: new Date().toISOString()
   };
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
+  const { synced } = await createAndSyncRecord(record, { onSuccessMsg: `🔄 補打卡申請已送出` });
+
+  //records.unshift(record);
+  //saveRecords();
+  //renderAllList();
 
   if (filesToUpload.length > 0) {
     showToast(`📤 證明文件上傳中…`);
     await uploadProofFiles(clientId, filesToUpload, `補打卡`);
   }
     
-  await syncToSheet(record);
-  addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
-  showToast(`🔄 補打卡申請已送出`);
+  //await syncToSheet(record);
+  //addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
+  //showToast(`🔄 補打卡申請已送出`);
+if (synced) addNotif(`pending`, `補打卡申請已送出（${record.subType} ${record.date} ${record.time}），等待主管審核`);
 }
 
 async function submitAdjust() {
