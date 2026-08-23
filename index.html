@@ -372,15 +372,17 @@
       </div>
 
       <div id="record-detail-content" style="display:block;">
-        <p class="section-title">📅 本月打卡紀錄</p>
-          <button id="btnManualResync" class="approve-btn" 
-            style="font-size:12px; padding:6px 12px;" 
-            onclick="manualResyncPending()">
-            🔄 更新
-          </button>
-      </div>
-        <div class="record-list" id="allRecordsList"></div>
-      </div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <p class="section-title" style="margin:0;">📅 本月打卡紀錄</p>
+    <button id="btnManualResync" class="approve-btn" 
+      style="font-size:12px; padding:6px 12px;" 
+      onclick="manualResyncPending()">
+      🔄 更新
+    </button>
+  </div>
+  <div class="record-list" id="allRecordsList"></div>
+</div>
+      
 
 <div id="record-apply-content" style="display:none;">
         <p class="section-title">📋 申請單明細 <span id="apply-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
