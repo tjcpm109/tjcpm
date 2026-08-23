@@ -293,7 +293,12 @@ const APPLY_STATUS_CONFIG = {
 function buildResubmitBoxHtml(id, clientId, type) {
   return `
     <div id="resubmitBox-${id}" style="display:none; margin-top:8px;">
-      <textarea id="resubmitText-${id}" placeholder="請輸入補充說明或證明文件連結" style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
+      <textarea id="resubmitText-${id}" placeholder="請輸入補充說明（選填，若已上傳證明文件可留空）" style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
+      <div style="margin-top:6px;">
+        <input type="file" id="resubmitFiles-${id}" multiple style="font-size:12px;"
+               onchange="handleResubmitFilesSelected(event, '${id}')">
+        <div id="resubmitFileList-${id}" style="font-size:12px; color:var(--text-secondary); margin-top:4px;"></div>
+      </div>
       <button class="approve-btn ok" style="margin-top:6px; background:#2563eb; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${id}', '${clientId}', '${type}')">送出補件</button>
     </div>`;
 }
@@ -305,7 +310,26 @@ function getDotColorClass(subType) {
   if (subType === '事假') return 'dot-red';
   return 'dot-yellow';
 }
+let pendingResubmitFiles = {}; // 依 record id 分開存
 
+function handleResubmitFilesSelected(event, id) {
+  const files = Array.from(event.target.files || []);
+  const listEl = document.getElementById(`resubmitFileList-${id}`);
+  const oversized = files.filter(f => f.size > MAX_PROOF_FILE_SIZE);
+  if (oversized.length > 0) {
+    showToast(`⚠️ 檔案超過限制，請壓縮後再選`);
+    event.target.value = ``;
+    pendingResubmitFiles[id] = [];
+    if (listEl) listEl.textContent = ``;
+    return;
+  }
+  pendingResubmitFiles[id] = files;
+  if (listEl) {
+    listEl.textContent = files.length
+      ? `已選擇 ${files.length} 個檔案：` + files.map(f => `${f.name}（${(f.size / 1024 / 1024).toFixed(1)}MB）`).join(`、`)
+      : ``;
+  }
+}
 function showEmptyStateIfNeeded(visibleCount) {
   const container = document.getElementById('leaveRecordList');
   let emptyDiv = container.querySelector('.filter-empty');
@@ -1415,26 +1439,36 @@ function toggleResubmitBox(id) {
 async function confirmResubmit(id, clientId, type) {
   const textEl = document.getElementById(`resubmitText-${id}`);
   const text = textEl ? textEl.value.trim() : ``;
-  if (!text) {
-    showToast(`⚠️ 請填寫補充說明或證明文件連結`);
+  const files = pendingResubmitFiles[id] || [];
+
+  if (!text && files.length === 0) {
+    showToast(`⚠️ 請填寫補充說明或上傳證明文件`);
     return;
   }
+
   try {
+    if (files.length > 0) {
+      showToast(`📤 證明文件上傳中…`);
+      await uploadProofFiles(clientId, files);   // ← 沿用既有函式，跟請假一樣的上傳流程
+    }
+
     const res = await callGAS({
       action: `resubmit`,
       type: type,
       clientId: clientId,
       empId: currentUser.empId,
       name: currentUser.name,
-      suppMark: text
+      suppMark: text || `（已上傳補充證明文件）`
     });
+
     if (res.status === `ok`) {
       showToast(`✅ 補件已送出，等待主管第二次審核`);
       const rec = records.find(r => r.id === id);
       if (rec) rec.status = `待第二次審查`;
       saveRecords();
       renderAllList();
-      updateLeaveBalanceDisplay();   // ← 8/20新增
+      updateLeaveBalanceDisplay();
+      delete pendingResubmitFiles[id];
     } else {
       showToast(`⚠️ 補件送出失敗：` + (res.message || `請稍後再試`));
     }
