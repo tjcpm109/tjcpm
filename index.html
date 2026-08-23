@@ -90,7 +90,7 @@
       <div style="text-align:right;font-size:14px;margin-bottom:12px;min-height:18px;">
         <span id="syncStatus" style="transition:color 0.3s;"></span>
       </div>
-
+        
       <div class="action-grid">
         <div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
           <span class="btn-icon">✅</span>
@@ -373,6 +373,12 @@
 
       <div id="record-detail-content" style="display:block;">
         <p class="section-title">📅 本月打卡紀錄</p>
+          <button id="btnManualResync" class="approve-btn" 
+            style="font-size:12px; padding:6px 12px;" 
+            onclick="manualResyncPending()">
+            🔄 更新
+          </button>
+      </div>
         <div class="record-list" id="allRecordsList"></div>
       </div>
 
