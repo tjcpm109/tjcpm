@@ -156,7 +156,21 @@ function renderLeaveRecords(leaveDataList) {
     const subType = item.subType || item.type || '';
     const hours = item.hours || 0;
     const clientId = item.clientId || '';
-    
+    // ↓ 新增：依類型組出正確的日期時間文字
+  let dateRangeText = '';
+  if (item.type === '請假' || item.type === '加班') {
+    dateRangeText = `📅 ${item.date} ${item.startTime || ''} ～ ${item.endDate || item.date} ${item.endTime || ''}`;
+  } else if (item.type === '補打卡') {
+    dateRangeText = `📅 ${item.date} ${item.time || ''}（${item.subType || ''}）`;
+  } else if (item.type === '班別調整') {
+    dateRangeText = `📅 ${item.date}（調整為 ${item.subType || ''}）`;
+  } else {
+    dateRangeText = `📅 ${item.date || ''}`;
+  }
+
+  // ↓ 新增：只有請假/加班才顯示時數
+  const showHours = (item.type === '請假' || item.type === '加班');
+  const hours = item.hours || 0;
     // 判斷卡片樣式 Class 與標籤 Badge
     let cardClass = '';
     let badgeHtml = '';
@@ -207,18 +221,17 @@ function renderLeaveRecords(leaveDataList) {
 }
 
 html += `
-  <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
-    <div class="record-header-row">
-      <div class="record-title-group">
-        <span class="record-dot ${getDotColorClass(subType)}"></span>
-        <span class="record-type">${subType}</span>
-        ${badgeHtml}
+    <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
+      <div class="record-header-row">
+        <div class="record-title-group">
+          <span class="record-dot ${getDotColorClass(subType)}"></span>
+          <span class="record-type">${item.type === '請假' ? subType : item.type}</span>
+          ${badgeHtml}
+        </div>
+        ${showHours ? `<span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>` : ''}
       </div>
-      <span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>
-    </div>
-
     <div class="record-date-range">
-      📅 ${item.date} ${item.startTime} ～ ${item.endDate || item.date} ${item.endTime}
+      ${dateRangeText}
     </div>
 
     <div class="record-apply-time" style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
@@ -1034,7 +1047,8 @@ async function submitLeave() {
     { date: document.getElementById(`leaveStart`).value, endDate: document.getElementById(`leaveEnd`).value,
       startTime: document.getElementById(`leaveStartTime`).value, endTime: document.getElementById(`leaveEndTime`).value },
     currentUser?.holidayStrings || []
-  ) };
+    ) 
+  };
   records.unshift(record);
   saveRecords();
   renderAllList();
@@ -1119,7 +1133,11 @@ async function submitOvertime() {
     id, clientId: clientId, type: `加班`, empId: currentUser.empId, name: currentUser.name,
     date: document.getElementById(`otDate`).value, startTime: document.getElementById(`otStart`).value,
     endTime: document.getElementById(`otEnd`).value, reason: document.getElementById(`otReason`).value,
-    status: `待審`, timestamp: new Date().toISOString()
+    status: `待審`, timestamp: new Date().toISOString(),
+        hours: calculateLeaveHoursLocal(   // ← 直接呼叫現成函式
+      { date: otDateVal, endDate: otDateVal, startTime: otStartVal, endTime: otEndVal },
+      currentUser?.holidayStrings || []
+    )
   };
   records.unshift(record);
   saveRecords();
@@ -1513,7 +1531,7 @@ function renderAllList() {
     });
 
     // 4. 💡 關鍵修正：將過濾後的資料送入渲染函式，讓假別卡片完整產生！
-    renderLeaveRecords(mine);
+    (mine);
   }
 }
 
