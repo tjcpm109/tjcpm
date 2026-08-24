@@ -954,7 +954,9 @@ function calculateLeaveHoursLocal(record, holidayStrings = []) {
   let totalHours = 0;
   let cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   const endLimit = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-
+  const startMinInput = timeToMin(startTime);
+  const endMinInput = timeToMin(endTime);
+  
   while (cur <= endLimit) {
     const dayOfWeek = cur.getDay();
     const y = cur.getFullYear();
@@ -966,17 +968,24 @@ function calculateLeaveHoursLocal(record, holidayStrings = []) {
     const isHoliday = holidayStrings.includes(dateStr);
 
     // 排除週末與國定假日
-    if (!isWeekend && !isHoliday) {
-      let sMin = timeToMin(startTime);
-      let eMin = timeToMin(endTime);
+   if (!isWeekend && !isHoliday) {
+      let sMin = 540;  // 預設 09:00
+      let eMin = 1080; // 預設 18:00
 
-      // 若為跨多天請假，中間全天以 09:00 - 18:00 計算
-      if (cur.getTime() !== startDate.getTime()) sMin = 540; // 09:00
-      if (cur.getTime() !== endLimit.getTime()) eMin = 1080;  // 18:00
+      // 💡 修正邏輯：
+      // 如果是「第一天」，開始時間採用使用者填寫的 startTime
+      if (cur.getTime() === startDate.getTime()) {
+        sMin = startMinInput;
+      }
+      // 如果是「最後一天」，結束時間採用使用者填寫的 endTime
+      if (cur.getTime() === endLimit.getTime()) {
+        eMin = endMinInput;
+      }
 
       let diffMin = eMin - sMin;
       if (diffMin > 0) {
-        // 扣除 12:00 ~ 13:00 午休 60 分鐘
+        // 只有當請假區間包含完整午休 (12:00 ~ 13:00，即 <=720 且 >=780) 才扣除 60 分鐘
+        // 13:00~18:00 (780~1080) 不涵蓋午休，不會被誤扣！
         if (sMin <= 720 && eMin >= 780) {
           diffMin -= 60;
         }
@@ -988,6 +997,7 @@ function calculateLeaveHoursLocal(record, holidayStrings = []) {
 
   return totalHours;
 }
+
 async function submitLeave() {
   if (window.submitLeaveInFlight) return;
   window.submitLeaveInFlight = true;
