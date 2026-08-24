@@ -595,7 +595,7 @@ function showApp() {
 
   document.getElementById(`headerUser`).textContent = currentUser.name;
   document.getElementById(`clockUser`).innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
-  [`leaveStart`,`leaveEnd`,`otDate`,`suppDate`,`modalLeaveDate`,`adjustDate`,`adminAdjustDate`].forEach(id => {
+  [`leaveStart`,`leaveEnd`,`otDate`,`suppDate`,`adjustDate`,`adminAdjustDate`].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = todayStr;
   });
