@@ -45,10 +45,10 @@ function filterApplyMainCategory(type, chip) {
   // 3. 控制第三層 (狀態列) UI 重置
   const statusBar = document.getElementById('statusFilterBar');
   if (statusBar) {
-    statusBar.querySelectorAll('.segment-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('onclick')?.includes("'同意'"));
-      btn.classList.toggle('active', wantActive);   // ← 改這段：只有請假類別才高亮「同意」，其餘不高亮任何按鈕
-    });
+   statusBar.querySelectorAll('.segment-btn').forEach(btn => {
+    const wantActive = (type === '請假') && btn.getAttribute('onclick')?.includes("'同意'");
+    btn.classList.toggle('active', wantActive);
+  });
   }
 
   // 執行過濾
@@ -113,7 +113,7 @@ function applyCombinedFilter() {
     let passStatus = false;
     if (currentStatus === '') {
       passStatus = false;   // ← 新增：尚未選擇狀態時，全部不顯示，畫面空白
-     if (currentStatus === 'ALL') {
+    } else if (currentStatus === 'ALL') {
       passStatus = true;
     } else if (currentStatus === '同意') {
       passStatus = (itemStatus === '同意' || itemStatus === '同意_補件後');
@@ -170,7 +170,6 @@ function renderLeaveRecords(leaveDataList) {
 
   // ↓ 新增：只有請假/加班才顯示時數
   const showHours = (item.type === '請假' || item.type === '加班');
-  const hours = item.hours || 0;
     // 判斷卡片樣式 Class 與標籤 Badge
     let cardClass = '';
     let badgeHtml = '';
@@ -1042,7 +1041,7 @@ async function submitLeave() {
     empId: currentUser.empId, name: currentUser.name,
     date: document.getElementById(`leaveStart`).value, startTime: document.getElementById(`leaveStartTime`).value,
     endDate: document.getElementById(`leaveEnd`).value, endTime: document.getElementById(`leaveEndTime`).value,
-    reason: document.getElementById(`leaveReason`).value, status: `待審`, timestamp: new Date().toISOString),
+    reason: document.getElementById(`leaveReason`).value, status: `待審`, timestamp: new Date().toISOString(),
     hours: calculateLeaveHoursLocal(   // ← 新增：先用前端算一個暫時值
     { date: document.getElementById(`leaveStart`).value, endDate: document.getElementById(`leaveEnd`).value,
       startTime: document.getElementById(`leaveStartTime`).value, endTime: document.getElementById(`leaveEndTime`).value },
@@ -1129,6 +1128,8 @@ async function submitOvertime() {
   const filesToUpload = pendingProofFiles.slice();
   clearProofFileSelection(`overtime`);
 
+  const otStartVal = document.getElementById(`otStart`).value;
+  const otEndVal = document.getElementById(`otEnd`).value;
   const record = {
     id, clientId: clientId, type: `加班`, empId: currentUser.empId, name: currentUser.name,
     date: document.getElementById(`otDate`).value, startTime: document.getElementById(`otStart`).value,
@@ -1531,7 +1532,7 @@ function renderAllList() {
     });
 
     // 4. 💡 關鍵修正：將過濾後的資料送入渲染函式，讓假別卡片完整產生！
-    (mine);
+    renderLeaveRecords(mine);
   }
 }
 
