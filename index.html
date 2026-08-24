@@ -749,7 +749,17 @@
   </div>
 
   <div class="toast" id="toast"></div>
-
+<!-- 放到 index.html 底部 -->
+<template id="resubmitTemplate">
+  <div class="resubmit-box-container">
+    <span class="reject-tag reject-tag-block resubmit-comment"></span>
+    <button class="btn-cancel-apply btn-resubmit-toggle">📝 補件重新申請</button>
+    <div class="resubmit-box" style="display:none; margin-top:8px;">
+      <textarea class="resubmit-textarea" placeholder="請輸入補充說明或證明文件連結"></textarea>
+      <button class="approve-btn ok btn-resubmit-submit">送出補件</button>
+    </div>
+  </div>
+</template>
   <!-- JavaScript Resource -->
   <script src="script.js"></script>
 </body>
