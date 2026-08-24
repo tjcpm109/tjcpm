@@ -3089,11 +3089,14 @@ function calculatePendingLeaveHours(subType) {
   
   let total = 0;
   records.forEach(r => {
+    // 💡 關鍵：轉成字串並去除前後空白，避免 '待審 ' 或 '已撤回 ' 導致判斷失效
+    const cleanStatus = String(r.status || '').trim();
+
     // 2. 條件檢查：工號符合 + 類型為請假 + 假別符合 + 狀態屬於審核中
     if (!matchEmpId(r.empId, currentUser.empId) || 
         r.type !== '請假' || 
         r.subType !== subType || 
-        !pendingStatuses.includes(r.status)) {
+        !pendingStatuses.includes(cleanStatus)) {
       return; // 狀態為 '已撤回' 會在這裡直接被剔除
     }
     
