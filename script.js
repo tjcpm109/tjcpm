@@ -989,7 +989,7 @@ async function submitLeave() {
     return;
   }
   const subType = document.getElementById(`leaveType`).value;
-  if (subType === `加班補休`) {
+  if (subType === `補休`) {
     const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
     const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
     const requestHours = calculateLeaveHoursLocal(
@@ -1075,7 +1075,7 @@ function calculateCompensationBalance(refDateStr) {
 
   const usedCompThisMonth = records.filter(r => {
     if (r.empId !== currentUser.empId) return false;
-    if (r.type !== `請假` || r.subType !== `加班補休`) return false;
+    if (r.type !== `請假` || r.subType !== `補休`) return false;
     if (activeStatuses.indexOf(r.status) === -1) return false;
     const d = safeNewDate(r.date);
     return d.getFullYear() === y && d.getMonth() === m;
@@ -2958,7 +2958,7 @@ function updateLeaveBalanceDisplay() {
   const annualPendingEl = document.getElementById(`leaveAnnualPending`);
   const compPendingEl = document.getElementById(`leaveCompPending`);
   const annualPending = calculatePendingLeaveHours(`特休`);
-  const compPending = calculatePendingLeaveHours(`加班補休`);
+  const compPending = calculatePendingLeaveHours(`補休`);
 
   if (annualPendingEl) {
     if (annualPending > 0) {
