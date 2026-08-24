@@ -29,7 +29,7 @@ function filterApplyMainCategory(type, chip) {
   
   // 切換時重置第二層與第三層
   currentSubCategory = 'ALL';
-  currentStatus = (type === '請假') ? '同意' : 'ALL';
+  currentStatus = (type === '請假') ? '同意' : '';
 
   // 1. 主頁籤 (第一層) UI 高亮
   document.querySelectorAll('#record-apply-content .filter-chip').forEach(c => c.classList.remove('active'));
@@ -47,6 +47,7 @@ function filterApplyMainCategory(type, chip) {
   if (statusBar) {
     statusBar.querySelectorAll('.segment-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('onclick')?.includes("'同意'"));
+      btn.classList.toggle('active', wantActive);   // ← 改這段：只有請假類別才高亮「同意」，其餘不高亮任何按鈕
     });
   }
 
@@ -110,7 +111,9 @@ function applyCombinedFilter() {
 
     // (B) 第三層：審核狀態條件判斷
     let passStatus = false;
-    if (currentStatus === 'ALL') {
+    if (currentStatus === '') {
+      passStatus = false;   // ← 新增：尚未選擇狀態時，全部不顯示，畫面空白
+     if (currentStatus === 'ALL') {
       passStatus = true;
     } else if (currentStatus === '同意') {
       passStatus = (itemStatus === '同意' || itemStatus === '同意_補件後');
