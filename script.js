@@ -938,24 +938,19 @@ function hasLocalOverlap(type, startDate, endDate, subTypeFilter) {
 // 補上缺失的 calculateLeaveHoursLocal 函式
 function calculateLeaveHoursLocal(record, holidayStrings = []) {
   if (!record || !record.date) return 0;
-  
-  // 若 record 本身已有明確的 hours 數值，直接回傳
-  if (record.hours !== undefined && record.hours !== null && record.hours !== '') {
-    return parseFloat(record.hours) || 0;
-  }
 
   const startDate = safeNewDate(record.date);
   const endDate = safeNewDate(record.endDate || record.date);
-  const startTime = record.startTime || '09:00';
-  const endTime = record.endTime || '18:00';
+  const startTimeStr = record.startTime || '09:00';
+  const endTimeStr = record.endTime || '18:00';
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
 
   let totalHours = 0;
   let cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   const endLimit = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-  const startMinInput = timeToMin(startTime);
-  const endMinInput = timeToMin(endTime);
+  const startMinInput = timeToMin(startTimeStr);
+  const endMinInput = timeToMin(endTimeStr);
   
   while (cur <= endLimit) {
     const dayOfWeek = cur.getDay();
@@ -968,27 +963,36 @@ function calculateLeaveHoursLocal(record, holidayStrings = []) {
     const isHoliday = holidayStrings.includes(dateStr);
 
     // 排除週末與國定假日
-   if (!isWeekend && !isHoliday) {
-      let sMin = 540;  // 預設 09:00
-      let eMin = 1080; // 預設 18:00
+  if (!isWeekend && !isHoliday) {
+      // 動態取得班表（如無法取得則預設 09:00~18:00，即 540~1080）
+      const shift = (typeof getShiftMinutesForDate === 'function')
+        ? getShiftMinutesForDate(dateStr, record.empId || currentUser?.empId)
+        : { start: 540, end: 1080 };
+      
+      let sMin = shift.start;
+      let eMin = shift.end;
 
-      // 💡 修正邏輯：
-      // 如果是「第一天」，開始時間採用使用者填寫的 startTime
+      // 第一天：套用輸入的開始時間
       if (cur.getTime() === startDate.getTime()) {
-        sMin = startMinInput;
+        sMin = Math.max(shift.start, startMinInput);
       }
-      // 如果是「最後一天」，結束時間採用使用者填寫的 endTime
+      // 最後一天：套用輸入的結束時間
       if (cur.getTime() === endLimit.getTime()) {
-        eMin = endMinInput;
+        eMin = Math.min(shift.end, endMinInput);
       }
 
       let diffMin = eMin - sMin;
+
       if (diffMin > 0) {
-        // 只有當請假區間包含完整午休 (12:00 ~ 13:00，即 <=720 且 >=780) 才扣除 60 分鐘
-        // 13:00~18:00 (780~1080) 不涵蓋午休，不會被誤扣！
-        if (sMin <= 720 && eMin >= 780) {
-          diffMin -= 60;
+        // 💡 精準午休扣除法 (12:00~13:00，即 720~780 分鐘)
+        // 只有請假時間重疊到午休時，才扣除重疊的分鐘數
+        if (sMin < 780 && eMin > 720) {
+          const overlapStart = Math.max(sMin, 720);
+          const overlapEnd = Math.min(eMin, 780);
+          const lunchOverlap = Math.max(0, overlapEnd - overlapStart);
+          diffMin -= lunchOverlap;
         }
+
         totalHours += Math.max(0, diffMin / 60);
       }
     }
@@ -1047,13 +1051,13 @@ async function submitLeave() {
   clearProofFileSelection(`leave`);
   
   const record = {
-    id, clientId: clientId, type: `請假`, subType: document.getElementById(`leaveType`).value,
+    id, clientId: clientId, empId: currentUser.empId, type: `請假`, subType: document.getElementById(`leaveType`).value,
     empId: currentUser.empId, name: currentUser.name,
     date: document.getElementById(`leaveStart`).value, startTime: document.getElementById(`leaveStartTime`).value,
     endDate: document.getElementById(`leaveEnd`).value, endTime: document.getElementById(`leaveEndTime`).value,
     reason: document.getElementById(`leaveReason`).value, status: `待審`, timestamp: new Date().toISOString(),
     hours: calculateLeaveHoursLocal(   // ← 新增：先用前端算一個暫時值
-    { date: document.getElementById(`leaveStart`).value, endDate: document.getElementById(`leaveEnd`).value,
+    { empId: currentUser.empId, date: document.getElementById(`leaveStart`).value, endDate: document.getElementById(`leaveEnd`).value,
       startTime: document.getElementById(`leaveStartTime`).value, endTime: document.getElementById(`leaveEndTime`).value },
     currentUser?.holidayStrings || []
     ) 
