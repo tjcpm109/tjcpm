@@ -39,10 +39,7 @@ function filterApplyMainCategory(type, chip) {
   const subBar = document.getElementById('leaveSubFilterBar');
   if (subBar) {
     subBar.style.display = (type === '請假') ? 'flex' : 'none';
-    subBar.querySelectorAll('.segment-btn').forEach(btn => {
-      // 預設將「全部」設為 active
-      btn.classList.toggle('active', btn.getAttribute('onclick')?.includes("'ALL'"));
-    });
+    subBar.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
   }
 
   // 3. 控制第三層 (狀態列) UI 重置
@@ -153,7 +150,7 @@ function renderLeaveRecords(leaveDataList) {
   let html = '';
   leaveDataList.forEach(item => {
     const status = item.status || '待審';
-    const subType = item.subType || '請假';
+    const subType = item.subType || item.type || '';
     const hours = item.hours || 0;
     const clientId = item.clientId || '';
     
@@ -173,13 +170,13 @@ function renderLeaveRecords(leaveDataList) {
       cardClass = 'status-pending';
       badgeHtml = '<span class="badge badge-waiting">⏳ 待審核</span>';
       hoursClass = 'pending-hours';
-      hoursPrefix = '預扣 ';
-      detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="cancelLeave('${clientId}')">撤回</button>`;
+      hoursPrefix = '時數';
+      detailHtml = `<span class="pending-tag">🕒 審核處理中</span><button class="btn-cancel-apply" onclick="retractRecord('${item.id}','${item.type}','${clientId}')">撤回</button>`;
     } else if (status === '待第二次審查') {
       cardClass = 'status-pending-second';
       badgeHtml = '<span class="badge badge-purple">🔄 待第二次審查</span>';
       hoursClass = 'pending-hours';
-      hoursPrefix = '預扣 ';
+      hoursPrefix = '時數 ';
       detailHtml = `<span class="pending-tag">💬 補件審查中</span><span class="record-time">補件：${item.suppTime || ''}</span>`;
     } else if (status === '拒絕' || status === '拒絕_補件後') {
       cardClass = 'status-rejected';
@@ -191,7 +188,20 @@ function renderLeaveRecords(leaveDataList) {
       badgeHtml = '<span class="badge badge-withdrawn">🔙 已撤回</span>';
       hoursClass = '';
       detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
-    }
+    } else if (status === '補件') {
+  cardClass = 'status-supplement';
+  badgeHtml = '<span class="badge" style="background:#eff6ff;color:#3b82f6;border:1px solid #3b82f6;border-radius:6px;padding:4px 8px;">🔄 需補件</span>';
+  hoursClass = 'pending-hours';
+  hoursPrefix = '時數 ';
+  detailHtml = `
+    <span class="reject-tag" style="width:100%;">💬 主管意見：${item.approveComment || '請補充說明'}</span>
+    <button class="btn-cancel-apply" style="background:#ec4899;color:#fff;border:none;" onclick="toggleResubmitBox('${item.id}')">📝 補件重新申請</button>
+    <div id="resubmitBox-${item.id}" style="display:none; margin-top:8px;">
+      <textarea id="resubmitText-${item.id}" placeholder="請輸入補充說明或證明文件連結" style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
+      <button class="approve-btn ok" style="margin-top:6px; background:#2563eb; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${item.id}', '${clientId}', '${item.type}')">送出補件</button>
+    </div>
+  `;
+}
 
 html += `
   <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
@@ -266,27 +276,6 @@ function showEmptyStateIfNeeded(visibleCount) {
 }
 
 // 渲染個人首頁與額度資料
-function renderUserProfile(quota, userData) {
-  // 填寫基本資料
-  document.getElementById('userName').innerText = userData.name || '-';
-  document.getElementById('userEmpId').innerText = userData.empId || '-';
-  document.getElementById('userSeniority').innerText = `年資：${userData.seniorityText || '計算中'}`;
-
-  if (quota) {
-    // 填寫特休
-    document.getElementById('specialRemaining').innerHTML = `${quota.specialLeaveRemainingHours} <small>小時</small>`;
-    document.getElementById('specialTotal').innerText = quota.specialLeaveTotalHours || 0;
-    document.getElementById('specialUsed').innerText = quota.specialLeaveUsedHours || 0;
-    document.getElementById('specialPending').innerText = quota.specialLeavePendingHours || 0; // 配合剛新增的待審
-
-    // 填寫補休
-    document.getElementById('compRemaining').innerHTML = `${quota.compLeaveRemainingHours} <small>小時</small>`;
-    document.getElementById('otAcc').innerText = quota.totalOtHoursAcc || 0;
-    document.getElementById('compUsed').innerText = quota.compLeaveUsedHours || 0;
-    document.getElementById('compPending').innerText = quota.compLeavePendingHours || 0;     // 配合剛新增的待審
-  }
-}
-
 function isRangeExempted(s, e, leaves) {
   for (let m = s; m < e; m++) {
     if (!isTimeExempted(m, leaves)) return false;
@@ -328,34 +317,9 @@ function initTimeSelects() {
   }
 }
 
-// 初始化日期欄位預設值
-function initFormDefaultValues() {
-  const today = getTodayStr(); // 或用 new Date().toISOString().split('T')[0]
-  
-  const dateFields = [
-    'leaveStart', 'leaveEnd', 'adminAdjustDate', 
-    'adminAgentStartDate', 'modalLeaveDate'
-  ];
-  
-  dateFields.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && !el.value) {
-      el.value = today;
-    }
-  });
-  
-  // 代理結束日期特殊處理（預設 7 天後）
-  const endDateEl = document.getElementById('adminAgentEndDate');
-  if (endDateEl && !endDateEl.value) {
-    const sevenDaysLater = new Date();
-    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
-    endDateEl.value = sevenDaysLater.toISOString().split('T')[0];
-  }
-}
 
 // 頁面載入時執行
 window.addEventListener('load', () => {
-  initTimeSelects();
   initFormDefaultValues();
   // ... 其他初始化邏輯
 });
