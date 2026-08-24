@@ -1332,12 +1332,21 @@ async function retractRecord(recordId, type, clientId) {
     if (res.status === `ok`) {
       showToast(`✅ 已撤回`);
       const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
-      if (data.status === `ok` && data.updates) {
-        // 💡 關鍵：先剔除當前使用者的舊資料，再寫入後端最新的 updates
-        const otherRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
-        records = [...otherRecords, ...data.updates];
+      if (data.status === `ok`) {
+        // 1. 替換本機快取紀錄
+        if (data.updates) {
+          const otherRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
+          records = [...otherRecords, ...data.updates];
+          saveRecords();
+        }
 
-        saveRecords();
+        // 2. 💡 關鍵修復：更新 currentUser 的 quota 並同步回 sessionStorage
+        if (data.quota) {
+          currentUser.quota = data.quota;
+          sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+        }
+
+        // 3. 重新渲染畫面與更新上方額度卡片
         renderAllList();
         updateLeaveBalanceDisplay(); // 👈 重新計算並更新 UI
       }
