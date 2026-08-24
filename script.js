@@ -1417,23 +1417,6 @@ function quickLeave() {
   showToast(`📝 請假申請已送出`);
 }
 
-function quickOvertime() {
-  const id = Date.now();
-  const clientId = pendingClientId || String(id);
-  const record = {
-    id, clientId: clientId, type: `加班`, empId: currentUser.empId, name: currentUser.name,
-    hours: document.getElementById(`modalOTHours`).value, reason: document.getElementById(`modalOTReason`).value,
-    date: todayStr, status: `待審`, timestamp: new Date().toISOString()
-  };
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
-  syncToSheet(record);
-  addNotif(`pending`, `加班申請已送出（${record.date} ${record.hours}），等待主管審核`);
-  closeModal(`overtime`);
-  showToast(`🌙 加班申請已送出`);
-}
-
 // ── Render / Filtering ──
 function switchRecordSubTab(sub) {
   currentRecordSubTab = sub;
