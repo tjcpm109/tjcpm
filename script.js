@@ -1343,6 +1343,7 @@ async function retractRecord(recordId, type, clientId) {
         });
         saveRecords();
         renderAllList();
+        updateLeaveBalanceDisplay(); 
       }
     } else {
       showToast(`⚠️ ` + (res.message || `撤回失敗`));
