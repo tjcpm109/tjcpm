@@ -225,7 +225,7 @@ html += `
       <div class="record-header-row">
         <div class="record-title-group">
           <span class="record-dot ${getDotColorClass(subType)}"></span>
-          <span class="record-type">${item.type === '請假' ? subType : item.type}</span>
+          <span class="record-type" style="font-size:15px; font-weight:700;">${item.type === '請假' ? subType : item.type}</span>
           ${badgeHtml}
         </div>
         ${showHours ? `<span class="record-leave-hours ${hoursClass}">${hoursPrefix}${hours}h</span>` : ''}
