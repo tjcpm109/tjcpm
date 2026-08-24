@@ -748,48 +748,6 @@
     </div>
   </div>
 
-  <!-- Quick Modals -->
-  <div class="modal-overlay" id="modal-leave">
-    <div class="modal">
-      <div class="modal-title">📝 請假申請<button class="modal-close" onclick="closeModal('leave')">×</button></div>
-      <div class="input-group">
-        <label class="input-label">假別</label>
-        <select class="select-field" id="modalLeaveType">
-          <option>特休</option>
-          <option value="補休">補休</option>
-          <option>事假</option>
-          <option>病假</option>
-          <option>公假</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label class="input-label">日期</label>
-        <input type="date" class="input-field" id="modalLeaveDate" />
-      </div>
-      <button class="submit-btn orange" onclick="quickLeave()">確認送出</button>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="modal-overtime">
-    <div class="modal">
-      <div class="modal-title">🌙 加班申請<button class="modal-close" onclick="closeModal('overtime')">×</button></div>
-      <div class="input-group">
-        <label class="input-label">加班時數</label>
-        <select class="select-field" id="modalOTHours">
-          <option>1 小時</option><option>1.5 小時</option><option>2 小時</option>
-          <option>2.5 小時</option><option>3 小時</option><option>3.5 小時</option>
-          <option>4 小時</option><option>4.5 小時</option><option>5 小時</option>
-          <option>5.5 小時</option><option>6 小時</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label class="input-label">原因</label>
-        <input class="input-field" id="modalOTReason" placeholder="加班原因" />
-      </div>
-      <button class="submit-btn purple" onclick="quickOvertime()">確認送出</button>
-    </div>
-  </div>
-
   <div class="toast" id="toast"></div>
 
   <!-- JavaScript Resource -->
