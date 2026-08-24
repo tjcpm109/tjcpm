@@ -1333,17 +1333,13 @@ async function retractRecord(recordId, type, clientId) {
       showToast(`✅ 已撤回`);
       const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
       if (data.status === `ok` && data.updates) {
-        data.updates.forEach(u => {
-          const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
-          if (existing) {
-            Object.assign(existing, u);
-          } else {
-            records.push(u);
-          }
-        });
+        // 💡 關鍵：先剔除當前使用者的舊資料，再寫入後端最新的 updates
+        const otherRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
+        records = [...otherRecords, ...data.updates];
+
         saveRecords();
         renderAllList();
-        updateLeaveBalanceDisplay(); 
+        updateLeaveBalanceDisplay(); // 👈 重新計算並更新 UI
       }
     } else {
       showToast(`⚠️ ` + (res.message || `撤回失敗`));
