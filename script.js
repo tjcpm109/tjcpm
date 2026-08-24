@@ -206,16 +206,16 @@ function renderLeaveRecords(leaveDataList) {
       detailHtml = `<span class="record-time">撤回時間：${item.timestamp || ''}</span>`;
     } else if (status === '補件') {
   cardClass = 'status-supplement';
-  badgeHtml = '<span class="badge" style="background:#eff6ff;color:#3b82f6;border:1px solid #3b82f6;border-radius:6px;padding:4px 8px;">🔄 需補件</span>';
+  badgeHtml = '<span class="badge badge-supplement ">🔄 需補件</span>';
   hoursClass = 'pending-hours';
   hoursPrefix = '時數 ';
   detailHtml = `
-    <span class="reject-tag" style="width:100%;">💬 主管意見：${item.approveComment || '請補充說明'}</span>
-    <button class="btn-cancel-apply" style="background:#ec4899;color:#fff;border:none;" onclick="toggleResubmitBox('${item.id}')">📝 補件重新申請</button>
-    <div id="resubmitBox-${item.id}" style="display:none; margin-top:8px;">
+    <span class="reject-tag full-width">💬 主管意見：${item.approveComment || '請補充說明'}</span>
+    <button class="btn-cancel-apply btn-resubmit")">📝 補件重新申請</button>
+    <div id="resubmitBox-${item.id}" class="resubmit-box">
       <textarea id="resubmitText-${item.id}" placeholder="請輸入補充說明或證明文件連結" style="width:100%; min-height:60px; border-radius:8px; padding:8px; font-size:13px;"></textarea>
-      <button class="approve-btn ok" style="margin-top:6px; background:#2563eb; color:#ffffff; border:none; font-weight:600;" onclick="confirmResubmit('${item.id}', '${clientId}', '${item.type}')">送出補件</button>
-    </div>
+      <button class="approve-btn ok btn-confirm-resubmit">送出補件</button>
+  </div>
   `;
 }
 
