@@ -1029,8 +1029,12 @@ async function submitLeave() {
     empId: currentUser.empId, name: currentUser.name,
     date: document.getElementById(`leaveStart`).value, startTime: document.getElementById(`leaveStartTime`).value,
     endDate: document.getElementById(`leaveEnd`).value, endTime: document.getElementById(`leaveEndTime`).value,
-    reason: document.getElementById(`leaveReason`).value, status: `待審`, timestamp: new Date().toISOString()
-  };
+    reason: document.getElementById(`leaveReason`).value, status: `待審`, timestamp: new Date().toISOString),
+    hours: calculateLeaveHoursLocal(   // ← 新增：先用前端算一個暫時值
+    { date: document.getElementById(`leaveStart`).value, endDate: document.getElementById(`leaveEnd`).value,
+      startTime: document.getElementById(`leaveStartTime`).value, endTime: document.getElementById(`leaveEndTime`).value },
+    currentUser?.holidayStrings || []
+  ) };
   records.unshift(record);
   saveRecords();
   renderAllList();
