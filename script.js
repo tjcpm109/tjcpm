@@ -5,7 +5,7 @@ function isTimeExempted(min, leaves) {
 }
 // script.js 新增：欄位變更時觸發預覽
 document.addEventListener('DOMContentLoaded', function() {
-  const inputs = ['leaveStar', 'leaveEnd', 'leaveStartTime', 'leaveEndTime'];
+  const inputs = ['leaveStart', 'leaveEnd', 'leaveStartTime', 'leaveEndTime'];
   
   inputs.forEach(id => {
     const el = document.getElementById(id);
@@ -2555,6 +2555,7 @@ async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
+      localStorage.setItem(`tjcpm_recordsLastSyncTime`, new Date().toISOString());
       const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
       localStorage.setItem(snapshotKey, JSON.stringify({ updates: data.updates, quota: data.quota || null }));
 
