@@ -426,6 +426,14 @@ function updateAllYearRanges() {
   if (profileRangeEl) profileRangeEl.textContent = `(${rangeStr})`;
 }
 
+
+
+//單一員工」有關的暫存資料
+function storageKey(base, empId) {
+  const id = empId || (currentUser && currentUser.empId) || `_anon`;
+  return `${base}_${id}`;
+}
+
 function safeNewDate(str) {
   if (!str) return new Date();
   if (str instanceof Date) return str;
@@ -436,8 +444,13 @@ function safeNewDate(str) {
 }
 
 let currentUser = JSON.parse(sessionStorage.getItem(`tjcpm_user`) || `null`);
-let records = JSON.parse(localStorage.getItem(`tjcpm_records`) || `[]`);
-let notifications = JSON.parse(localStorage.getItem(`tjcpm_notif`) || `[]`);
+let records = currentUser
+  ? JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`)
+  : [];
+let notifications = currentUser
+  ? JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || `[]`)
+  : [];
+
 let adminPendingCache = [];
 let pendingApproveDecision = {};
 let gpsLat = null, gpsLng = null;
@@ -642,10 +655,12 @@ async function doLogin() {
                    specialLeaveEntitlementHours: data.specialLeaveEntitlementHours || 0   // 【新增】 
                    };
       try {
-        const cachedSettled = localStorage.getItem(`tjcpm_settledAccumulated`);
+        const cachedSettled = localStorage.getItem(storageKey('tjcpm_settledAccumulated', currentUser.empId));
         if (cachedSettled) currentUser.settledAccumulated = JSON.parse(cachedSettled);
       } catch (e) {}
       sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+      records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
+      migrateLegacyStorage(currentUser.empId);
       showApp();
       syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
     } else {
@@ -665,14 +680,10 @@ function showLoginErr(msg) {
 }
 
 function doLogout() {
-  if (currentUser && currentUser.empId) {
+    if (currentUser && currentUser.empId) {
     localStorage.removeItem(`tjcpm_lastSync_${currentUser.empId}`);
   }
   sessionStorage.removeItem(`tjcpm_user`);
-  localStorage.removeItem(`tjcpm_records`);
-  localStorage.removeItem(`tjcpm_notif`);
-  localStorage.removeItem(`tjcpm_settledAccumulated`);
-  localStorage.removeItem(`tjcpm_recordsLastSyncTime`);
   records = [];
   notifications = [];
   currentUser = null;
@@ -792,13 +803,15 @@ function sendPush(title, body) {
   if (Notification && Notification.permission === `granted`) new Notification(title, { body });
 }
 
+
 function addNotif(type, message) {
   notifications.unshift({ id: Date.now(), type, message, time: new Date().toISOString(), read: false });
   if (notifications.length > 50) notifications = notifications.slice(0, 50);
-  localStorage.setItem(`tjcpm_notif`, JSON.stringify(notifications));
+  if (currentUser && currentUser.empId) {
+    localStorage.setItem(storageKey('tjcpm_notif', currentUser.empId), JSON.stringify(notifications));
+  }
   updateNotifBadge();
 }
-
 function updateNotifBadge() {
   const unread = notifications.filter(n => !n.read).length;
   let hasPending = false;
@@ -874,9 +887,10 @@ function handleAction(type) {
   if (remarkEl) remarkEl.value = ``;
 
   if (!isOnline) {
-    let offlineQueue = JSON.parse(localStorage.getItem(`tjcpm_offline_queue`) || `[]`);
+    const queueKey = storageKey('tjcpm_offline_queue', currentUser.empId);
+    let offlineQueue = JSON.parse(localStorage.getItem(queueKey) || `[]`);
     offlineQueue.push(record);
-    localStorage.setItem(`tjcpm_offline_queue`, JSON.stringify(offlineQueue));
+    localStorage.setItem(queueKey, JSON.stringify(offlineQueue));
     addNotif(`system`, `${type}離線打卡成功 ${record.time} 📍 (待同步)`);
     showToast(`✅ 離線${type}打卡成功！已加入補傳佇列`);
   } else {
@@ -887,7 +901,9 @@ function handleAction(type) {
 }
 
 async function processOfflineQueue() {
-  let offlineQueue = JSON.parse(localStorage.getItem(`tjcpm_offline_queue`) || `[]`);
+  if (!currentUser || !currentUser.empId) return;
+  const queueKey = storageKey('tjcpm_offline_queue', currentUser.empId);
+  let offlineQueue = JSON.parse(localStorage.getItem(queueKey) || `[]`);
   if (offlineQueue.length === 0) return;
   const remaining = [];
   const statusEl = document.getElementById(`syncStatus`);
@@ -1349,11 +1365,10 @@ async function retractRecord(recordId, type, clientId) {
       const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
       if (data.status === `ok`) {
         // 1. 替換本機快取紀錄
-        if (data.updates) {
-          const otherRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
-          records = [...otherRecords, ...data.updates];
-          saveRecords();
-        }
+      if (data.updates) {
+        records = data.updates;
+        saveRecords();
+      }
 
         // 2. 💡 關鍵修復：更新 currentUser 的 quota 並同步回 sessionStorage
         if (data.quota) {
@@ -2368,7 +2383,8 @@ function applyAdminSubTabVisibility() {
 }
 
 function saveRecords() {
-  localStorage.setItem(`tjcpm_records`, JSON.stringify(records));
+  if (!currentUser || !currentUser.empId) return;
+  localStorage.setItem(storageKey('tjcpm_records', currentUser.empId), JSON.stringify(records));
 }
 
 let pendingClientId = null;
@@ -2603,21 +2619,20 @@ function renderProfile() {
 }
 
 function shouldSyncRecordsNow() {
-  const lastSyncStr = localStorage.getItem(`tjcpm_recordsLastSyncTime`);
+  if (!currentUser || !currentUser.empId) return true;
+  const lastSyncStr = localStorage.getItem(storageKey('tjcpm_recordsLastSyncTime', currentUser.empId));
   if (!lastSyncStr) return true;
   return (Date.now() - new Date(lastSyncStr).getTime()) > RECORDS_SYNC_INTERVAL_MS;
 }
-
 async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
-      localStorage.setItem(`tjcpm_recordsLastSyncTime`, new Date().toISOString());
+      localStorage.setItem(storageKey('tjcpm_recordsLastSyncTime', currentUser.empId), new Date().toISOString());
       const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
       localStorage.setItem(snapshotKey, JSON.stringify({ updates: data.updates, quota: data.quota || null }));
 
-      const keepRecords = records.filter(r => !matchEmpId(r.empId, currentUser.empId));
-      records = [...keepRecords, ...data.updates];
+      records = data.updates;
       saveRecords();
 
       let annualLeaveUsed = 0, compLeaveUsed = 0, sickLeaveUsed = 0, personalLeaveUsed = 0, officialLeaveUsed = 0, marriageLeaveUsed = 0, funeralLeaveUsed = 0;
@@ -2651,7 +2666,7 @@ async function syncProfileAndAccumulatedLeaves() {
  
         if (data.settledAccumulated) {
           currentUser.settledAccumulated = data.settledAccumulated;
-          localStorage.setItem(`tjcpm_settledAccumulated`, JSON.stringify(data.settledAccumulated));
+          localStorage.setItem(storageKey('tjcpm_settledAccumulated', currentUser.empId), JSON.stringify(data.settledAccumulated));
         }
         if (data.hasOwnProperty(`isActiveProxy`)) currentUser.isActiveProxy = data.isActiveProxy;
         applyAdminSubTabVisibility();
@@ -2698,7 +2713,16 @@ function timeToMin(timeStr) {
   const parts = timeStr.split(`:`);
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || 0, 10);
 }
-
+function migrateLegacyStorage(empId) {
+  const legacyRecords = localStorage.getItem(`tjcpm_records`);
+  if (legacyRecords) {
+    const newKey = storageKey('tjcpm_records', empId);
+    if (!localStorage.getItem(newKey)) {
+      localStorage.setItem(newKey, legacyRecords);
+    }
+    localStorage.removeItem(`tjcpm_records`);
+  }
+}
 // script.js 新增：向後端請求預覽時數
 async function previewLeaveHours() {
   const startDate = document.getElementById('leaveStart').value;
