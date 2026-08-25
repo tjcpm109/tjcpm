@@ -659,8 +659,9 @@ async function doLogin() {
         if (cachedSettled) currentUser.settledAccumulated = JSON.parse(cachedSettled);
       } catch (e) {}
       sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
-      records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
       migrateLegacyStorage(currentUser.empId);
+      records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
+      notifications = JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || `[]`);
       showApp();
       syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
     } else {
@@ -680,9 +681,6 @@ function showLoginErr(msg) {
 }
 
 function doLogout() {
-    if (currentUser && currentUser.empId) {
-    localStorage.removeItem(`tjcpm_lastSync_${currentUser.empId}`);
-  }
   sessionStorage.removeItem(`tjcpm_user`);
   records = [];
   notifications = [];
@@ -887,7 +885,7 @@ function handleAction(type) {
   if (remarkEl) remarkEl.value = ``;
 
   if (!isOnline) {
-    const queueKey = storageKey('tjcpm_offline_queue', currentUser.empId);
+    const queueKey = storageKey('', currentUser.empId);
     let offlineQueue = JSON.parse(localStorage.getItem(queueKey) || `[]`);
     offlineQueue.push(record);
     localStorage.setItem(queueKey, JSON.stringify(offlineQueue));
@@ -925,7 +923,7 @@ async function processOfflineQueue() {
       remaining.push(record);
     }
   }
-  localStorage.setItem(`tjcpm_offline_queue`, JSON.stringify(remaining));
+  localStorage.setItem(queueKey, JSON.stringify(remaining));
   if (statusEl) {
     if (remaining.length === 0) {
       statusEl.textContent = `✅ 所有離線打卡已同步雲端`;
@@ -2106,9 +2104,7 @@ function formatDateTimeRange(r) {
     } else {
       hoursText = ` (${parseFloat(rawHours.toFixed(1))}h)`;
     }
-  } else if (hoursVal) {
-    hoursText = ` (${hoursVal}h)`;
-  }
+  } 
   if (r.type === `請假` || r.type === `加班`) {
     return (dateStr === endDateStr || !r.endDate) ? `${dateStr} ${startT}～${endT}${hoursText}` : `${dateStr} ${startT}～${endDateStr} ${endT}${hoursText}`;
   } else if (r.type === `補打卡`) {
