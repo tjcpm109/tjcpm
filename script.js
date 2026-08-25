@@ -335,10 +335,11 @@ function initTimeSelects() {
 
 // 頁面載入時執行
 window.addEventListener('load', () => {
-  initFormDefaultValues();
+  if (typeof initFormDefaultValues === 'function') {
+    initFormDefaultValues();
+  }
   // ... 其他初始化邏輯
 });
-
 function parseLocalDate(d) { return safeNewDate(d); }
 // ── 個人資料頁面：開關班別調整表單 ──
 function toggleProfileAdjustForm() {
