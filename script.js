@@ -3021,8 +3021,12 @@ function updateLeaveBalanceDisplay() {
 
   const annualPendingEl = document.getElementById(`leaveAnnualPending`);
   const compPendingEl = document.getElementById(`leaveCompPending`);
-  const annualPending = calculatePendingLeaveHours(`特休`);
-  const compPending = calculatePendingLeaveHours(`補休`);
+   const annualPending = (currentUser?.quota?.specialLeavePendingHours !== undefined)
+    ? currentUser.quota.specialLeavePendingHours
+    : calculatePendingLeaveHours(`特休`);
+  const compPending = (currentUser?.quota?.compLeavePendingHours !== undefined)
+    ? currentUser.quota.compLeavePendingHours
+    : calculatePendingLeaveHours(`補休`);
 
   if (annualPendingEl) {
     if (annualPending > 0) {
