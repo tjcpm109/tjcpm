@@ -2041,6 +2041,7 @@ function formatDateTimeRange(r) {
   }
 
   let hoursText = ``;
+  console.log(r.type, r.hours)
   if (startT && endT && (r.type === `請假` || r.type === `加班`)) {
     const [sh, sm] = startT.split(':').map(Number);
     const [eh, em] = endT.split(':').map(Number);
