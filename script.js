@@ -2672,8 +2672,10 @@ async function syncProfileAndAccumulatedLeaves() {
       //8/20 document.getElementById(`profileAnnualLeave`).textContent = `${data.quota ? data.quota.specialLeaveRemainingHours : '—'} 小時`;
       //8/20 document.getElementById(`profileCompensatoryLeave`).textContent = `${data.quota ? data.quota.compLeaveRemainingHours : '—'} 小時`;
 
-      document.getElementById(`accumAnnual`).textContent = `${data.quota ? data.quota.specialLeaveUsedHours : annualLeaveUsed}h`;
-      document.getElementById(`accumComp`).textContent = `${data.quota ? data.quota.compLeaveUsedHours : compLeaveUsed}h`;
+     // document.getElementById(`accumAnnual`).textContent = `${data.quota ? data.quota.specialLeaveUsedHours : annualLeaveUsed}h`;
+     // document.getElementById(`accumComp`).textContent = `${data.quota ? data.quota.compLeaveUsedHours : compLeaveUsed}h`;
+      document.getElementById(`accumAnnual`).textContent = `${annualLeaveUsed}h`;
+      document.getElementById(`accumComp`).textContent = `${compLeaveUsed}h`;
       document.getElementById(`accumSick`).textContent = `${sickLeaveUsed}h`;
       document.getElementById(`accumPersonal`).textContent = `${personalLeaveUsed}h`;
       document.getElementById(`accumOfficial`).textContent = `${officialLeaveUsed}h`;
