@@ -2917,8 +2917,9 @@ function calcAttendance() {
   const suppCount = myRecords.filter(r => r.type === `補打卡` && isFinalApproved(r.status)).length;
   let leaveHours = 0;
   myRecords.filter(r => r.type === `請假` && isFinalApproved(r.status)).forEach(r => {
-    leaveHours += calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
-  });
+  const hasValidHours = r.hours !== undefined && r.hours !== null && r.hours !== `` && !isNaN(Number(r.hours));
+  leaveHours += hasValidHours ? Number(r.hours) : calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
+});
 
   const dailyPunches = {};
   myRecords.forEach(r => {
@@ -3094,14 +3095,8 @@ function sumApprovedHoursInRange(type, start, end) {
     if (!matchEmpId(r.empId, currentUser?.empId) || r.type !== type || !isFinalApproved(r.status)) return;
     const d = safeNewDate(r.date);
     if (d < start || d > end) return;
-    if (r.hours !== undefined && r.hours !== null && r.hours !== ``) {
-      total += parseFloat(r.hours) || 0;
-    } else if (r.startTime && r.endTime) {
-      const s = timeToMin(r.startTime), e = timeToMin(r.endTime);
-      let diff = e - s;
-      if (s <= 720 && e >= 780) diff -= 60;
-      total += Math.max(0, diff / 60);
-    }
+    const hasValidHours = r.hours !== undefined && r.hours !== null && r.hours !== `` && !isNaN(Number(r.hours));
+    total += hasValidHours ? Number(r.hours) : calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
   });
   return total;
 }
