@@ -2029,7 +2029,7 @@ function formatLocalTimeStr(str) {
   return `${String(d.getHours()).padStart(2, `0`)}:${String(d.getMinutes()).padStart(2, `0`)}`;
 }
 
-function formatDateTimeRange(r) {
+/*function formatDateTimeRange(r) {
   const dateStr = formatLocalDateStr(r.date);
   const endDateStr = r.endDate ? formatLocalDateStr(r.endDate) : dateStr;
   const startT = formatLocalTimeStr(r.startTime || r.time || ``);
@@ -2068,8 +2068,43 @@ function formatDateTimeRange(r) {
   } else {
     return `${dateStr} ${r.time || ``}`;
   }
-}
+}*/
+function formatDateTimeRange(r) {
+  const dateStr = formatLocalDateStr(r.date);
+  const endDateStr = r.endDate ? formatLocalDateStr(r.endDate) : dateStr;
+  const startT = formatLocalTimeStr(r.startTime || r.time || ``);
+  const endT = formatLocalTimeStr(r.endTime || ``);
+  let hoursText = ``;
+  const hasValidHours = r.hours !== undefined && r.hours !== null && r.hours !== `` && !isNaN(Number(r.hours));
 
+  if ((r.type === `請假` || r.type === `加班`)) {
+    let rawHours;
+    if (hasValidHours) {
+      rawHours = Number(r.hours);
+    } else {
+      rawHours = calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
+    }
+
+    if (r.type === `請假`) {
+      const cleanHours = Math.round(rawHours * 100) / 100;
+      hoursText = ` (${cleanHours > 0 ? Math.ceil(cleanHours) : 0}h)`;
+    } else {
+      hoursText = ` (${parseFloat(rawHours.toFixed(1))}h)`;
+    }
+  } else if (hoursVal) {
+    hoursText = ` (${hoursVal}h)`;
+  }
+  if (r.type === `請假` || r.type === `加班`) {
+    return (dateStr === endDateStr || !r.endDate) ? `${dateStr} ${startT}～${endT}${hoursText}` : `${dateStr} ${startT}～${endDateStr} ${endT}${hoursText}`;
+  } else if (r.type === `補打卡`) {
+    return `${dateStr} ${formatLocalTimeStr(r.time || ``)}`;
+  } else if (r.type === `班別調整`) {
+    return `${dateStr} ${r.subType || ``}`;
+  } else {
+    return `${dateStr} ${r.time || ``}`;
+  }
+}
+  
 function buildAttachmentLinksHTML(attachmentText) {
   if (!attachmentText) return ``;
   const parts = String(attachmentText).split(`【補件新增】`);
