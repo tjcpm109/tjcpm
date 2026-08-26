@@ -493,7 +493,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v89.js`)
+    navigator.serviceWorker.register(`sw-v90.js`)
       .then(reg => console.log(`SW-v89 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v89 註冊失敗:`, err));
   });
