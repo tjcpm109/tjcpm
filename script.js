@@ -1,5 +1,5 @@
 // 💡 每次改版就把這行改掉（例如用日期或流水號），用來觸發「登出後清一次快取」
-const APP_BUILD_VERSION = '2026-08-26-v1';
+/*const APP_BUILD_VERSION = '2026-08-26-v1';
 
 async function clearStaleCacheIfNeeded() {
   const savedVersion = localStorage.getItem('tjcpm_buildVersion');
@@ -24,8 +24,10 @@ async function clearStaleCacheIfNeeded() {
 
   // 3. 記下這個版本已經清過了，下次登出就不會再觸發
   localStorage.setItem('tjcpm_buildVersion', APP_BUILD_VERSION);
-  return true;
-}// 💡 全域相容性大腦：集中定義請假與午休豁免計算
+  return true;}
+  */
+
+// 💡 全域相容性大腦：集中定義請假與午休豁免計算
 function isTimeExempted(min, leaves) {
   if (min >= 720 && min < 780) return true; // 午休固定豁免
   return leaves.some(l => min >= l.start && min < l.end);
