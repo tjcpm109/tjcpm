@@ -2574,7 +2574,13 @@ async function approveRecord(id, decision, comment) {
   try {
     const res = await callGAS({
       action: `approve`, clientId: rec.clientId || String(rec.id),
-      empId: rec.empId, type: rec.type, date: rec.date, decision,
+      empId: rec.empId, type: rec.type, date: rec.date, 
+      endDate: rec.endDate || rec.date,      // ← 補上
+      startTime: rec.startTime || '',        // ← 補上
+      endTime: rec.endTime || '',            // ← 補上
+      subType: rec.subType || '',            // ← 補上
+      hours: rec.hours,                      // ← 補上，讓後端可比對／直接採用
+      decision,
       approverName: currentUser.name, approverId: currentUser.empId,
       comment: comment || ``
     });
