@@ -730,12 +730,12 @@ function doLogout() {
   document.getElementById(`loginPw`).value = ``;
   document.getElementById(`loginErr`).style.display = `none`;
   setTimeout(() => document.getElementById(`loginId`).focus(), 100);
-    clearStaleCacheIfNeeded().then(didClear => {
-    if (didClear) {
-      showToast(`🔄 偵測到新版本，正在重新整理…`);
-      setTimeout(() => location.reload(true), 800);
-    }
-  });
+    //clearStaleCacheIfNeeded().then(didClear => {
+    //if (didClear) {
+    //  showToast(`🔄 偵測到新版本，正在重新整理…`);
+    //  setTimeout(() => location.reload(true), 800);
+   // }
+  //});
 }
 
 // ── Clock ──
