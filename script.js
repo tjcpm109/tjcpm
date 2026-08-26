@@ -1,4 +1,31 @@
-// 💡 全域相容性大腦：集中定義請假與午休豁免計算
+// 💡 每次改版就把這行改掉（例如用日期或流水號），用來觸發「登出後清一次快取」
+const APP_BUILD_VERSION = '2026-08-26-v1';
+
+async function clearStaleCacheIfNeeded() {
+  const savedVersion = localStorage.getItem('tjcpm_buildVersion');
+  if (savedVersion === APP_BUILD_VERSION) {
+    return false; // 版本相同，不需要清
+  }
+
+  try {
+    // 1. 清除舊的 Service Worker 註冊
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) await reg.unregister();
+    }
+    // 2. 清除 Cache Storage（SW 底下實際存放檔案的地方）
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    }
+  } catch (e) {
+    console.warn('清除快取時發生錯誤：', e);
+  }
+
+  // 3. 記下這個版本已經清過了，下次登出就不會再觸發
+  localStorage.setItem('tjcpm_buildVersion', APP_BUILD_VERSION);
+  return true;
+}// 💡 全域相容性大腦：集中定義請假與午休豁免計算
 function isTimeExempted(min, leaves) {
   if (min >= 720 && min < 780) return true; // 午休固定豁免
   return leaves.some(l => min >= l.start && min < l.end);
@@ -703,6 +730,12 @@ function doLogout() {
   document.getElementById(`loginPw`).value = ``;
   document.getElementById(`loginErr`).style.display = `none`;
   setTimeout(() => document.getElementById(`loginId`).focus(), 100);
+    clearStaleCacheIfNeeded().then(didClear => {
+    if (didClear) {
+      showToast(`🔄 偵測到新版本，正在重新整理…`);
+      setTimeout(() => location.reload(true), 800);
+    }
+  });
 }
 
 // ── Clock ──
