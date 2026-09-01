@@ -1410,12 +1410,18 @@ async function confirmResubmit(id, clientId, type) {
       suppMark: text
     });
     if (res.status === `ok`) {
-      showToast(`✅ 補件已送出，等待主管第二次審核`);
-      const rec = records.find(r => r.id === id);
-      if (rec) rec.status = `待第二次審查`;
-      saveRecords();
-      renderAllList();
-      updateLeaveBalanceDisplay();   // ← 8/20新增
+  showToast(`✅ 補件已送出，等待主管第二次審核`);
+  await refreshMyStatus();
+  renderAllList();
+  updateLeaveBalanceDisplay();
+
+    //if (res.status === `ok`) {
+      //showToast(`✅ 補件已送出，等待主管第二次審核`);
+      //const rec = records.find(r => r.id === id);
+      //if (rec) rec.status = `待第二次審查`;
+      //saveRecords();
+      //renderAllList();
+      //updateLeaveBalanceDisplay();   // ← 8/20新增
     } else {
       showToast(`⚠️ 補件送出失敗：` + (res.message || `請稍後再試`));
     }
@@ -1425,6 +1431,28 @@ async function confirmResubmit(id, clientId, type) {
 }
 
 async function retractRecord(recordId, type, clientId) {
+  if (!confirm(`確認要撤回這筆 ${type} 記錄嗎？`)) return;
+  try {
+    const res = await callGAS({
+      action: `cancel`,
+      recordId: recordId,
+      type: type,
+      clientId: clientId
+    });
+
+    if (res.status === `ok`) {
+      showToast(`✅ 已撤回`);
+      await refreshMyStatus();   // ← 取代原本手動的 callGAS + 手動組資料
+      renderAllList();
+      updateLeaveBalanceDisplay();
+    } else {
+      showToast(`⚠️ ` + (res.message || `撤回失敗`));
+    }
+  } catch (e) {
+    showToast(`⚠️ 連線失敗`);
+  }
+}
+/* 8/31 async function retractRecord(recordId, type, clientId) {
   if (!confirm(`確認要撤回這筆 ${type} 記錄嗎？`)) return;
   try {
     const res = await callGAS({
@@ -1460,7 +1488,7 @@ async function retractRecord(recordId, type, clientId) {
   } catch (e) {
     showToast(`⚠️ 連線失敗`);
   }
-}
+}*/
 
 function submitAdminAdjust() {
   if (window.submitAdminAdjustInFlight) return;
