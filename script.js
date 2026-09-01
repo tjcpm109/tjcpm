@@ -887,10 +887,16 @@ async function checkApprovalUpdates() {
           addNotif(notifType, msg);
           sendPush(`TJCPM 審批結果`, msg);
           saveRecords();
-          renderAllList();
-          updateLeaveBalanceDisplay();   // ←8/20 新增
         }
       });
+      renderAllList();
+
+      // ★ 新增：同步更新最新的 quota，這樣才會反映扣除後的餘額
+      if (data.quota) {
+        currentUser.quota = data.quota;
+        sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+      }
+      updateLeaveBalanceDisplay();
     }
   } catch (e) {}
 }
