@@ -866,6 +866,41 @@ async function checkApprovalUpdates() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
+
+      // 先比對狀態變化，決定要不要跳通知（用舊的 records 做比對基準）
+      data.updates.forEach(u => {
+        const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
+        if (existing && existing.status !== u.status) {
+          let msg, notifType;
+          if (isFinalApproved(u.status)) {
+            msg = `您的${u.type}申請（${u.date}）已 核准`;
+            notifType = `approve`;
+          } else if (u.status === `補件`) {
+            msg = `您的${u.type}申請（${u.date}）主管要求補件，請查看意見並補齊資料後重新送出`;
+            notifType = `reject`;
+          } else if (u.status === `待第二次審查`) {
+            msg = `您的${u.type}申請（${u.date}）已補件送出，等待主管第二次審核`;
+            notifType = `approve`;
+          } else {
+            msg = `您的${u.type}申請（${u.date}）已 拒絕`;
+            notifType = `reject`;
+          }
+          addNotif(notifType, msg);
+          sendPush(`TJCPM 審批結果`, msg);
+        }
+      });
+
+      // 再統一套用最新資料（records、quota、DOM 全部一次到位）
+      applyMyStatusData(data);
+      renderAllList();
+      updateLeaveBalanceDisplay();
+    }
+  } catch (e) {}
+}
+/* 8/31 async function checkApprovalUpdates() {
+  try {
+    const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
+    if (data.status === `ok` && data.updates) {
       data.updates.forEach(u => {
         const existing = records.find(r => r.clientId && String(r.clientId) === String(u.clientId));
         if (existing && existing.status !== u.status) {
@@ -899,7 +934,7 @@ async function checkApprovalUpdates() {
       updateLeaveBalanceDisplay();
     }
   } catch (e) {}
-}
+}*/
 
 // ── Actions ──
 function handleAction(type) {
@@ -2667,7 +2702,86 @@ function shouldSyncRecordsNow() {
   if (!lastSyncStr) return true;
   return (Date.now() - new Date(lastSyncStr).getTime()) > RECORDS_SYNC_INTERVAL_MS;
 }
+function applyMyStatusData(data) {
+  if (!data || data.status !== `ok` || !data.updates) return false;
+
+  localStorage.setItem(storageKey('tjcpm_recordsLastSyncTime', currentUser.empId), new Date().toISOString());
+  const snapshotKey = `tjcpm_lastSync_${currentUser.empId}`;
+  localStorage.setItem(snapshotKey, JSON.stringify({ updates: data.updates, quota: data.quota || null }));
+
+  records = data.updates;
+  saveRecords();
+
+  let annualLeaveUsed = 0, compLeaveUsed = 0, sickLeaveUsed = 0, personalLeaveUsed = 0, officialLeaveUsed = 0, marriageLeaveUsed = 0, funeralLeaveUsed = 0;
+  let anniversaryStartStr = null;
+  if (currentUser && currentUser.joinDate) {
+    const win = getCurrentAnniversaryWindow(currentUser.joinDate);
+    if (win && win.start) anniversaryStartStr = `${win.start.getFullYear()}-${String(win.start.getMonth() + 1).padStart(2, `0`)}-${String(win.start.getDate()).padStart(2, `0`)}`;
+  }
+
+  records.forEach(r => {
+    if (r.type === `請假` && isFinalApproved(r.status) && r.date && (!anniversaryStartStr || r.date >= anniversaryStartStr)) {
+      const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
+      const hours = parseFloat(r.hours) || 0;
+      if (leaveType === `特休`) annualLeaveUsed += hours;
+      else if (leaveType === `補休`) compLeaveUsed += hours;
+      else if (leaveType === `病假`) sickLeaveUsed += hours;
+      else if (leaveType === `事假`) personalLeaveUsed += hours;
+      else if (leaveType === `公假`) officialLeaveUsed += hours;
+      else if (leaveType === `婚假`) marriageLeaveUsed += hours;
+      else if (leaveType === `喪假`) funeralLeaveUsed += hours;
+    }
+  });
+
+  if (data.quota) {
+    currentUser.quota = data.quota;
+    if (data.holidayStrings) currentUser.holidayStrings = data.holidayStrings;
+    if (data.specialShifts) currentUser.specialShifts = data.specialShifts;
+    if (data.defaultShift) currentUser.defaultShift = data.defaultShift;
+    if (data.hasOwnProperty(`seniorityText`)) currentUser.seniorityText = data.seniorityText;
+    if (data.hasOwnProperty(`specialLeaveEntitlementHours`)) currentUser.specialLeaveEntitlementHours = data.specialLeaveEntitlementHours;
+
+    if (data.settledAccumulated) {
+      currentUser.settledAccumulated = data.settledAccumulated;
+      localStorage.setItem(storageKey('tjcpm_settledAccumulated', currentUser.empId), JSON.stringify(data.settledAccumulated));
+    }
+    if (data.hasOwnProperty(`isActiveProxy`)) currentUser.isActiveProxy = data.isActiveProxy;
+    applyAdminSubTabVisibility();
+    sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+  }
+
+  const accumAnnualEl = document.getElementById(`accumAnnual`);
+  if (accumAnnualEl) accumAnnualEl.textContent = `${annualLeaveUsed}h`;
+  const accumCompEl = document.getElementById(`accumComp`);
+  if (accumCompEl) accumCompEl.textContent = `${compLeaveUsed}h`;
+  const accumSickEl = document.getElementById(`accumSick`);
+  if (accumSickEl) accumSickEl.textContent = `${sickLeaveUsed}h`;
+  const accumPersonalEl = document.getElementById(`accumPersonal`);
+  if (accumPersonalEl) accumPersonalEl.textContent = `${personalLeaveUsed}h`;
+  const accumOfficialEl = document.getElementById(`accumOfficial`);
+  if (accumOfficialEl) accumOfficialEl.textContent = `${officialLeaveUsed}h`;
+  const accumMarriageEl = document.getElementById(`accumMarriage`);
+  if (accumMarriageEl) accumMarriageEl.textContent = `${marriageLeaveUsed}h`;
+  const accumFuneralEl = document.getElementById(`accumFuneral`);
+  if (accumFuneralEl) accumFuneralEl.textContent = `${funeralLeaveUsed}h`;
+
+  calcAttendance();
+  return true;
+}
+async function refreshMyStatus() {
+  try {
+    const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
+    const changed = applyMyStatusData(data);
+    return { ok: true, changed, data };
+  } catch (e) {
+    return { ok: false, changed: false, data: null };
+  }
+}
 async function syncProfileAndAccumulatedLeaves() {
+  const result = await refreshMyStatus();
+  return { ok: result.ok, changed: result.changed };
+}
+/*async function syncProfileAndAccumulatedLeaves() {
   try {
     const data = await callGAS({ action: `getMyStatus`, empId: currentUser.empId });
     if (data.status === `ok` && data.updates) {
@@ -2736,7 +2850,7 @@ async function syncProfileAndAccumulatedLeaves() {
   } catch (e) {
     return { ok: false, changed: false };
   }
-}
+}*/
 
 function normalizeDate(str) {
   if (!str) return null;
