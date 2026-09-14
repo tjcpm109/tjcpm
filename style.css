@@ -656,7 +656,7 @@ body {
 .profile-meta-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--card-border); font-size: var(--fs-body); }
 .profile-meta-row:last-child { border-bottom: none; }
 .profile-meta-icon { font-size: 18px; width: 26px; flex-shrink: 0; }
-.profile-meta-label { color: var(--text-secondary); width: 70px; flex-shrink: 0; }
+.profile-meta-label { color: var(--text-secondary); width: 110px; flex-shrink: 0; }
 .profile-meta-value { color: var(--text-primary); flex: 1; font-weight: 500; }
 .pw-toggle-btn { background: none; border: 1px solid var(--blue-border); color: var(--blue-light); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; transition: background 0.15s; }
 .pw-toggle-btn:hover { background: var(--blue-pale); }
