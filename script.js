@@ -2715,11 +2715,16 @@ function renderProfile() {
   if (entitlementEl) entitlementEl.textContent = (currentUser.specialLeaveEntitlementHours !== undefined) 
     ? `${currentUser.specialLeaveEntitlementHours} 小時` 
     : `—`;
+ 
+    // 9/14★ 新增：年度加班時數，直接沿用既有的 getCurrentEmploymentYearRange()，不需要修改它
+  const otEntitlementEl = document.getElementById(`profileAnnualOtHours`);
+  if (otEntitlementEl) {
+    const range = getCurrentEmploymentYearRange();
+    const annualOtHours = sumApprovedHoursInRange(`加班`, range.start, range.end);
+    otEntitlementEl.textContent = `${annualOtHours.toFixed(1)} 小時`;
+  }
+  
   calcAttendance();
-  //8/20 if (currentUser.quota) {
-  //  document.getElementById(`profileAnnualLeave`).textContent = `${currentUser.quota.specialLeaveRemainingHours} 小時`;
-  //  document.getElementById(`profileCompensatoryLeave`).textContent = `${currentUser.quota.compLeaveRemainingHours} 小時`;
-  //}
   syncProfileAndAccumulatedLeaves();
   updateAllYearRanges();
 }
