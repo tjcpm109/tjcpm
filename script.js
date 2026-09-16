@@ -1047,7 +1047,7 @@ async function submitLeave() {
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
     );
-    // 0916 const compensationBalance = calculateCompensationBalance(leaveStartVal);
+    const compensationBalance = calculateCompensationBalance(leaveStartVal);
     if (requestHours > compensationBalance) {
       showToast(`⚠️ 補休餘額不足！申請時數：${requestHours}h，餘額：${compensationBalance}h`);
       window.submitLeaveInFlight = false;
@@ -1103,52 +1103,12 @@ async function submitLeave() {
   window.submitLeaveInFlight = false;
 }
 
+// ── 3.2：拿掉本地重複疊加，直接信任伺服器算好的批次加總結果 ──
+// 原本這個函式會在 baseBalance 上疊加「本地快取的本月加班-本月已用」，
+// 换成批次系統後，伺服器回傳的 compLeaveRemainingHours 本身就是即時、
+// 正確加總過的數字，前端不用也不該再自己疊加一次，否則有雙重計算風險。
 function calculateCompensationBalance(refDateStr) {
-  const baseBalance = currentUser?.quota?.compLeaveRemainingHours || 0;
-  const activeStatuses = [`待審`, `補件`, `待第二次審查`, `同意`, `同意_補件後`];
-
-  const refDate = refDateStr ? safeNewDate(refDateStr) : new Date();
-  const y = refDate.getFullYear();
-  const m = refDate.getMonth();
-
-  const approvedOTsThisMonth = records.filter(r => {
-    if (r.empId !== currentUser.empId) return false;
-    if (r.type !== `加班` || !isFinalApproved(r.status)) return false;
-    const d = safeNewDate(r.date);
-    return d.getFullYear() === y && d.getMonth() === m;
-  });
-
-  let totalOTHours = 0;
-  approvedOTsThisMonth.forEach(r => {
-    const startMin = timeToMin(r.startTime || `09:00`);
-    const endMin = timeToMin(r.endTime || `18:00`);
-    let diffMin = endMin - startMin;
-    if (diffMin > 0) {
-      if (startMin <= 720 && endMin >= 780) diffMin -= 60;
-      totalOTHours += diffMin / 60;
-    }
-  });
-
-  const usedCompThisMonth = records.filter(r => {
-    if (r.empId !== currentUser.empId) return false;
-    if (r.type !== `請假` || r.subType !== `補休`) return false;
-    if (activeStatuses.indexOf(r.status) === -1) return false;
-    const d = safeNewDate(r.date);
-    return d.getFullYear() === y && d.getMonth() === m;
-  });
-
-  let totalUsedHours = 0;
-  usedCompThisMonth.forEach(r => {
-    const startMin = timeToMin(r.startTime || `09:00`);
-    const endMin = timeToMin(r.endTime || `18:00`);
-    let diffMin = endMin - startMin;
-    if (diffMin > 0) {
-      if (startMin <= 720 && endMin >= 780) diffMin -= 60;
-      totalUsedHours += diffMin / 60;
-    }
-  });
-
-  return baseBalance + totalOTHours - totalUsedHours;
+  return currentUser?.quota?.compLeaveRemainingHours || 0;
 }
   
 async function submitOvertime() {
@@ -3013,6 +2973,8 @@ async function changePassword() {
   }
 }
 
+
+// ── 3.3：特休到期提醒 ──
 function updateLeaveBalanceDisplay() {
   const annualEl = document.getElementById(`leaveAnnualBalance`);
   const compEl = document.getElementById(`leaveCompBalance`);
@@ -3024,7 +2986,7 @@ function updateLeaveBalanceDisplay() {
     annualEl.textContent = `— 小時`;
     compEl.textContent = `— 小時`;
   }
-
+ 
   const annualPendingEl = document.getElementById(`leaveAnnualPending`);
   const compPendingEl = document.getElementById(`leaveCompPending`);
    const annualPending = (currentUser?.quota?.specialLeavePendingHours !== undefined)
@@ -3033,7 +2995,7 @@ function updateLeaveBalanceDisplay() {
   const compPending = (currentUser?.quota?.compLeavePendingHours !== undefined)
     ? currentUser.quota.compLeavePendingHours
     : calculatePendingLeaveHours(`補休`);
-
+ 
   if (annualPendingEl) {
     if (annualPending > 0) {
       annualPendingEl.textContent = `審核中：${annualPending.toFixed(1)} 小時`;
@@ -3050,7 +3012,33 @@ function updateLeaveBalanceDisplay() {
       compPendingEl.style.display = `none`;
     }
   }
+ 
+  // 【新增】特休到期提醒：距最舊一批到期還有幾天、多少小時要小心用完
+  let expiryEl = document.getElementById(`leaveAnnualExpiry`);
+  if (!expiryEl && annualEl && annualEl.parentElement) {
+    // 找不到就自動建立，不用手動改 HTML（跟 showLoading() 同樣的作法）
+    expiryEl = document.createElement(`div`);
+    expiryEl.id = `leaveAnnualExpiry`;
+    expiryEl.style.cssText = `font-size:12px; margin-top:4px; display:none; font-weight:600;`;
+    annualEl.parentElement.appendChild(expiryEl);
+  }
+  if (expiryEl) {
+    const q = currentUser?.quota;
+    const hoursAtRisk = q?.specialLeaveHoursAtRisk || 0;
+    const expiryDate = q?.specialLeaveExpiryDate || ``;
+    const daysUntil = q?.specialLeaveDaysUntilExpiry;
+    if (hoursAtRisk > 0 && expiryDate) {
+      const isUrgent = (daysUntil !== null && daysUntil !== undefined && daysUntil <= 30);
+      expiryEl.textContent = `⏰ ${expiryDate} 前需用完 ${hoursAtRisk} 小時` + (daysUntil !== null && daysUntil !== undefined ? `（尚餘 ${daysUntil} 天）` : ``);
+      expiryEl.style.color = isUrgent ? `#dc2626` : `#f59e0b`;
+      expiryEl.style.display = `block`;
+    } else {
+      expiryEl.style.display = `none`;
+    }
+  }
 }
+ 
+
 
 function initYearMonthQuerySelectors() {
   const yearSel = document.getElementById(`queryYearSelect`);
