@@ -1113,7 +1113,7 @@ async function submitLeave() {
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
     );
-    const compensationBalance = calculateCompensationBalance(leaveStartVal);
+    // 0916 const compensationBalance = calculateCompensationBalance(leaveStartVal);
     if (requestHours > compensationBalance) {
       showToast(`⚠️ 補休餘額不足！申請時數：${requestHours}h，餘額：${compensationBalance}h`);
       window.submitLeaveInFlight = false;
