@@ -3229,7 +3229,7 @@ function getLeaveRemaining(subType) {
 }
 
 // 2. 完整畫面更新函式
-/*function updateLeaveBalanceDisplay() {
+function updateLeaveBalanceDisplay() {
   if (!window.currentUser || !currentUser.quota) return;
   const q = currentUser.quota;
 
@@ -3293,52 +3293,4 @@ function getLeaveRemaining(subType) {
       expiryEl.style.display = 'none';
     }
   }
-}*/
-function updateLeaveBalanceDisplay() {
-  console.log('--- [DEBUG] updateLeaveBalanceDisplay 啟動 ---');
-  
-  // 1. 如果記憶體中沒有 currentUser，嘗試從 sessionStorage 還原
-  if (typeof currentUser === 'undefined' || !currentUser) {
-    const saved = sessionStorage.getItem('tjcpm_user');
-    if (saved) {
-      try {
-        currentUser = JSON.parse(saved);
-        if (typeof window !== 'undefined') window.currentUser = currentUser;
-      } catch (e) {
-        console.error('還原 sessionStorage 失敗', e);
-      }
-    }
-  }
-
-  const u = (typeof currentUser !== 'undefined' ? currentUser : null) || window.currentUser;
-  if (!u || !u.quota) {
-    console.warn('⚠️ 攔截：currentUser 或 u.quota 依然為空！當前 user 物件:', u);
-    return;
-  }
-  
-  const q = u.quota;
-  console.log('✅ 讀取到的 quota 數據:', q);
-
-  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-  const specialUsed  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
-  const specialRemaining = specialTotal - specialUsed;
-
-  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
-  const compUsed  = Number(q.compLeaveUsedHours || q.compLeaveUsed || 0);
-  const compRemaining = compTotal - compUsed;
-
-  const annualEl = document.getElementById('leaveAnnualBalance');
-  const compEl   = document.getElementById('leaveCompBalance');
-
-  if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
-  if (compEl)   compEl.innerHTML   = `${compRemaining} <span class="unit">小時</span>`;
-  
-  // 更新 profile / table (若有需要可保留)
-  const profileEntitlementEl = document.getElementById('profileAnnualEntitlement');
-  if (profileEntitlementEl) profileEntitlementEl.textContent = `${specialTotal} 小時`;
-
-  const accumAnnualEl = document.getElementById('accumAnnual');
-  const accumCompEl   = document.getElementById('accumComp');
-  if (accumAnnualEl) accumAnnualEl.textContent = `剩餘 ${specialRemaining} / 應有 ${specialTotal} 小時`;
-  if (accumCompEl)   accumCompEl.textContent   = `剩餘 ${compRemaining} / 應有 ${compTotal} 小時`;
 }
