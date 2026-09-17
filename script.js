@@ -3204,7 +3204,7 @@ function getLeaveRemaining(subType) {
 }
 
 // 2. 完整畫面更新函式
-function updateLeaveBalanceDisplay() {
+/*function updateLeaveBalanceDisplay() {
   if (!window.currentUser || !currentUser.quota) return;
   const q = currentUser.quota;
 
@@ -3267,5 +3267,41 @@ function updateLeaveBalanceDisplay() {
     } else {
       expiryEl.style.display = 'none';
     }
+  }
+}*/
+function updateLeaveBalanceDisplay() {
+  console.log('--- [DEBUG] updateLeaveBalanceDisplay 啟動 ---');
+  console.log('window.currentUser:', window.currentUser);
+  
+  if (!window.currentUser || !window.currentUser.quota) {
+    console.warn('⚠️ 攔截：currentUser 或 currentUser.quota 為空！');
+    return;
+  }
+  
+  const q = window.currentUser.quota;
+  console.log('✅ 讀取到的 quota 數據:', q);
+
+  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
+  const specialUsed  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
+  const specialRemaining = specialTotal - specialUsed;
+
+  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
+  const compUsed  = Number(q.compLeaveUsedHours || q.compLeaveUsed || 0);
+  const compRemaining = compTotal - compUsed;
+
+  const annualEl = document.getElementById('leaveAnnualBalance');
+  const compEl   = document.getElementById('leaveCompBalance');
+  console.log('DOM 元素狀態:', { annualEl: !!annualEl, compEl: !!compEl });
+
+  if (annualEl) {
+    annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
+  } else {
+    console.error('❌ 找不到 ID 為 leaveAnnualBalance 的 DOM 元素！');
+  }
+
+  if (compEl) {
+    compEl.innerHTML = `${compRemaining} <span class="unit">小時</span>`;
+  } else {
+    console.error('❌ 找不到 ID 為 leaveCompBalance 的 DOM 元素！');
   }
 }
