@@ -664,7 +664,9 @@ async function doLogin() {
       records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
       notifications = JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || `[]`);
       showApp();
+      updateLeaveBalanceDisplay();
       syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
+      updateLeaveBalanceDisplay();
     } else {
       showLoginErr(data.message || `帳號或密碼錯誤，請再試一次`);
     }
@@ -1060,7 +1062,12 @@ async function submitLeave() {
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
     );
-    const annualBalance = currentUser?.quota?.specialLeaveRemainingHours || 0;
+    //const annualBalance = currentUser?.quota?.specialLeaveRemainingHours || 0;
+    // 💡 改用衍生計算：應有 - 已用
+    const q = currentUser?.quota || {};
+    const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
+    const specialUsed  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
+    const annualBalance = specialTotal - specialUsed;
     
     if (requestHours > annualBalance) {
       showToast(`⚠️ 特休餘額不足！申請時數：${requestHours}h，餘額：${annualBalance}h`);
