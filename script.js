@@ -2975,7 +2975,7 @@ async function changePassword() {
 
 
 // ── 3.3：特休到期提醒 ──
-function updateLeaveBalanceDisplay() {
+/* 0916 function updateLeaveBalanceDisplay() {
   const annualEl = document.getElementById(`leaveAnnualBalance`);
   const compEl = document.getElementById(`leaveCompBalance`);
   if (!annualEl || !compEl) return;
@@ -3036,8 +3036,63 @@ function updateLeaveBalanceDisplay() {
       expiryEl.style.display = `none`;
     }
   }
+}*/
+
+function updateLeaveBalanceDisplay() {
+  const q = currentUser?.quota || {};
+
+  // 1. 直接用「應有 － 使用」計算
+  const annualTotal = q.specialLeaveTotal ?? q.specialLeaveGranted ?? 0;
+  const annualUsed = q.specialLeaveUsed ?? 0;
+  const specialRemaining = annualTotal - annualUsed;
+
+  const compTotal = q.compLeaveTotal ?? q.compLeaveGranted ?? 0;
+  const compUsed = q.compLeaveUsed ?? 0;
+  const compRemaining = compTotal - compUsed;
+
+  // 2. 填入上方假別餘額卡片
+  const annualEl = document.getElementById('leaveAnnualBalance');
+  const compEl = document.getElementById('leaveCompBalance');
+  if (annualEl) annualEl.textContent = `${specialRemaining} 小時`;
+  if (compEl) compEl.textContent = `${compRemaining} 小時`;
+
+  // 3. 審核中計算（維持原邏輯）
+  const annualPendingEl = document.getElementById('leaveAnnualPending');
+  const compPendingEl = document.getElementById('leaveCompPending');
+  const annualPending = q.specialLeavePendingHours ?? calculatePendingLeaveHours('特休');
+  const compPending = q.compLeavePendingHours ?? calculatePendingLeaveHours('補休');
+
+  if (annualPendingEl) {
+    annualPendingEl.textContent = annualPending > 0 ? `審核中：${annualPending.toFixed(1)} 小時` : '';
+    annualPendingEl.style.display = annualPending > 0 ? 'block' : 'none';
+  }
+  if (compPendingEl) {
+    compPendingEl.textContent = compPending > 0 ? `審核中：${compPending.toFixed(1)} 小時` : '';
+    compPendingEl.style.display = compPending > 0 ? 'block' : 'none';
+  }
+
+  // 4. 特休到期提醒（維持原邏輯）
+  let expiryEl = document.getElementById('leaveAnnualExpiry');
+  if (!expiryEl && annualEl && annualEl.parentElement) {
+    expiryEl = document.createElement('div');
+    expiryEl.id = 'leaveAnnualExpiry';
+    expiryEl.style.cssText = 'font-size:12px; margin-top:4px; display:none; font-weight:600;';
+    annualEl.parentElement.appendChild(expiryEl);
+  }
+  if (expiryEl) {
+    const hoursAtRisk = q.specialLeaveHoursAtRisk || 0;
+    const expiryDate = q.specialLeaveExpiryDate || '';
+    const daysUntil = q.specialLeaveDaysUntilExpiry;
+    if (hoursAtRisk > 0 && expiryDate) {
+      const isUrgent = (daysUntil !== null && daysUntil !== undefined && daysUntil <= 30);
+      expiryEl.textContent = `⏰ ${expiryDate} 前需用完 ${hoursAtRisk} 小時` + (daysUntil !== null && daysUntil !== undefined ? `（尚餘 ${daysUntil} 天）` : '');
+      expiryEl.style.color = isUrgent ? '#dc2626' : '#f59e0b';
+      expiryEl.style.display = 'block';
+    } else {
+      expiryEl.style.display = 'none';
+    }
+  }
 }
- 
 
 
 function initYearMonthQuerySelectors() {
