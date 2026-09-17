@@ -2571,7 +2571,7 @@ function shouldSyncRecordsNow() {
   if (!lastSyncStr) return true;
   return (Date.now() - new Date(lastSyncStr).getTime()) > RECORDS_SYNC_INTERVAL_MS;
 }
-function applyMyStatusData(data) {
+/*0916 function applyMyStatusData(data) {
   if (!data || data.status !== `ok` || !data.updates) return false;
 
   localStorage.setItem(storageKey('tjcpm_recordsLastSyncTime', currentUser.empId), new Date().toISOString());
@@ -2636,6 +2636,126 @@ function applyMyStatusData(data) {
 
   calcAttendance();
   return true;
+}*/
+// ── 資料同步層:只負責把後端資料寫進 currentUser / records ──
+function applyMyStatusData(data) {
+  if (!data || data.status !== `ok` || !data.updates) return false;
+
+  localStorage.setItem(storageKey('tjcpm_recordsLastSyncTime', currentUser.empId), new Date().toISOString());
+  localStorage.setItem(`tjcpm_lastSync_${currentUser.empId}`, JSON.stringify({ updates: data.updates, quota: data.quota || null }));
+
+  records = data.updates;
+  saveRecords();
+
+  if (data.quota) {
+    currentUser.quota = data.quota;
+    if (data.holidayStrings) currentUser.holidayStrings = data.holidayStrings;
+    if (data.specialShifts) currentUser.specialShifts = data.specialShifts;
+    if (data.defaultShift) currentUser.defaultShift = data.defaultShift;
+    if (data.hasOwnProperty(`seniorityText`)) currentUser.seniorityText = data.seniorityText;
+    if (data.hasOwnProperty(`specialLeaveEntitlementHours`)) currentUser.specialLeaveEntitlementHours = data.specialLeaveEntitlementHours;
+    if (data.settledAccumulated) {
+      currentUser.settledAccumulated = data.settledAccumulated;
+      localStorage.setItem(storageKey('tjcpm_settledAccumulated', currentUser.empId), JSON.stringify(data.settledAccumulated));
+    }
+    if (data.hasOwnProperty(`isActiveProxy`)) currentUser.isActiveProxy = data.isActiveProxy;
+    applyAdminSubTabVisibility();
+    sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+  }
+
+  calcAttendance();
+  updateLeaveBalanceDisplay(); // ← 資料同步完，統一交給渲染層畫面，不再自己寫 DOM
+  return true;
+}
+
+// ── 渲染層:只負責畫面，唯一負責 accumAnnual / accumComp / leaveAnnualBalance 等元素 ──
+function updateLeaveBalanceDisplay() {
+  if (!currentUser || !currentUser.quota) return;
+  const q = currentUser.quota;
+
+  const specialRemaining = getLeaveRemaining('特休');
+  const compRemaining    = getLeaveRemaining('補休');
+  const specialTotal     = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
+  const compTotal        = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
+  const otHours          = Number(q.totalOtHoursAcc || 0);
+
+  const annualEl = document.getElementById('leaveAnnualBalance');
+  const compEl   = document.getElementById('leaveCompBalance');
+  if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
+  if (compEl)   compEl.innerHTML   = `${compRemaining} <span class="unit">小時</span>`;
+
+  const profileEntitlementEl = document.getElementById('profileAnnualEntitlement');
+  const profileOtEl          = document.getElementById('profileAnnualOtHours');
+  if (profileEntitlementEl) profileEntitlementEl.textContent = `${specialTotal} 小時`;
+  if (profileOtEl)          profileOtEl.textContent          = `${otHours} 小時`;
+
+  // 明細表：用「已用時數」而不是「剩餘/應有」，這裡選一種語意，不要兩個函式各寫一次
+  const accumAnnualEl = document.getElementById('accumAnnual');
+  const accumCompEl   = document.getElementById('accumComp');
+  if (accumAnnualEl) accumAnnualEl.textContent = `${(specialTotal - specialRemaining).toFixed(1)}h`;
+  if (accumCompEl)   accumCompEl.textContent   = `${(compTotal - compRemaining).toFixed(1)}h`;
+
+  // 病假/事假/公假/婚假/喪假：這幾個沒有額度概念，只能靠掃 records 算「已用」
+  // 保留原本 applyMyStatusData 裡那段 loop，搬到這裡集中管理
+  let sickUsed = 0, personalUsed = 0, officialUsed = 0, marriageUsed = 0, funeralUsed = 0;
+  let anniversaryStartStr = null;
+  if (currentUser.joinDate) {
+    const win = getCurrentAnniversaryWindow(currentUser.joinDate);
+    if (win && win.start) anniversaryStartStr = `${win.start.getFullYear()}-${String(win.start.getMonth() + 1).padStart(2, `0`)}-${String(win.start.getDate()).padStart(2, `0`)}`;
+  }
+  records.forEach(r => {
+    if (r.type === `請假` && isFinalApproved(r.status) && r.date && (!anniversaryStartStr || r.date >= anniversaryStartStr)) {
+      const leaveType = r.subType === `加班補休` ? `補休` : (r.subType || ``);
+      const hours = parseFloat(r.hours) || 0;
+      if (leaveType === `病假`) sickUsed += hours;
+      else if (leaveType === `事假`) personalUsed += hours;
+      else if (leaveType === `公假`) officialUsed += hours;
+      else if (leaveType === `婚假`) marriageUsed += hours;
+      else if (leaveType === `喪假`) funeralUsed += hours;
+    }
+  });
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = `${val}h`; };
+  set('accumSick', sickUsed);
+  set('accumPersonal', personalUsed);
+  set('accumOfficial', officialUsed);
+  set('accumMarriage', marriageUsed);
+  set('accumFuneral', funeralUsed);
+
+  // 審核中
+  const annualPendingEl = document.getElementById('leaveAnnualPending');
+  const compPendingEl   = document.getElementById('leaveCompPending');
+  const annualPending = q.specialLeavePendingHours ?? calculatePendingLeaveHours('特休');
+  const compPending   = q.compLeavePendingHours ?? calculatePendingLeaveHours('補休');
+  if (annualPendingEl) {
+    annualPendingEl.textContent = annualPending > 0 ? `審核中：${annualPending.toFixed(1)} 小時` : '';
+    annualPendingEl.style.display = annualPending > 0 ? 'block' : 'none';
+  }
+  if (compPendingEl) {
+    compPendingEl.textContent = compPending > 0 ? `審核中：${compPending.toFixed(1)} 小時` : '';
+    compPendingEl.style.display = compPending > 0 ? 'block' : 'none';
+  }
+
+  // 特休到期提醒
+  let expiryEl = document.getElementById('leaveAnnualExpiry');
+  if (!expiryEl && annualEl && annualEl.parentElement) {
+    expiryEl = document.createElement('div');
+    expiryEl.id = 'leaveAnnualExpiry';
+    expiryEl.style.cssText = 'font-size:12px; margin-top:4px; display:none; font-weight:600;';
+    annualEl.parentElement.appendChild(expiryEl);
+  }
+  if (expiryEl) {
+    const hoursAtRisk = q.specialLeaveHoursAtRisk || 0;
+    const expiryDate  = q.specialLeaveExpiryDate || '';
+    const daysUntil   = q.specialLeaveDaysUntilExpiry;
+    if (hoursAtRisk > 0 && expiryDate) {
+      const isUrgent = (daysUntil !== null && daysUntil !== undefined && daysUntil <= 30);
+      expiryEl.textContent = `⏰ ${expiryDate} 前需用完 ${hoursAtRisk} 小時` + (daysUntil != null ? `（尚餘 ${daysUntil} 天）` : '');
+      expiryEl.style.color = isUrgent ? '#dc2626' : '#f59e0b';
+      expiryEl.style.display = 'block';
+    } else {
+      expiryEl.style.display = 'none';
+    }
+  }
 }
 async function refreshMyStatus() {
   try {
@@ -3210,85 +3330,4 @@ function queryYearMonthRecords() {
 
   renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`);
 }
-// 集中管理計算邏輯（改一次，全站生效）
-// 1. 共用計算函式（可複用於防呆或 UI）
-function getLeaveRemaining(subType) {
-  const q = currentUser?.quota || {};
-  if (subType === '特休') {
-    const total = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-    const used  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
-    return total - used;
-  } else if (subType === '補休') {
-    const total = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
-    const used  = Number(q.compLeaveUsedHours || q.compLeaveUsed || 0);
-    return total - used;
-  }
-  return 0;
-}
 
-// 2. 完整畫面更新函式
-function updateLeaveBalanceDisplay() {
-  if (!window.currentUser || !currentUser.quota) return;
-  const q = currentUser.quota|| {};
-
-  const specialRemaining = getLeaveRemaining('特休');
-  const compRemaining    = getLeaveRemaining('補休');
-  const specialTotal     = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-  const compTotal        = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
-  const otHours          = Number(q.totalOtHoursAcc || 0);
-
-  // A. 更新上方假別餘額卡片
-  const annualEl = document.getElementById('leaveAnnualBalance');
-  const compEl   = document.getElementById('leaveCompBalance');
-  if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
-  if (compEl)   compEl.innerHTML   = `${compRemaining} <span class="unit">小時</span>`;
-
-  // B. 更新 Profile Meta 區塊
-  const profileEntitlementEl = document.getElementById('profileAnnualEntitlement');
-  const profileOtEl          = document.getElementById('profileAnnualOtHours');
-  if (profileEntitlementEl) profileEntitlementEl.textContent = `${specialTotal} 小時`;
-  if (profileOtEl)          profileOtEl.textContent          = `${otHours} 小時`;
-
-  // C. 更新下方表格明細 (accumAnnual / accumComp)
-  const accumAnnualEl = document.getElementById('accumAnnual');
-  const accumCompEl   = document.getElementById('accumComp');
-  if (accumAnnualEl) accumAnnualEl.textContent = `剩餘 ${specialRemaining} / 應有 ${specialTotal} 小時`;
-  if (accumCompEl)   accumCompEl.textContent   = `剩餘 ${compRemaining} / 應有 ${compTotal} 小時`;
-
-  // D. 審核中計算
-  const annualPendingEl = document.getElementById('leaveAnnualPending');
-  const compPendingEl   = document.getElementById('leaveCompPending');
-  const annualPending = q.specialLeavePendingHours ?? (typeof calculatePendingLeaveHours === 'function' ? calculatePendingLeaveHours('特休') : 0);
-  const compPending   = q.compLeavePendingHours ?? (typeof calculatePendingLeaveHours === 'function' ? calculatePendingLeaveHours('補休') : 0);
-
-  if (annualPendingEl) {
-    annualPendingEl.textContent = annualPending > 0 ? `審核中：${annualPending.toFixed(1)} 小時` : '';
-    annualPendingEl.style.display = annualPending > 0 ? 'block' : 'none';
-  }
-  if (compPendingEl) {
-    compPendingEl.textContent = compPending > 0 ? `審核中：${compPending.toFixed(1)} 小時` : '';
-    compPendingEl.style.display = compPending > 0 ? 'block' : 'none';
-  }
-
-  // E. 特休到期提醒
-  let expiryEl = document.getElementById('leaveAnnualExpiry');
-  if (!expiryEl && annualEl && annualEl.parentElement) {
-    expiryEl = document.createElement('div');
-    expiryEl.id = 'leaveAnnualExpiry';
-    expiryEl.style.cssText = 'font-size:12px; margin-top:4px; display:none; font-weight:600;';
-    annualEl.parentElement.appendChild(expiryEl);
-  }
-  if (expiryEl) {
-    const hoursAtRisk = q.specialLeaveHoursAtRisk || 0;
-    const expiryDate  = q.specialLeaveExpiryDate || '';
-    const daysUntil   = q.specialLeaveDaysUntilExpiry;
-    if (hoursAtRisk > 0 && expiryDate) {
-      const isUrgent = (daysUntil !== null && daysUntil !== undefined && daysUntil <= 30);
-      expiryEl.textContent = `⏰ ${expiryDate} 前需用完 ${hoursAtRisk} 小時` + (daysUntil !== null && daysUntil !== undefined ? `（尚餘 ${daysUntil} 天）` : '');
-      expiryEl.style.color = isUrgent ? '#dc2626' : '#f59e0b';
-      expiryEl.style.display = 'block';
-    } else {
-      expiryEl.style.display = 'none';
-    }
-  }
-}
