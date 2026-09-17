@@ -1,4 +1,17 @@
-
+// 在 script.js 最上方或 init 函式統一初始化
+function initCurrentUser() {
+  if (!window.currentUser) {
+    const saved = sessionStorage.getItem('tjcpm_user');
+    if (saved) {
+      try {
+        window.currentUser = JSON.parse(saved);
+        currentUser = window.currentUser;
+      } catch (e) { console.error(e); }
+    }
+  }
+}
+// 頁面載入或切換時確保呼叫一次即可
+initCurrentUser();
 // 💡 全域相容性大腦：集中定義請假與午休豁免計算
 function isTimeExempted(min, leaves) {
   if (min >= 720 && min < 780) return true; // 午休固定豁免
@@ -3271,14 +3284,27 @@ function getLeaveRemaining(subType) {
 }*/
 function updateLeaveBalanceDisplay() {
   console.log('--- [DEBUG] updateLeaveBalanceDisplay 啟動 ---');
-  console.log('window.currentUser:', window.currentUser);
   
-  if (!window.currentUser || !window.currentUser.quota) {
-    console.warn('⚠️ 攔截：currentUser 或 currentUser.quota 為空！');
+  // 1. 如果記憶體中沒有 currentUser，嘗試從 sessionStorage 還原
+  if (typeof currentUser === 'undefined' || !currentUser) {
+    const saved = sessionStorage.getItem('tjcpm_user');
+    if (saved) {
+      try {
+        currentUser = JSON.parse(saved);
+        if (typeof window !== 'undefined') window.currentUser = currentUser;
+      } catch (e) {
+        console.error('還原 sessionStorage 失敗', e);
+      }
+    }
+  }
+
+  const u = (typeof currentUser !== 'undefined' ? currentUser : null) || window.currentUser;
+  if (!u || !u.quota) {
+    console.warn('⚠️ 攔截：currentUser 或 u.quota 依然為空！當前 user 物件:', u);
     return;
   }
   
-  const q = window.currentUser.quota;
+  const q = u.quota;
   console.log('✅ 讀取到的 quota 數據:', q);
 
   const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
@@ -3291,17 +3317,16 @@ function updateLeaveBalanceDisplay() {
 
   const annualEl = document.getElementById('leaveAnnualBalance');
   const compEl   = document.getElementById('leaveCompBalance');
-  console.log('DOM 元素狀態:', { annualEl: !!annualEl, compEl: !!compEl });
 
-  if (annualEl) {
-    annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
-  } else {
-    console.error('❌ 找不到 ID 為 leaveAnnualBalance 的 DOM 元素！');
-  }
+  if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
+  if (compEl)   compEl.innerHTML   = `${compRemaining} <span class="unit">小時</span>`;
+  
+  // 更新 profile / table (若有需要可保留)
+  const profileEntitlementEl = document.getElementById('profileAnnualEntitlement');
+  if (profileEntitlementEl) profileEntitlementEl.textContent = `${specialTotal} 小時`;
 
-  if (compEl) {
-    compEl.innerHTML = `${compRemaining} <span class="unit">小時</span>`;
-  } else {
-    console.error('❌ 找不到 ID 為 leaveCompBalance 的 DOM 元素！');
-  }
+  const accumAnnualEl = document.getElementById('accumAnnual');
+  const accumCompEl   = document.getElementById('accumComp');
+  if (accumAnnualEl) accumAnnualEl.textContent = `剩餘 ${specialRemaining} / 應有 ${specialTotal} 小時`;
+  if (accumCompEl)   accumCompEl.textContent   = `剩餘 ${compRemaining} / 應有 ${compTotal} 小時`;
 }
