@@ -456,7 +456,7 @@ function storageKey(prefix, empId) {
   return `${prefix}_${empId || `guest`}`;
 }
 // 1. 安全還原 currentUser
-let currentUser = null;
+//let currentUser = null;
 try {
   const savedUser = sessionStorage.getItem(`tjcpm_user`);
   if (savedUser && savedUser !== `null`) {
