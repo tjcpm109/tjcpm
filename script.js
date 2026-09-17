@@ -463,8 +463,8 @@ if (currentUser?.empId) {
   } catch (e) {}
 }
 // 2. 安全初始化 records / notifications（若有登入才帶入，否則給空陣列）
-//let records = [];
-let notifications = [];
+ records = [];
+ notifications = [];
 if (currentUser?.empId) {
   try {
     records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
