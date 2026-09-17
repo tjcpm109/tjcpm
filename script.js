@@ -443,11 +443,6 @@ function updateAllYearRanges() {
 
 
 //單一員工」有關的暫存資料
-function storageKey(base, empId) {
-  const id = empId || (currentUser && currentUser.empId) || `_anon`;
-  return `${base}_${id}`;
-}
-
 function safeNewDate(str) {
   if (!str) return new Date();
   if (str instanceof Date) return str;
@@ -456,15 +451,32 @@ function safeNewDate(str) {
   const clean = String(str).replace(/-/g, `/`);
   return new Date(clean);
 }
+// 確保 storageKey 函式在最前面可用
+function storageKey(prefix, empId) {
+  return `${prefix}_${empId || `guest`}`;
+}
+// 1. 安全還原 currentUser
+let currentUser = null;
+try {
+  const savedUser = sessionStorage.getItem(`tjcpm_user`);
+  if (savedUser && savedUser !== `null`) {
+    currentUser = JSON.parse(savedUser);
+    window.currentUser = currentUser;
+  }
+} catch (e) {
+  console.error(`Session 讀取錯誤`, e);
+}
 
-let currentUser = JSON.parse(sessionStorage.getItem(`tjcpm_user`) || `null`);
-let records = currentUser
-  ? JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`)
-  : [];
-let notifications = currentUser
-  ? JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || `[]`)
-  : [];
-
+  
+/ 2. 安全初始化 records / notifications（若有登入才帶入，否則給空陣列）
+let records = [];
+let notifications = [];
+if (currentUser?.empId) {
+  try {
+    records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
+    notifications = JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || `[]`);
+  } catch (e) {}
+}
 let adminPendingCache = [];
 let pendingApproveDecision = {};
 let gpsLat = null, gpsLng = null;
