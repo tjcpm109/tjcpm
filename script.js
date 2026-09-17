@@ -1,13 +1,13 @@
 // 在 script.js 最上方或 init 函式統一初始化
+// 【Line 1】直接在最上面宣告並初始化
+let currentUser = null;function initCurrentUser() {
 function initCurrentUser() {
-  if (!window.currentUser) {
-    const saved = sessionStorage.getItem('tjcpm_user');
-    if (saved) {
-      try {
-        window.currentUser = JSON.parse(saved);
-        currentUser = window.currentUser;
-      } catch (e) { console.error(e); }
-    }
+  const saved = sessionStorage.getItem('tjcpm_user');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      window.currentUser = currentUser;
+    } catch (e) { console.error(e); }
   }
 }
 // 頁面載入或切換時確保呼叫一次即可
