@@ -3117,6 +3117,8 @@ function getLeaveRemaining(subType) {
 //    accumAnnual / accumComp / accumSick...等 DOM 的函式。
 //    請勿在 applyMyStatusData() 或其他地方重複寫這些元素。 ──
 function updateLeaveBalanceDisplay() {
+console.log('👀 currentUser.quota:', currentUser.quota);
+console.log('👀 員工特休時數(J欄):', currentUser.specialLeaveEntitlementHours);
   if (!currentUser || !currentUser.quota) return;
   const q = currentUser.quota;
 
