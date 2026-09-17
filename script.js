@@ -468,8 +468,8 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
     navigator.serviceWorker.register(`sw-v90.js`)
-      .then(reg => console.log(`SW-v89 註冊成功:`, reg.scope))
-      .catch(err => console.error(`SW-v89 註冊失敗:`, err));
+      .then(reg => console.log(`SW-v90 註冊成功:`, reg.scope))
+      .catch(err => console.error(`SW-v90 註冊失敗:`, err));
   });
 }
 
