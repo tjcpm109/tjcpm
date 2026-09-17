@@ -3116,17 +3116,22 @@ function getLeaveRemaining(subType) {
 // ── 假別額度畫面：唯一負責渲染 leaveAnnualBalance / leaveCompBalance /
 //    accumAnnual / accumComp / accumSick...等 DOM 的函式。
 //    請勿在 applyMyStatusData() 或其他地方重複寫這些元素。 ──
+
 function updateLeaveBalanceDisplay() {
 console.log('👀 currentUser.quota:', currentUser.quota);
 console.log('👀 員工特休時數(J欄):', currentUser.specialLeaveEntitlementHours);
   if (!currentUser || !currentUser.quota) return;
   const q = currentUser.quota;
 
+// 🔴 修正：優先抓 currentUser.specialLeaveEntitlementHours (J欄)，沒有才抓 q.specialLeaveTotalHours
+  const specialTotal = Number(currentUser.specialLeaveEntitlementHours || q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
+  const compTotal    = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
+  const otHours      = Number(q.totalOtHoursAcc || 0);
+
   const specialRemaining = getLeaveRemaining('特休');
   const compRemaining    = getLeaveRemaining('補休');
-  const specialTotal     = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-  const compTotal        = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
-  const otHours          = Number(q.totalOtHoursAcc || 0);
+  const specialConsumed  = specialTotal - specialRemaining;
+  const compConsumed     = compTotal    - compRemaining;
 
   // A. 上方假別餘額卡片
   const annualEl = document.getElementById('leaveAnnualBalance');
