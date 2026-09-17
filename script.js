@@ -3118,7 +3118,11 @@ function getLeaveRemaining(subType) {
 function updateLeaveBalanceDisplay() {
   if (!currentUser || !currentUser.quota) return;
   const q = currentUser.quota;
+  // 當年度特休
+  const currentYear = currentUser.quota.currentYearSpecialLeaveRemainingHours;  // 36h
 
+// 前一年度特休  
+  const prevYear = currentUser.quota.prevYearSpecialLeaveRemainingHours;  // 16h
   const specialRemaining = getLeaveRemaining('特休');
   const compRemaining    = getLeaveRemaining('補休');
   const specialTotal     = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
