@@ -3217,3 +3217,65 @@ function updateLeaveBalanceDisplay() {
     }
   }
 }*/
+function updateLeaveBalanceDisplay() {
+  const annualEl = document.getElementById(`leaveAnnualBalance`);
+  const compEl = document.getElementById(`leaveCompBalance`);
+  if (!annualEl || !compEl) return;
+  if (currentUser && currentUser.quota) {
+    annualEl.textContent = `${currentUser.quota.specialLeaveRemainingHours} 小時`;
+    compEl.textContent = `${currentUser.quota.compLeaveRemainingHours} 小時`;
+  } else {
+    annualEl.textContent = `— 小時`;
+    compEl.textContent = `— 小時`;
+  }
+ 
+  const annualPendingEl = document.getElementById(`leaveAnnualPending`);
+  const compPendingEl = document.getElementById(`leaveCompPending`);
+   const annualPending = (currentUser?.quota?.specialLeavePendingHours !== undefined)
+    ? currentUser.quota.specialLeavePendingHours
+    : calculatePendingLeaveHours(`特休`);
+  const compPending = (currentUser?.quota?.compLeavePendingHours !== undefined)
+    ? currentUser.quota.compLeavePendingHours
+    : calculatePendingLeaveHours(`補休`);
+ 
+  if (annualPendingEl) {
+    if (annualPending > 0) {
+      annualPendingEl.textContent = `審核中：${annualPending.toFixed(1)} 小時`;
+      annualPendingEl.style.display = `block`;
+    } else {
+      annualPendingEl.style.display = `none`;
+    }
+  }
+  if (compPendingEl) {
+    if (compPending > 0) {
+      compPendingEl.textContent = `審核中：${compPending.toFixed(1)} 小時`;
+      compPendingEl.style.display = `block`;
+    } else {
+      compPendingEl.style.display = `none`;
+    }
+  }
+ 
+  // 【新增】特休到期提醒：距最舊一批到期還有幾天、多少小時要小心用完
+  let expiryEl = document.getElementById(`leaveAnnualExpiry`);
+  if (!expiryEl && annualEl && annualEl.parentElement) {
+    // 找不到就自動建立，不用手動改 HTML（跟 showLoading() 同樣的作法）
+    expiryEl = document.createElement(`div`);
+    expiryEl.id = `leaveAnnualExpiry`;
+    expiryEl.style.cssText = `font-size:12px; margin-top:4px; display:none; font-weight:600;`;
+    annualEl.parentElement.appendChild(expiryEl);
+  }
+  if (expiryEl) {
+    const q = currentUser?.quota;
+    const hoursAtRisk = q?.specialLeaveHoursAtRisk || 0;
+    const expiryDate = q?.specialLeaveExpiryDate || ``;
+    const daysUntil = q?.specialLeaveDaysUntilExpiry;
+    if (hoursAtRisk > 0 && expiryDate) {
+      const isUrgent = (daysUntil !== null && daysUntil !== undefined && daysUntil <= 30);
+      expiryEl.textContent = `⏰ ${expiryDate} 前需用完 ${hoursAtRisk} 小時` + (daysUntil !== null && daysUntil !== undefined ? `（尚餘 ${daysUntil} 天）` : ``);
+      expiryEl.style.color = isUrgent ? `#dc2626` : `#f59e0b`;
+      expiryEl.style.display = `block`;
+    } else {
+      expiryEl.style.display = `none`;
+    }
+  }
+}
