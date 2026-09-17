@@ -1,17 +1,16 @@
 // 在 script.js 最上方或 init 函式統一初始化
 // 【Line 1】直接在最上面宣告並初始化
 let currentUser = null;
-function initCurrentUser() {
-  const saved = sessionStorage.getItem('tjcpm_user');
-  if (saved) {
-    try {
-      currentUser = JSON.parse(saved);
-      window.currentUser = currentUser;
-    } catch (e) { console.error(e); }
+try {
+  const savedUser = sessionStorage.getItem('tjcpm_user');
+  if (savedUser && savedUser !== 'null') {
+    currentUser = JSON.parse(savedUser);
+    window.currentUser = currentUser;
   }
+} catch (e) {
+  console.error('Session 讀取錯誤', e);
 }
-// 頁面載入或切換時確保呼叫一次即可
-initCurrentUser();
+
 // 💡 全域相容性大腦：集中定義請假與午休豁免計算
 function isTimeExempted(min, leaves) {
   if (min >= 720 && min < 780) return true; // 午休固定豁免
@@ -455,19 +454,14 @@ function safeNewDate(str) {
 function storageKey(prefix, empId) {
   return `${prefix}_${empId || `guest`}`;
 }
-// 1. 安全還原 currentUser
-//let currentUser = null;
-try {
-  const savedUser = sessionStorage.getItem(`tjcpm_user`);
-  if (savedUser && savedUser !== `null`) {
-    currentUser = JSON.parse(savedUser);
-    window.currentUser = currentUser;
-  }
-} catch (e) {
-  console.error(`Session 讀取錯誤`, e);
+let records = [];
+let notifications = [];
+if (currentUser?.empId) {
+  try {
+    records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || '[]');
+    notifications = JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || '[]');
+  } catch (e) {}
 }
-
-  
 // 2. 安全初始化 records / notifications（若有登入才帶入，否則給空陣列）
 let records = [];
 let notifications = [];
@@ -483,6 +477,10 @@ let gpsLat = null, gpsLng = null;
 let currentFilter = `打卡`;
 let currentRecordSubTab = `detail`;
 let currentLeaveSubFilter = '特休';
+let currentApplyFilter = '请假';
+let currentSubCategory = '特休';
+let currentStatus = '同意';
+
 const localNow = new Date();
 const localYear = localNow.getFullYear();
 const localMonth = String(localNow.getMonth() + 1).padStart(2, `0`);
@@ -3231,7 +3229,7 @@ function getLeaveRemaining(subType) {
 // 2. 完整畫面更新函式
 function updateLeaveBalanceDisplay() {
   if (!window.currentUser || !currentUser.quota) return;
-  const q = currentUser.quota;
+  const q = currentUser.quota|| {};
 
   const specialRemaining = getLeaveRemaining('特休');
   const compRemaining    = getLeaveRemaining('補休');
