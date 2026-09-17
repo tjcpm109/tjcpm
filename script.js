@@ -463,7 +463,7 @@ if (currentUser?.empId) {
   } catch (e) {}
 }
 // 2. 安全初始化 records / notifications（若有登入才帶入，否則給空陣列）
-let records = [];
+//let records = [];
 let notifications = [];
 if (currentUser?.empId) {
   try {
@@ -3227,7 +3227,7 @@ function getLeaveRemaining(subType) {
 }
 
 // 2. 完整畫面更新函式
-/*function updateLeaveBalanceDisplay() {
+function updateLeaveBalanceDisplay() {
   if (!window.currentUser || !currentUser.quota) return;
   const q = currentUser.quota|| {};
 
@@ -3291,4 +3291,4 @@ function getLeaveRemaining(subType) {
       expiryEl.style.display = 'none';
     }
   }
-}*/
+}
