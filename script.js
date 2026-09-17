@@ -3227,7 +3227,7 @@ function getLeaveRemaining(subType) {
 }
 
 // 2. 完整畫面更新函式
-function updateLeaveBalanceDisplay() {
+/*function updateLeaveBalanceDisplay() {
   if (!window.currentUser || !currentUser.quota) return;
   const q = currentUser.quota|| {};
 
@@ -3291,4 +3291,4 @@ function updateLeaveBalanceDisplay() {
       expiryEl.style.display = 'none';
     }
   }
-}
+}*/
