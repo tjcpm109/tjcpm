@@ -655,7 +655,6 @@ async function doLogin() {
       showApp();
       updateLeaveBalanceDisplay();
       syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
-      updateLeaveBalanceDisplay();
     } else {
       showLoginErr(data.message || `帳號或密碼錯誤，請再試一次`);
     }
