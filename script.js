@@ -1062,12 +1062,7 @@ async function submitLeave() {
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
     );
-    //const annualBalance = currentUser?.quota?.specialLeaveRemainingHours || 0;
-    // 💡 改用衍生計算：應有 - 已用
-    const q = currentUser?.quota || {};
-    const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-    const specialUsed  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
-    const annualBalance = specialTotal - specialUsed;
+    const annualBalance = getLeaveRemaining('特休');
     
     if (requestHours > annualBalance) {
       showToast(`⚠️ 特休餘額不足！申請時數：${requestHours}h，餘額：${annualBalance}h`);
@@ -1316,13 +1311,6 @@ async function confirmResubmit(id, clientId, type) {
   renderAllList();
   updateLeaveBalanceDisplay();
 
-    //if (res.status === `ok`) {
-      //showToast(`✅ 補件已送出，等待主管第二次審核`);
-      //const rec = records.find(r => r.id === id);
-      //if (rec) rec.status = `待第二次審查`;
-      //saveRecords();
-      //renderAllList();
-      //updateLeaveBalanceDisplay();   // ← 8/20新增
     } else {
       showToast(`⚠️ 補件送出失敗：` + (res.message || `請稍後再試`));
     }
@@ -3044,27 +3032,6 @@ async function changePassword() {
     }
   }
 }*/
-function updateLeaveBalanceDisplay() {
-  if (!currentUser || !currentUser.quota) return;
-  const q = currentUser.quota;
-
-  // 特休：應有 - 已用
-  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-  const specialUsed  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
-  const specialRemaining = specialTotal - specialUsed;
-
-  // 補休：應有 - 已用
-  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
-  const compUsed  = Number(q.compLeaveUsedHours || q.compLeaveUsed || 0);
-  const compRemaining = compTotal - compUsed;
-
-  // 更新上方卡片
-  const annualEl = document.getElementById('leaveAnnualBalance');
-  const compEl   = document.getElementById('leaveCompBalance');
-
-  if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
-  if (compEl)   compEl.innerHTML   = `${compRemaining} <span class="unit">小時</span>`;
-}
 
 //
 function initYearMonthQuerySelectors() {
@@ -3219,4 +3186,86 @@ function queryYearMonthRecords() {
   document.getElementById(`y-leave`).textContent = leaveHours.toFixed(1) + ` h`;
 
   renderAttendanceIssuesForRangeByMonth(start, end, `yearIssueList`);
+}
+// 集中管理計算邏輯（改一次，全站生效）
+// 1. 共用計算函式（可複用於防呆或 UI）
+function getLeaveRemaining(subType) {
+  const q = currentUser?.quota || {};
+  if (subType === '特休') {
+    const total = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
+    const used  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
+    return total - used;
+  } else if (subType === '補休') {
+    const total = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
+    const used  = Number(q.compLeaveUsedHours || q.compLeaveUsed || 0);
+    return total - used;
+  }
+  return 0;
+}
+
+// 2. 完整畫面更新函式
+function updateLeaveBalanceDisplay() {
+  if (!window.currentUser || !currentUser.quota) return;
+  const q = currentUser.quota;
+
+  const specialRemaining = getLeaveRemaining('特休');
+  const compRemaining    = getLeaveRemaining('補休');
+  const specialTotal     = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
+  const compTotal        = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
+  const otHours          = Number(q.totalOtHoursAcc || 0);
+
+  // A. 更新上方假別餘額卡片
+  const annualEl = document.getElementById('leaveAnnualBalance');
+  const compEl   = document.getElementById('leaveCompBalance');
+  if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
+  if (compEl)   compEl.innerHTML   = `${compRemaining} <span class="unit">小時</span>`;
+
+  // B. 更新 Profile Meta 區塊
+  const profileEntitlementEl = document.getElementById('profileAnnualEntitlement');
+  const profileOtEl          = document.getElementById('profileAnnualOtHours');
+  if (profileEntitlementEl) profileEntitlementEl.textContent = `${specialTotal} 小時`;
+  if (profileOtEl)          profileOtEl.textContent          = `${otHours} 小時`;
+
+  // C. 更新下方表格明細 (accumAnnual / accumComp)
+  const accumAnnualEl = document.getElementById('accumAnnual');
+  const accumCompEl   = document.getElementById('accumComp');
+  if (accumAnnualEl) accumAnnualEl.textContent = `剩餘 ${specialRemaining} / 應有 ${specialTotal} 小時`;
+  if (accumCompEl)   accumCompEl.textContent   = `剩餘 ${compRemaining} / 應有 ${compTotal} 小時`;
+
+  // D. 審核中計算
+  const annualPendingEl = document.getElementById('leaveAnnualPending');
+  const compPendingEl   = document.getElementById('leaveCompPending');
+  const annualPending = q.specialLeavePendingHours ?? (typeof calculatePendingLeaveHours === 'function' ? calculatePendingLeaveHours('特休') : 0);
+  const compPending   = q.compLeavePendingHours ?? (typeof calculatePendingLeaveHours === 'function' ? calculatePendingLeaveHours('補休') : 0);
+
+  if (annualPendingEl) {
+    annualPendingEl.textContent = annualPending > 0 ? `審核中：${annualPending.toFixed(1)} 小時` : '';
+    annualPendingEl.style.display = annualPending > 0 ? 'block' : 'none';
+  }
+  if (compPendingEl) {
+    compPendingEl.textContent = compPending > 0 ? `審核中：${compPending.toFixed(1)} 小時` : '';
+    compPendingEl.style.display = compPending > 0 ? 'block' : 'none';
+  }
+
+  // E. 特休到期提醒
+  let expiryEl = document.getElementById('leaveAnnualExpiry');
+  if (!expiryEl && annualEl && annualEl.parentElement) {
+    expiryEl = document.createElement('div');
+    expiryEl.id = 'leaveAnnualExpiry';
+    expiryEl.style.cssText = 'font-size:12px; margin-top:4px; display:none; font-weight:600;';
+    annualEl.parentElement.appendChild(expiryEl);
+  }
+  if (expiryEl) {
+    const hoursAtRisk = q.specialLeaveHoursAtRisk || 0;
+    const expiryDate  = q.specialLeaveExpiryDate || '';
+    const daysUntil   = q.specialLeaveDaysUntilExpiry;
+    if (hoursAtRisk > 0 && expiryDate) {
+      const isUrgent = (daysUntil !== null && daysUntil !== undefined && daysUntil <= 30);
+      expiryEl.textContent = `⏰ ${expiryDate} 前需用完 ${hoursAtRisk} 小時` + (daysUntil !== null && daysUntil !== undefined ? `（尚餘 ${daysUntil} 天）` : '');
+      expiryEl.style.color = isUrgent ? '#dc2626' : '#f59e0b';
+      expiryEl.style.display = 'block';
+    } else {
+      expiryEl.style.display = 'none';
+    }
+  }
 }
