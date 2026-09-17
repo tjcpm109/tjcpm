@@ -3116,6 +3116,11 @@ function getLeaveRemaining(subType) {
 //    accumAnnual / accumComp / accumSick...等 DOM 的函式。
 //    請勿在 applyMyStatusData() 或其他地方重複寫這些元素。 ──
 function updateLeaveBalanceDisplay() {
+  // 暫時停用餘額與明細渲染
+  return; 
+}
+
+/*function updateLeaveBalanceDisplay() {
   if (!currentUser || !currentUser.quota) return;
   const q = currentUser.quota;
   // 當年度特休
@@ -3211,4 +3216,4 @@ function updateLeaveBalanceDisplay() {
       expiryEl.style.display = 'none';
     }
   }
-}
+}*/
