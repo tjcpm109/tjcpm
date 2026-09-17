@@ -1,6 +1,6 @@
 // 在 script.js 最上方或 init 函式統一初始化
 // 【Line 1】直接在最上面宣告並初始化
-let currentUser = null;function initCurrentUser() {
+let currentUser = null;
 function initCurrentUser() {
   const saved = sessionStorage.getItem('tjcpm_user');
   if (saved) {
