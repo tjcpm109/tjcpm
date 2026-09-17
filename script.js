@@ -468,7 +468,7 @@ try {
 }
 
   
-/ 2. 安全初始化 records / notifications（若有登入才帶入，否則給空陣列）
+// 2. 安全初始化 records / notifications（若有登入才帶入，否則給空陣列）
 let records = [];
 let notifications = [];
 if (currentUser?.empId) {
