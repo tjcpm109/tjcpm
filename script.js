@@ -3123,6 +3123,9 @@ function updateLeaveBalanceDisplay() {
 
 // 前一年度特休  
   const prevYear = currentUser.quota.prevYearSpecialLeaveRemainingHours;  // 16h
+  console.log(`當年度特休: ${currentYear}h`);
+  console.log(`前一年度特休: ${prevYear}h`);
+  
   const specialRemaining = getLeaveRemaining('特休');
   const compRemaining    = getLeaveRemaining('補休');
   const specialTotal     = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
