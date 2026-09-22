@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="TJCPM">
   <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
   <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-  <title>TJCPM 員工系統 v9.22</title>
+  <title>TJCPM 員工系統 v9.22-1</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -129,7 +129,22 @@
           </div>
         </div>
       </div>  -->
-
+      <div class="balance-card">
+        <div class="balance-grid">
+          <div class="balance-item border-right">
+            <div class="balance-title green">🌴 特休</div>
+            <div id="leaveAnnualBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveAnnualPending" class="balance-pending"></div>
+            <div id="leaveAnnualYearSplit" class="balance-yearsplit"></div>
+          </div>
+          <div class="balance-item">
+            <div class="balance-title purple">⏰ 補休</div>
+            <div id="leaveCompBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveCompPending" class="balance-pending"></div>
+            <div id="leaveCompYearSplit" class="balance-yearsplit"></div>
+          </div>
+        </div>
+      </div>
       <!-- 請假申請表單 -->
       <div class="form-card">
         <h3 class="section-title">請假申請表單</h3>
