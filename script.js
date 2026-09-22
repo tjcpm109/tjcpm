@@ -3165,16 +3165,31 @@ function updateLeaveBalanceDisplay() {
     q.prevYearCompLeaveRemainingHours || 0
   );
   // 2. 更新表格：特休與補休「已使用時數」
-  const accumAnnualEl = document.getElementById('accumAnnual');
-  const accumCompEl = document.getElementById('accumComp');
+  //const accumAnnualEl = document.getElementById('accumAnnual');
+  //const accumCompEl = document.getElementById('accumComp');
   
   // 計算已使用時數 (總數 - 剩餘)
-  const specialUsed = (q.specialLeaveUsedHours !== undefined) ? q.specialLeaveUsedHours : (specialTotal - specialRemaining);
-  const compUsed = (q.compLeaveUsedHours !== undefined) ? q.compLeaveUsedHours : (compTotal - compRemaining);
+  //const specialUsed = (q.specialLeaveUsedHours !== undefined) ? q.specialLeaveUsedHours : (specialTotal - specialRemaining);
+  //const compUsed = (q.compLeaveUsedHours !== undefined) ? q.compLeaveUsedHours : (compTotal - compRemaining);
 
-  if (accumAnnualEl) accumAnnualEl.textContent = `${parseFloat(Number(specialUsed).toFixed(1))}h`;
-  if (accumCompEl) accumCompEl.textContent = `${parseFloat(Number(compUsed).toFixed(1))}h`;
+  //if (accumAnnualEl) accumAnnualEl.textContent = `${parseFloat(Number(specialUsed).toFixed(1))}h`;
+  //if (accumCompEl) accumCompEl.textContent = `${parseFloat(Number(compUsed).toFixed(1))}h`;
+   // 2. 更新表格：特休與補休「已使用時數」（今年度／前一年度分開）
+  const accumAnnualCurrentEl = document.getElementById('accumAnnualCurrent');
+  const accumAnnualPrevEl = document.getElementById('accumAnnualPrev');
+  const accumCompCurrentEl = document.getElementById('accumCompCurrent');
+  const accumCompPrevEl = document.getElementById('accumCompPrev');
 
+  const specialUsedCurrent = Number(q.currentYearSpecialLeaveUsedHours || 0);
+  const specialUsedPrev = Number(q.prevYearSpecialLeaveUsedHours || 0);
+  const compUsedCurrent = Number(q.currentYearCompLeaveUsedHours || 0);
+  const compUsedPrev = Number(q.prevYearCompLeaveUsedHours || 0);
+
+  if (accumAnnualCurrentEl) accumAnnualCurrentEl.textContent = `${specialUsedCurrent.toFixed(1)}h`;
+  if (accumAnnualPrevEl) accumAnnualPrevEl.textContent = `${specialUsedPrev.toFixed(1)}h`;
+  if (accumCompCurrentEl) accumCompCurrentEl.textContent = `${compUsedCurrent.toFixed(1)}h`;
+  if (accumCompPrevEl) accumCompPrevEl.textContent = `${compUsedPrev.toFixed(1)}h`;
+  
   // 3. 更新表格：其他假別 (病假 / 事假 / 公假 / 婚假 / 喪假) 統計
   let sickUsed = 0, personalUsed = 0, officialUsed = 0, marriageUsed = 0, funeralUsed = 0;
   
