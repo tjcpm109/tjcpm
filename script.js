@@ -3115,10 +3115,6 @@ function getLeaveRemaining(subType) {
 // ── 假別額度畫面：唯一負責渲染 leaveAnnualBalance / leaveCompBalance /
 //    accumAnnual / accumComp / accumSick...等 DOM 的函式。
 //    請勿在 applyMyStatusData() 或其他地方重複寫這些元素。 ──
-function updateLeaveBalanceDisplay() {
-  // 暫時停用餘額與明細渲染
-  return; 
-}
 
 function updateLeaveBalanceDisplay() {
   if (!currentUser || !currentUser.quota) return;
@@ -3134,7 +3130,40 @@ function updateLeaveBalanceDisplay() {
   const compEl = document.getElementById('leaveCompBalance');
   if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
   if (compEl) compEl.innerHTML = `${compRemaining} <span class="unit">小時</span>`;
+   // 1-1. 今年度 / 前一年度分開顯示
+  const setYearSplit = (idPrefix, curTotal, curUsed, curRemain, prevTotal, prevUsed, prevRemain) => {
+    const map = {
+      [`${idPrefix}CurrentTotal`]: curTotal,
+      [`${idPrefix}CurrentUsed`]: curUsed,
+      [`${idPrefix}CurrentRemaining`]: curRemain,
+      [`${idPrefix}PrevTotal`]: prevTotal,
+      [`${idPrefix}PrevUsed`]: prevUsed,
+      [`${idPrefix}PrevRemaining`]: prevRemain
+    };
+    Object.keys(map).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = `${map[id]} 小時`;
+    });
+  };
 
+  setYearSplit(
+    'special',
+    q.currentYearSpecialLeaveTotalHours || 0,
+    q.currentYearSpecialLeaveUsedHours || 0,
+    q.currentYearSpecialLeaveRemainingHours || 0,
+    q.prevYearSpecialLeaveTotalHours || 0,
+    q.prevYearSpecialLeaveUsedHours || 0,
+    q.prevYearSpecialLeaveRemainingHours || 0
+  );
+  setYearSplit(
+    'comp',
+    q.currentYearCompLeaveTotalHours || 0,
+    q.currentYearCompLeaveUsedHours || 0,
+    q.currentYearCompLeaveRemainingHours || 0,
+    q.prevYearCompLeaveTotalHours || 0,
+    q.prevYearCompLeaveUsedHours || 0,
+    q.prevYearCompLeaveRemainingHours || 0
+  );
   // 2. 更新表格：特休與補休「已使用時數」
   const accumAnnualEl = document.getElementById('accumAnnual');
   const accumCompEl = document.getElementById('accumComp');
