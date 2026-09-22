@@ -3125,8 +3125,8 @@ function updateLeaveBalanceDisplay() {
   //const compRemaining = getLeaveRemaining('補休');
   const specialRemaining = Number(q.specialLeaveTotalHours);
   const compRemaining = Number(q.specialLeaveTotalHours);
-  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || -);
-  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || -);
+  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || "-");
+  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || "-");
 
   const annualEl = document.getElementById('leaveAnnualBalance');
   const compEl = document.getElementById('leaveCompBalance');
