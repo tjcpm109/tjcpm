@@ -3130,8 +3130,27 @@ function updateLeaveBalanceDisplay() {
   const compEl = document.getElementById('leaveCompBalance');
   if (annualEl) annualEl.innerHTML = `${specialRemaining} <span class="unit">小時</span>`;
   if (compEl) compEl.innerHTML = `${compRemaining} <span class="unit">小時</span>`;
+    // 今年度／前一年度明細（小字顯示在剩餘時數下方）
+  const annualSplitEl = document.getElementById('leaveAnnualYearSplit');
+  const compSplitEl = document.getElementById('leaveCompYearSplit');
+
+  const specialCurrentRemain = Number(q.currentYearSpecialLeaveRemainingHours || 0);
+  const specialPrevRemain = Number(q.prevYearSpecialLeaveRemainingHours || 0);
+  const compCurrentRemain = Number(q.currentYearCompLeaveRemainingHours || 0);
+  const compPrevRemain = Number(q.prevYearCompLeaveRemainingHours || 0);
+
+  if (annualSplitEl) {
+    annualSplitEl.textContent = specialPrevRemain > 0
+      ? `今年度 ${specialCurrentRemain.toFixed(1)}h・前年度 ${specialPrevRemain.toFixed(1)}h`
+      : '';
+  }
+  if (compSplitEl) {
+    compSplitEl.textContent = compPrevRemain > 0
+      ? `今年度 ${compCurrentRemain.toFixed(1)}h・前年度 ${compPrevRemain.toFixed(1)}h`
+      : '';
+  }
    // 1-1. 今年度 / 前一年度分開顯示
-  const setYearSplit = (idPrefix, curTotal, curUsed, curRemain, prevTotal, prevUsed, prevRemain) => {
+  /*const setYearSplit = (idPrefix, curTotal, curUsed, curRemain, prevTotal, prevUsed, prevRemain) => {
     const map = {
       [`${idPrefix}CurrentTotal`]: curTotal,
       [`${idPrefix}CurrentUsed`]: curUsed,
@@ -3144,9 +3163,9 @@ function updateLeaveBalanceDisplay() {
       const el = document.getElementById(id);
       if (el) el.textContent = `${map[id]} 小時`;
     });
-  };
+  };*/
 
-  setYearSplit(
+  /*setYearSplit(
     'special',
     q.currentYearSpecialLeaveTotalHours || 0,
     q.currentYearSpecialLeaveUsedHours || 0,
@@ -3163,7 +3182,7 @@ function updateLeaveBalanceDisplay() {
     q.prevYearCompLeaveTotalHours || 0,
     q.prevYearCompLeaveUsedHours || 0,
     q.prevYearCompLeaveRemainingHours || 0
-  );
+  );*/
   // 2. 更新表格：特休與補休「已使用時數」
   //const accumAnnualEl = document.getElementById('accumAnnual');
   //const accumCompEl = document.getElementById('accumComp');
