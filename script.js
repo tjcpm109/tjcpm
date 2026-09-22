@@ -3101,8 +3101,8 @@ function queryYearMonthRecords() {
 function getLeaveRemaining(subType) {
   const q = currentUser?.quota || {};
   if (subType === '特休') {
-    const total = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-    const used  = Number(q.specialLeaveUsedHours || q.specialLeaveUsed || 0);
+    const total = Number(q.specialLeaveTotalHours || 0);
+    const used  = Number(q.specialLeaveUsedHours  || 0);
     return total - used;
   } else if (subType === '補休') {
     const total = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
@@ -3121,10 +3121,12 @@ function updateLeaveBalanceDisplay() {
   const q = currentUser.quota;
 
   // 1. 特休與補休剩餘時數 (上方卡片)
-  const specialRemaining = getLeaveRemaining('特休');
-  const compRemaining = getLeaveRemaining('補休');
-  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || 0);
-  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || 0);
+  //const specialRemaining = getLeaveRemaining('特休');
+  //const compRemaining = getLeaveRemaining('補休');
+  const specialRemaining = Number(q.specialLeaveTotalHours);
+  const compRemaining = Number(q.specialLeaveTotalHours);
+  const specialTotal = Number(q.specialLeaveTotalHours || q.specialLeaveTotal || -);
+  const compTotal = Number(q.totalOtHoursAcc || q.compLeaveTotalHours || -);
 
   const annualEl = document.getElementById('leaveAnnualBalance');
   const compEl = document.getElementById('leaveCompBalance');
