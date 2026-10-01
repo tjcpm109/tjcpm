@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
@@ -518,11 +518,18 @@
           <div class="profile-meta-value" id="profileSeniority" style="color:var(--accent-orange); font-weight:700;">—</div>
         </div>
 
-        <div class="profile-meta-row">
-          <div class="profile-meta-icon">🌴</div>
-          <div class="profile-meta-label">年度特休應有</div>
-          <div class="profile-meta-value" id="profileAnnualEntitlement" style="color:var(--green-light); font-weight:700;">—</div>
-        </div>
+    <div class="profile-meta-row">
+      <div class="profile-meta-icon">🌴</div>
+      <div class="profile-meta-label">特休應有</div>
+      <div class="profile-meta-value" style="display:flex; gap:16px; font-weight:700;">
+        <span style="color:var(--text-secondary);">
+          上一年度 <span id="profileAnnualEntitlementPrev" style="color:var(--green-light);">—</span>
+        </span>
+        <span style="color:var(--text-secondary);">
+          本年度 <span id="profileAnnualEntitlement" style="color:var(--green-light);">—</span>
+        </span>
+      </div>
+</div>
 
         <div class="profile-meta-row">
           <div class="profile-meta-icon">⏰</div>
