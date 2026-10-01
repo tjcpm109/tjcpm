@@ -462,7 +462,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v90.js`)
+    navigator.serviceWorker.register(`sw-v89.js`)
       .then(reg => console.log(`SW-v89 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v90 註冊失敗:`, err));
   });
@@ -2534,7 +2534,15 @@ if (q.currentYearSpecialLeaveTotalHours !== undefined) {
     ? `${currentUser.specialLeaveEntitlementHours}h` : `—`;
   if (entitlementPrevEl) entitlementPrevEl.textContent = `—`;
 }
- 
+   const profileCompEl = document.getElementById(`profileCompEntitlement`);
+  const profileCompPrevEl = document.getElementById(`profileCompEntitlementPrev`);
+  if (q.currentYearCompLeaveTotalHours !== undefined) {
+    if (profileCompEl) profileCompEl.textContent = `${q.currentYearCompLeaveTotalHours}h`;
+    if (profileCompPrevEl) profileCompPrevEl.textContent = `${q.prevYearCompLeaveTotalHours || 0}h`;
+  } else {
+    if (profileCompEl) profileCompEl.textContent = `—`;
+    if (profileCompPrevEl) profileCompPrevEl.textContent = `—`;
+  }
     // 9/14★ 新增：年度加班時數，直接沿用既有的 getCurrentEmploymentYearRange()，不需要修改它
   const otEntitlementEl = document.getElementById(`profileAnnualOtHours`);
   if (otEntitlementEl) {
@@ -3170,50 +3178,8 @@ function updateLeaveBalanceDisplay() {
       ? `今年度 ${compCurrentRemain.toFixed(1)}h・前年度 ${compPrevRemain.toFixed(1)}h`
       : '';
   }
-   // 1-1. 今年度 / 前一年度分開顯示
-  /*const setYearSplit = (idPrefix, curTotal, curUsed, curRemain, prevTotal, prevUsed, prevRemain) => {
-    const map = {
-      [`${idPrefix}CurrentTotal`]: curTotal,
-      [`${idPrefix}CurrentUsed`]: curUsed,
-      [`${idPrefix}CurrentRemaining`]: curRemain,
-      [`${idPrefix}PrevTotal`]: prevTotal,
-      [`${idPrefix}PrevUsed`]: prevUsed,
-      [`${idPrefix}PrevRemaining`]: prevRemain
-    };
-    Object.keys(map).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = `${map[id]} 小時`;
-    });
-  };*/
 
-  /*setYearSplit(
-    'special',
-    q.currentYearSpecialLeaveTotalHours || 0,
-    q.currentYearSpecialLeaveUsedHours || 0,
-    q.currentYearSpecialLeaveRemainingHours || 0,
-    q.prevYearSpecialLeaveTotalHours || 0,
-    q.prevYearSpecialLeaveUsedHours || 0,
-    q.prevYearSpecialLeaveRemainingHours || 0
-  );
-  setYearSplit(
-    'comp',
-    q.currentYearCompLeaveTotalHours || 0,
-    q.currentYearCompLeaveUsedHours || 0,
-    q.currentYearCompLeaveRemainingHours || 0,
-    q.prevYearCompLeaveTotalHours || 0,
-    q.prevYearCompLeaveUsedHours || 0,
-    q.prevYearCompLeaveRemainingHours || 0
-  );*/
-  // 2. 更新表格：特休與補休「已使用時數」
-  //const accumAnnualEl = document.getElementById('accumAnnual');
-  //const accumCompEl = document.getElementById('accumComp');
-  
-  // 計算已使用時數 (總數 - 剩餘)
-  //const specialUsed = (q.specialLeaveUsedHours !== undefined) ? q.specialLeaveUsedHours : (specialTotal - specialRemaining);
-  //const compUsed = (q.compLeaveUsedHours !== undefined) ? q.compLeaveUsedHours : (compTotal - compRemaining);
-
-  //if (accumAnnualEl) accumAnnualEl.textContent = `${parseFloat(Number(specialUsed).toFixed(1))}h`;
-  //if (accumCompEl) accumCompEl.textContent = `${parseFloat(Number(compUsed).toFixed(1))}h`;
+ 
    // 2. 更新表格：特休與補休「已使用時數」（今年度／前一年度分開）
   const accumAnnualCurrentEl = document.getElementById('accumAnnualCurrent');
   const accumAnnualPrevEl = document.getElementById('accumAnnualPrev');
