@@ -2521,10 +2521,19 @@ function renderProfile() {
   // 【修改】改成直接顯示 Sheet I/J 欄的值，不再前端計算
   const seniorityEl = document.getElementById(`profileSeniority`);
   if (seniorityEl) seniorityEl.textContent = currentUser.seniorityText || `—`;
-  const entitlementEl = document.getElementById(`profileAnnualEntitlement`);
-  if (entitlementEl) entitlementEl.textContent = (currentUser.specialLeaveEntitlementHours !== undefined) 
-    ? `${currentUser.specialLeaveEntitlementHours} 小時` 
-    : `—`;
+const q = currentUser.quota || {};
+const entitlementEl = document.getElementById(`profileAnnualEntitlement`);
+const entitlementPrevEl = document.getElementById(`profileAnnualEntitlementPrev`);
+
+if (q.currentYearSpecialLeaveTotalHours !== undefined) {
+  if (entitlementEl) entitlementEl.textContent = `${q.currentYearSpecialLeaveTotalHours}h`;
+  if (entitlementPrevEl) entitlementPrevEl.textContent = `${q.prevYearSpecialLeaveTotalHours || 0}h`;
+} else {
+  // 後端沒回傳時的保險:退回員工名單 J 欄
+  if (entitlementEl) entitlementEl.textContent = (currentUser.specialLeaveEntitlementHours !== undefined)
+    ? `${currentUser.specialLeaveEntitlementHours}h` : `—`;
+  if (entitlementPrevEl) entitlementPrevEl.textContent = `—`;
+}
  
     // 9/14★ 新增：年度加班時數，直接沿用既有的 getCurrentEmploymentYearRange()，不需要修改它
   const otEntitlementEl = document.getElementById(`profileAnnualOtHours`);
