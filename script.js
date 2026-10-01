@@ -231,7 +231,12 @@ function renderLeaveRecords(leaveDataList) {
     </div>
   `;
 }
-
+let batchHtml = '';
+if (Array.isArray(item.consumedBatches) && item.consumedBatches.length > 0) {
+  batchHtml = `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">📦 扣款批次：` +
+    item.consumedBatches.map(b => `${String(b.batchStart).replace(/-/g, '.')} 起算 ${b.consumed}h`).join('、') +
+    `</div>`;
+}
 html += `
     <div class="record-item ${cardClass}" data-type="${subType}" data-status="${status}">
       <div class="record-header-row">
