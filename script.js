@@ -254,7 +254,7 @@ html += `
     <div class="record-apply-time" style="font-size:12px; color:var(--text-secondary); margin-top:4px;">
       🕐 申請時間：${formatApplyTimestamp(item.timestamp)}
     </div>
-
+     ${batchHtml}
     <div class="record-approve-detail">
       ${detailHtml}
     </div>
