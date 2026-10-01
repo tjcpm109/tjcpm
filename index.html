@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="TJCPM">
   <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
   <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-  <title>TJCPM 員工系統 v10.1-1</title>
+  <title>TJCPM 員工系統 v10.1-2</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -529,14 +529,21 @@
           本年度 <span id="profileAnnualEntitlement" style="color:var(--green-light);">—</span>
         </span>
       </div>
-</div>
-
-        <div class="profile-meta-row">
-          <div class="profile-meta-icon">⏰</div>
-          <div class="profile-meta-label">年度加班時數</div>
-          <div class="profile-meta-value" id="profileAnnualOtHours" style="color:var(--accent-purple); font-weight:700;">—</div>
-        </div>
       </div>
+
+    <div class="profile-meta-row">
+  <div class="profile-meta-icon">⏰</div>
+  <div class="profile-meta-label">補休累計</div>
+  <div class="profile-meta-value" style="display:flex; gap:16px; font-weight:700;">
+    <span style="color:var(--text-secondary);">
+      上年度 <span id="profileCompEntitlementPrev" style="color:var(--accent-purple);">—</span>
+    </span>
+    <span style="color:var(--text-secondary);">
+      本年度 <span id="profileCompEntitlement" style="color:var(--accent-purple);">—</span>
+    </span>
+      </div>
+      </div>
+</div>
 
       <!-- 4. 帳號安全與通訊設定 -->
       <div class="profile-card profile-card-dark">
@@ -591,7 +598,7 @@
           </thead>
           <tbody>
             <tr style="border-bottom: 1px solid var(--card-border);">
-              <td style="padding: 10px 4px; font-weight: bold; color: var(--green-light);">🌴 特休假（前一年度）</td>
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--green-light);">🌴 特休假（上年度）</td>
               <td id="accumAnnualPrev" style="padding: 10px 4px;">未讀入</td>
               <td style="padding: 10px 4px; color: var(--text-secondary);">遞延自前一服務年度尚未休畢的時數。</td>
             </tr>
@@ -601,7 +608,7 @@
               <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。天數依到職年資遞增發給。</td>
             </tr>
             <tr style="border-bottom: 1px solid var(--card-border);">
-              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-purple);">⏰ 補休（前一年度）</td>
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-purple);">⏰ 補休（上年度）</td>
               <td id="accumCompPrev" style="padding: 10px 4px;">未讀入</td>
               <td style="padding: 10px 4px; color: var(--text-secondary);">遞延自前一服務年度尚未休畢的時數。</td>
             </tr>
