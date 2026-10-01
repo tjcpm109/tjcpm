@@ -379,14 +379,15 @@ function getYearRangeString(joinDateStr, quota) {
   if (quota && quota.correction && quota.correction.startDate) {
     const corrStart = safeNewDate(quota.correction.startDate);
     if (corrStart && !isNaN(corrStart.getTime())) {
-      if (corrStart <= displayedEnd) {
-        if (corrStart >= start) {
-          displayedStart = corrStart;
-        }
+    if (corrStart <= displayedEnd) {
+  // 只有校正落在「當前年度區間內」才套用起始日與備註；跨年度後不再顯示舊備註
+      if (corrStart >= start) {
+        displayedStart = corrStart;
         if (quota.correction.note) {
           const parts = quota.correction.note.split(/[,，]/);
           noteText = parts[parts.length - 1].trim();
         }
+      }
       } else if (corrStart > displayedEnd && corrStart <= end) {
         noteText = `⏳ 校正將於 ${corrStart.getFullYear()}.${String(corrStart.getMonth() + 1)}.${String(corrStart.getDate())} 生效（本月尚未結算）`;
       }
@@ -1484,7 +1485,10 @@ function renderAllList() {
     mine = mine.filter(r => r.type === currentApplyFilter);
     
     // 3. 限制在目前到職年度區間內
-    const range = getCurrentEmploymentYearRange();
+   // const range = getCurrentEmploymentYearRange();
+    const range = getEmploymentYearRangeByOffset(currentApplyYearOffset);
+    const rangeSpan = document.getElementById('apply-range-span');
+    if (rangeSpan) rangeSpan.textContent = `(${formatLocalDateStr(range.start)} ~ ${formatLocalDateStr(range.end)})`;
     mine = mine.filter(r => {
       const dStr = r.date || r.timestamp;
       if (!dStr) return false;
@@ -3291,4 +3295,22 @@ function updateLeaveBalanceDisplay() {
       expiryEl.style.display = 'none';
     }
   }
+}
+let currentApplyYearOffset = 0;
+
+function getEmploymentYearRangeByOffset(offset) {
+  const cur = getCurrentEmploymentYearRange();
+  if (!offset || !currentUser || !currentUser.joinDate) return cur;
+  const y = cur.start.getFullYear() + offset, m = cur.start.getMonth(), d = cur.start.getDate();
+  return {
+    start: new Date(y, m, d),
+    end: new Date(y + 1, m, d - 1, 23, 59, 59, 999)
+  };
+}
+
+function filterApplyYearScope(offset, el) {
+  currentApplyYearOffset = offset;
+  el.parentElement.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderAllList();
 }
