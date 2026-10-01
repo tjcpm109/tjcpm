@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="TJCPM">
   <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
   <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
-  <title>TJCPM 員工系統 v9.22-1</title>
+  <title>TJCPM 員工系統 v10.1</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -401,7 +401,11 @@
 
 <div id="record-apply-content" style="display:none;">
         <p class="section-title">📋 申請單明細 <span id="apply-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
-        
+          <!--  「本年度 / 前一年度」切換, -->
+    <div class="filter-bar-segmented" id="applyYearScopeBar" style="margin-bottom:10px;">
+    <div class="segment-btn active" onclick="filterApplyYearScope(0, this)">📆 本年度</div>
+    <div class="segment-btn" onclick="filterApplyYearScope(-1, this)">⏮️ 前一年度</div>
+    </div>
         <!-- 主要類型選擇器 -->
         <div class="filter-bar" style="margin-bottom: 10px;">
           <div class="filter-chip active" onclick="filterApplyMainCategory('請假', this)">🌴 請假單</div>
