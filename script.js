@@ -462,7 +462,7 @@ const todayStr = `${localYear}-${localMonth}-${localDay}`;
 // ── Service Worker 註冊 ──
 if (`serviceWorker` in navigator) {
   window.addEventListener(`load`, () => {
-    navigator.serviceWorker.register(`sw-v89.js`)
+    navigator.serviceWorker.register(`sw-v90.js`)
       .then(reg => console.log(`SW-v89 註冊成功:`, reg.scope))
       .catch(err => console.error(`SW-v90 註冊失敗:`, err));
   });
@@ -2009,9 +2009,11 @@ function formatDateTimeRange(r) {
     let rawHours;
     if (hasValidHours) {
       rawHours = Number(r.hours);
-    } else {
-      rawHours = calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
-    }
+    } else if (r.type === `加班`) {
+    rawHours = calculateOvertimeHoursLocal(r);
+  } else {
+    rawHours = calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
+  }
 
     if (r.type === `請假`) {
       const cleanHours = Math.round(rawHours * 100) / 100;
@@ -2847,14 +2849,16 @@ function calcAttendance() {
 
   let otHours = 0;
   myRecords.filter(r => r.type === `加班` && isFinalApproved(r.status)).forEach(r => {
-    if (r.hours) otHours += parseFloat(r.hours);
-    else if (r.startTime && r.endTime) {
-      const sh = parseInt(r.startTime.split(`:`)[0], 10), sm = parseInt(r.startTime.split(`:`)[1] || 0, 10);
-      const eh = parseInt(r.endTime.split(`:`)[0], 10), em = parseInt(r.endTime.split(`:`)[1] || 0, 10);
-      otHours += Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60);
-    }
+   // if (r.hours) otHours += parseFloat(r.hours);
+   // else if (r.startTime && r.endTime) {
+   //   const sh = parseInt(r.startTime.split(`:`)[0], 10), sm = parseInt(r.startTime.split(`:`)[1] || 0, 10);
+   //   const eh = parseInt(r.endTime.split(`:`)[0], 10), em = parseInt(r.endTime.split(`:`)[1] || 0, 10);
+   //   otHours += Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60);
+  //  }
+  //});
+  if (r.hours !== undefined && r.hours !== null && r.hours !== ``) otHours += Math.floor(parseFloat(r.hours) || 0);
+  else otHours += calculateOvertimeHoursLocal(r);
   });
-
   const suppCount = myRecords.filter(r => r.type === `補打卡` && isFinalApproved(r.status)).length;
   let leaveHours = 0;
   myRecords.filter(r => r.type === `請假` && isFinalApproved(r.status)).forEach(r => {
