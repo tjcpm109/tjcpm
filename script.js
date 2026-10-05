@@ -1130,10 +1130,11 @@ async function submitOvertime() {
     date: document.getElementById(`otDate`).value, startTime: document.getElementById(`otStart`).value,
     endTime: document.getElementById(`otEnd`).value, reason: document.getElementById(`otReason`).value,
     status: `待審`, timestamp: new Date().toISOString(),
-        hours: calculateLeaveHoursLocal(   // ← 直接呼叫現成函式
-      { date: otDateVal, endDate: otDateVal, startTime: otStartVal, endTime: otEndVal },
-      currentUser?.holidayStrings || []
-    )
+    //hours: calculateLeaveHoursLocal(   // ← 直接呼叫現成函式
+     // { date: otDateVal, endDate: otDateVal, startTime: otStartVal, endTime: otEndVal },
+     // currentUser?.holidayStrings || []
+    //)
+     hours: calculateOvertimeHoursLocal({ startTime: otStartVal, endTime: otEndVal })
   };
   records.unshift(record);
   saveRecords();
@@ -3293,4 +3294,14 @@ function filterApplyYearScope(offset, el) {
   el.parentElement.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   renderAllList();
+}
+// 1005 加班時數：與後端 getOvertimeHoursFromRow 一致（不排除假日、不裁班表，跨午休扣 1h，無條件捨去）
+function calculateOvertimeHoursLocal(r) {
+  if (!r || !r.startTime || !r.endTime) return 0;
+  const s = timeToMin(r.startTime);
+  const e = timeToMin(r.endTime);
+  if (s > e) return 0;
+  let diff = e - s;
+  if (s < 720 && e > 780) diff -= 60;   // 完整跨越 12:00~13:00 才扣午休
+  return Math.floor(Math.max(0, diff) / 60);
 }
