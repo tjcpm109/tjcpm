@@ -1039,10 +1039,10 @@ async function submitLeave() {
   if (subType === `補休`) {
     const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
     const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
-    const requestHours = calculateLeaveHoursLocal(
+    const requestHours = Math.ceil(calculateLeaveHoursLocal(
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
-    );
+    ));
     const compensationBalance = calculateCompensationBalance(leaveStartVal);
     if (requestHours > compensationBalance) {
       showToast(`⚠️ 補休餘額不足！申請時數：${requestHours}h，餘額：${compensationBalance}h`);
@@ -1052,10 +1052,10 @@ async function submitLeave() {
   } else if (subType === `特休`) {
     const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
     const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
-    const requestHours = calculateLeaveHoursLocal(
+    const requestHours = Math.ceil(calculateLeaveHoursLocal(
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
-    );
+    ));
     const annualBalance = getLeaveRemaining('特休');
     
     if (requestHours > annualBalance) {
@@ -3002,8 +3002,12 @@ function sumApprovedHoursInRange(type, start, end) {
     if (!matchEmpId(r.empId, currentUser?.empId) || r.type !== type || !isFinalApproved(r.status)) return;
     const d = safeNewDate(r.date);
     if (d < start || d > end) return;
+    //const hasValidHours = r.hours !== undefined && r.hours !== null && r.hours !== `` && !isNaN(Number(r.hours));
+    //total += hasValidHours ? Number(r.hours) : calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
     const hasValidHours = r.hours !== undefined && r.hours !== null && r.hours !== `` && !isNaN(Number(r.hours));
-    total += hasValidHours ? Number(r.hours) : calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
+    if (hasValidHours) total += Number(r.hours);
+    else if (type === `加班`) total += calculateOvertimeHoursLocal(r);
+    else total += calculateLeaveHoursLocal(r, currentUser?.holidayStrings || []);
   });
   return total;
 }
