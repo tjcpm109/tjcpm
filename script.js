@@ -3313,3 +3313,59 @@ function calculateOvertimeHoursLocal(r) {
   if (s < 720 && e > 780) diff -= 60;   // 完整跨越 12:00~13:00 才扣午休
   return Math.floor(Math.max(0, diff) / 60);
 }
+let _cashOffers = [];
+let _cashCur = null;
+
+// 在 getMyStatus / login 回來後呼叫:renderCashOutButtons(res.cashOutOffers)
+function renderCashOutButtons(list) {
+  _cashOffers = list || [];
+  ['特休', '補休'].forEach(t => {
+    const btn = document.getElementById('btnCashOut' + t);
+    if (!btn) return;
+    const o = _cashOffers.find(x => x.leaveType === t);
+    if (!o) { btn.style.display = 'none'; return; }
+    btn.style.display = 'inline-block';
+    if (o.existingStatus) { btn.textContent = '已申請(' + o.existingStatus + ')'; btn.disabled = true; }
+    else if (o.maxHours <= 0) { btn.textContent = '無可換時數'; btn.disabled = true; }
+    else { btn.textContent = '💰 申請換薪'; btn.disabled = false; }
+  });
+}
+
+function openCashOutModal(leaveType) {
+  _cashCur = _cashOffers.find(x => x.leaveType === leaveType);
+  if (!_cashCur) return;
+  document.getElementById('cashTitle').textContent = '💰 ' + leaveType + '換薪申請';
+  document.getElementById('cashInfo').innerHTML =
+    '申請期間至 <b>' + _cashCur.windowEnd + '</b><br>' +
+    '當期剩餘 <b>' + _cashCur.remainingHours + '</b> 小時,可申請上限 <b>' + _cashCur.maxHours + '</b> 小時<br>' +
+    '結算日:' + _cashCur.annivKey;
+  document.getElementById('cashHours').value = '';
+  document.getElementById('cashHours').max = _cashCur.maxHours;
+  document.getElementById('cashModal').style.display = 'flex';
+}
+function closeCashModal() { document.getElementById('cashModal').style.display = 'none'; }
+
+async function submitCashOut() {
+  const hours = Number(document.getElementById('cashHours').value);
+  if (!(hours > 0) || hours !== Math.floor(hours) || hours > _cashCur.maxHours) {
+    alert('請輸入 1~' + _cashCur.maxHours + ' 的整數'); return;
+  }
+  if (!confirm('確定申請折發 ' + hours + ' 小時' + _cashCur.leaveType + '?')) return;
+  const btn = document.getElementById('cashSubmit');
+  btn.disabled = true;
+  try {
+    const res = await fetch(GAS_URL, {                    // ← 換成你前端現有的 GAS 網址變數
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'handleNewApplicationSubmission', data: {
+        type: '換薪', leaveType: _cashCur.leaveType,
+        empId: currentUser.empId, name: currentUser.name,   // ← 換成你現有的登入使用者變數
+        hours: hours, clientId: String(Date.now())
+      }})
+    }).then(r => r.json());
+    const ok = res.status === 'ok' && (!res.result || res.result.status === 'ok');
+    if (ok) { closeCashModal(); alert('已送出,等待主管簽核'); refreshMyStatus(); }  // ← 換成你重新載入狀態的函式
+    else alert((res.result && res.result.message) || res.message || '送出失敗');
+  } catch (e) { alert('網路錯誤:' + e); }
+  finally { btn.disabled = false; }
+}
