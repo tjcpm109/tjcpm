@@ -2028,6 +2028,8 @@ function formatDateTimeRange(r) {
     return `${dateStr} ${formatLocalTimeStr(r.time || ``)}`;
   } else if (r.type === `班別調整`) {
     return `${dateStr} ${r.subType || ``}`;
+  } else if (r.type === `換薪`) {
+    return `${r.subType || ``} 換薪 ${r.hours || 0}h・結算日 ${dateStr}`;
   } else {
     return `${dateStr} ${r.time || ``}`;
   }
@@ -2556,6 +2558,7 @@ if (q.currentYearSpecialLeaveTotalHours !== undefined) {
   
   calcAttendance();
   syncProfileAndAccumulatedLeaves();
+  renderCashOutButtons(currentUser.cashOutOffers || []);
   updateAllYearRanges();
 }
 
@@ -2608,9 +2611,11 @@ function applyMyStatusData(data) {
     applyAdminSubTabVisibility();
     sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
   }
-
+  currentUser.cashOutOffers = data.cashOutOffers || [];
+  sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
+  
   calcAttendance();
-
+  renderCashOutButtons(currentUser.cashOutOffers);
   // 資料落地完成，統一交給渲染層畫面更新，避免與 updateLeaveBalanceDisplay() 重複寫同一批 DOM
   updateLeaveBalanceDisplay();
 
@@ -3323,11 +3328,19 @@ function renderCashOutButtons(list) {
     const btn = document.getElementById('btnCashOut' + t);
     if (!btn) return;
     const o = _cashOffers.find(x => x.leaveType === t);
-    if (!o) { btn.style.display = 'none'; return; }
+    if (!o) { btn.style.display = 'none'; return; }      // 兼任或無批次:不顯示
     btn.style.display = 'inline-block';
-    if (o.existingStatus) { btn.textContent = '已申請(' + o.existingStatus + ')'; btn.disabled = true; }
-    else if (o.maxHours <= 0) { btn.textContent = '無可換時數'; btn.disabled = true; }
-    else { btn.textContent = '💰 申請換薪'; btn.disabled = false; }
+    if (!o.open) {
+      const md = String(o.opensOn).slice(5).replace('-', '/');   // 例如 12/01
+      btn.textContent = '💰 換薪(' + md + ' 開放)';
+      btn.disabled = true;
+    } else if (o.existingStatus) {
+      btn.textContent = '已申請(' + o.existingStatus + ')'; btn.disabled = true;
+    } else if (o.maxHours <= 0) {
+      btn.textContent = '無可換時數'; btn.disabled = true;
+    } else {
+      btn.textContent = '💰 申請換薪'; btn.disabled = false;
+    }
   });
 }
 
@@ -3346,6 +3359,30 @@ function openCashOutModal(leaveType) {
 function closeCashModal() { document.getElementById('cashModal').style.display = 'none'; }
 
 async function submitCashOut() {
+  const hours = Number(document.getElementById('cashHours').value);
+  if (!(hours > 0) || hours !== Math.floor(hours) || hours > _cashCur.maxHours) {
+    showToast('⚠️ 請輸入 1~' + _cashCur.maxHours + ' 的整數'); return;
+  }
+  if (!confirm('確定申請折發 ' + hours + ' 小時' + _cashCur.leaveType + '?')) return;
+  const btn = document.getElementById('cashSubmit');
+  btn.disabled = true;
+  try {
+    // 不帶 action,doGet 會走 handleNewApplicationSubmission
+    const res = await callGAS({
+      type: '換薪', leaveType: _cashCur.leaveType,
+      empId: currentUser.empId, name: currentUser.name,
+      hours: hours, clientId: String(Date.now())
+    });
+    if (res.status === 'ok') {
+      closeCashModal(); showToast('💰 換薪申請已送出,等待主管簽核');
+      await refreshMyStatus(); renderAllList();
+    } else {
+      showToast('⚠️ ' + (res.message || '送出失敗'));
+    }
+  } catch (e) { showToast('⚠️ 連線失敗'); }
+  finally { btn.disabled = false; }
+}
+/*async function submitCashOut() {
   const hours = Number(document.getElementById('cashHours').value);
   if (!(hours > 0) || hours !== Math.floor(hours) || hours > _cashCur.maxHours) {
     alert('請輸入 1~' + _cashCur.maxHours + ' 的整數'); return;
@@ -3368,4 +3405,4 @@ async function submitCashOut() {
     else alert((res.result && res.result.message) || res.message || '送出失敗');
   } catch (e) { alert('網路錯誤:' + e); }
   finally { btn.disabled = false; }
-}
+}*/
