@@ -1080,3 +1080,53 @@ body {
   background: #94a3b8;
   cursor: default;
 }
+.cash-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+.cash-modal-box {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 360px;
+  width: 100%;
+  line-height: 1.7;
+  font-size: 14px;
+  box-shadow: var(--shadow-md);
+}
+.cash-modal-title { margin: 0 0 8px; font-size: 17px; }
+.cash-modal-info { color: var(--text-secondary); }
+.cash-modal-form { margin: 12px 0; }
+.cash-modal-input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  font-size: 15px;
+}
+.cash-modal-note { font-size: 12px; color: var(--text-muted); }
+.cash-modal-actions { text-align: right; margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
+.cash-modal-cancel {
+  background: none;
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+.cash-modal-submit {
+  background: #10b981;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cash-modal-submit:disabled { background: #94a3b8; cursor: default; }
