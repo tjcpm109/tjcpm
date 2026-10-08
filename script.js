@@ -3387,3 +3387,10 @@ async function submitCashOut() {
   } catch (e) { showToast('⚠️ 連線失敗'); }
   finally { btn.disabled = false; }
 }
+// 取得當前年份
+const currentYear = new Date().getFullYear(); // 2026
+const prevYear = currentYear - 1;             // 2025
+
+// 動態更新文字標籤
+document.getElementById('labelPrevYear').textContent = prevYear;      // 顯示 2025
+document.getElementById('labelCurrentYear').textContent = currentYear; // 顯示 2026
