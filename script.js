@@ -1323,7 +1323,9 @@ async function retractRecord(recordId, type, clientId) {
       action: `cancel`,
       recordId: recordId,
       type: type,
-      clientId: clientId
+      clientId: clientId,
+      empId: currentUser.empId,
+      name: currentUser.name
     });
 
     if (res.status === `ok`) {
@@ -2165,7 +2167,7 @@ async function loadAdminData() {
       pendingList.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       adminPendingCache = pendingList;
       document.getElementById(`statLeave`).innerHTML = pendingList.filter(r => r.type === `請假`).length + `<span>筆</span>`;
-      document.getElementById(`statOT`).innerHTML = pendingList.filter(r => r.type === `加班` || r.type === `補打卡`).length + `<span>筆</span>`;
+      document.getElementById(`statOT`).innerHTML = pendingList.filter(r => r.type === `加班` || r.type === `補打卡`|| r.type === `換薪`).length + `<span>筆</span>`;
       document.getElementById(`statSupp`).innerHTML = pendingList.filter(r => r.type === `補打卡`).length + `<span>筆</span>`;
       document.getElementById(`statAdjust`).innerHTML = pendingList.filter(r => r.type === `班別調整`).length + `<span>筆</span>`;
       if (!isApproveCommentBoxOpen()) {
@@ -3385,27 +3387,3 @@ async function submitCashOut() {
   } catch (e) { showToast('⚠️ 連線失敗'); }
   finally { btn.disabled = false; }
 }
-/*async function submitCashOut() {
-  const hours = Number(document.getElementById('cashHours').value);
-  if (!(hours > 0) || hours !== Math.floor(hours) || hours > _cashCur.maxHours) {
-    alert('請輸入 1~' + _cashCur.maxHours + ' 的整數'); return;
-  }
-  if (!confirm('確定申請折發 ' + hours + ' 小時' + _cashCur.leaveType + '?')) return;
-  const btn = document.getElementById('cashSubmit');
-  btn.disabled = true;
-  try {
-    const res = await fetch(GAS_URL, {                    // ← 換成你前端現有的 GAS 網址變數
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'handleNewApplicationSubmission', data: {
-        type: '換薪', leaveType: _cashCur.leaveType,
-        empId: currentUser.empId, name: currentUser.name,   // ← 換成你現有的登入使用者變數
-        hours: hours, clientId: String(Date.now())
-      }})
-    }).then(r => r.json());
-    const ok = res.status === 'ok' && (!res.result || res.result.status === 'ok');
-    if (ok) { closeCashModal(); alert('已送出,等待主管簽核'); refreshMyStatus(); }  // ← 換成你重新載入狀態的函式
-    else alert((res.result && res.result.message) || res.message || '送出失敗');
-  } catch (e) { alert('網路錯誤:' + e); }
-  finally { btn.disabled = false; }
-}*/
