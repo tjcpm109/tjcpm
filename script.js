@@ -177,12 +177,14 @@ function renderLeaveRecords(leaveDataList) {
     dateRangeText = `📅 ${item.date} ${item.time || ''}（${item.subType || ''}）`;
   } else if (item.type === '班別調整') {
     dateRangeText = `📅 ${item.date}（調整為 ${item.subType || ''}）`;
+    } else if (item.type === '換薪') {
+    dateRangeText = `💰 ${item.subType || ''}換薪　結算日 ${item.date || ''}`;
   } else {
     dateRangeText = `📅 ${item.date || ''}`;
   }
 
   // ↓ 新增：只有請假/加班才顯示時數
-  const showHours = (item.type === '請假' || item.type === '加班');
+    const showHours = (item.type === '請假' || item.type === '加班' || item.type === '換薪');
     // 判斷卡片樣式 Class 與標籤 Badge
     let cardClass = '';
     let badgeHtml = '';
@@ -817,7 +819,7 @@ function updateNotifBadge() {
   const unread = notifications.filter(n => !n.read).length;
   let hasPending = false;
   if (currentUser && (currentUser.role === `admin` || currentUser.role === `admin1` || currentUser.role === `admin2`)) {
-    hasPending = records.some(r => (r.status === `待審` || r.status === `待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡` || r.type === `班別調整`));
+    hasPending = records.some(r => (r.status === `待審` || r.status === `待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡` || r.type === `班別調整` || r.type === `換薪`));
   }
   const badge = document.getElementById(`notifCount`);
   const showBadge = unread > 0 || hasPending;
@@ -1496,7 +1498,7 @@ function renderAllList() {
     const rangeSpan = document.getElementById('apply-range-span');
     if (rangeSpan) rangeSpan.textContent = `(${formatLocalDateStr(range.start)} ~ ${formatLocalDateStr(range.end)})`;
     mine = mine.filter(r => {
-      const dStr = r.date || r.timestamp;
+            const dStr = (r.type === '換薪') ? (r.timestamp || r.date) : (r.date || r.timestamp);
       if (!dStr) return false;
       const d = safeNewDate(dStr);
       return d >= range.start && d <= range.end;
@@ -2066,7 +2068,8 @@ function recordHTML(r, showName = false, showApprove = false) {
   else if (r.type === `加班`) { dotClass = `dot-purple`; badge = `<span class="badge badge-purple">加班</span>`; }
   else if (r.type === `補打卡`) { dotClass = `dot-blue`; badge = `<span class="badge badge-blue">補打卡${subTypeLabel ? `·` + subTypeLabel : ``}</span>`; }
   else if (r.type === `班別調整`) { dotClass = `dot-green`; badge = `<span class="badge badge-green">班別調整${r.subType ? `·` + r.subType : ``}</span>`; }
-
+  else if (r.type === `換薪`) { dotClass = `dot-yellow`; badge = `<span class="badge badge-green">💰 ${r.subType || ``}換薪</span>`; }
+  
   let statusBadge = ``;
   if (r.status === `待審`) statusBadge = `<span class="badge badge-waiting" style="margin-left:4px;">待審</span>`;
   else if (r.status === `補件`) statusBadge = `<span class="badge" style="margin-left:4px; background:#eff6ff; color:#3b82f6; border:1px solid #3b82f6; border-radius:6px; padding:4px 8px;">🔄 需補件</span>`;
@@ -2141,7 +2144,7 @@ async function loadAdminData() {
   rebuildAdminDropdownsAndTable();
   document.getElementById(`pendingLoading`).textContent = `載入中…`;
   
-  let pending = records.filter(r => (r.status === `待審` || r.status === `待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡`));
+  let pending = records.filter(r => (r.status === `待審` || r.status === `待第二次審查`) && (r.type === `請假` || r.type === `加班` || r.type === `補打卡` || r.type === `班別調整` || r.type === `換薪`));
   pending.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   adminPendingCache = pending;
   document.getElementById(`statLeave`).innerHTML = records.filter(r => r.type === `請假` && (r.status === `待審` || r.status === `待第二次審查`)).length + `<span>筆</span>`;
