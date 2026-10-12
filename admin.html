@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>主管後台</title>
+
+<!-- ★ 有原本的樣式檔就用這行，並刪掉下面整段 <style id="fallback"> -->
+<!-- <link rel="stylesheet" href="style.css"> -->
+
+<style id="fallback">
+
+<!-- 主管頁面 -->
+<div class="page active" id="page-admin">
+  <div class="filter-bar" style="margin-bottom: 20px;">
+    <div class="filter-chip active" id="adminSubTab-pending" onclick="switchAdminSubTab('pending')">⏳ 待審核</div>
+    <div class="filter-chip" id="adminSubTab-board" onclick="switchAdminSubTab('board')">📊 考勤與假別看板</div>
+    <div class="filter-chip" id="adminSubTab-adjust" onclick="switchAdminSubTab('adjust')">⚙️ 排班異動</div>
+    <div class="filter-chip" id="adminSubTab-agent" onclick="switchAdminSubTab('agent')">👥 代理人</div>
+  </div>
+
+  <!-- ===== 待審核 ===== -->
+  <div class="admin-subpage" id="adminSubPage-pending">
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr) !important;">
+      <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審請假</div>
+        <div class="stat-value" id="statLeave" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-purple); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審加班</div>
+        <div class="stat-value" id="statOT" style="color:var(--accent-purple); font-size: 20px;">—<span>筆</span></div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--blue-light); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審補卡</div>
+        <div class="stat-value" id="statSupp" style="color:var(--blue-light); font-size: 20px;">—<span>筆</span></div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+        <div class="stat-label" style="font-size: 11px;">待審排班</div>
+        <div class="stat-value" id="statAdjust" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
+      </div>
+    </div>
+    <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
+    <div class="record-list" id="pendingList"></div>
+  </div>
+
+  <!-- ===== 考勤與假別看板 ===== -->
+  <div class="admin-subpage" id="adminSubPage-board" style="display:none;">
+    <div class="record-list" id="adminFieldPunches" style="margin-bottom:24px;display: none !important;"></div>
+    <p class="section-title">📊 全體專任同仁考勤與假別看板</p>
+    <div class="profile-card" style="padding:16px; overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:13px; border: 1.5px solid var(--card-border);">
+        <thead>
+          <tr style="background:#2a3650; border-bottom:2px solid var(--card-border); color:#ffffff; font-weight:bold; text-align:center;">
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">員編</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">姓名</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">到職日</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">當前年資</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休總額</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休已請</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休賸餘</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
+            <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
+            <th style="padding:8px;">穿透對帳</th>
+          </tr>
+        </thead>
+        <tbody id="adminEmployeeOverviewBody">
+          <tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">資料載入中…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
+    <div class="profile-card" style="padding: 16px;">
+      <div class="input-group" style="margin-bottom:12px;">
+        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
+        <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
+          <option value="">-- 請選擇員工 --</option>
+        </select>
+      </div>
+      <div id="adminQueryResults" style="display:none; margin-top:16px;">
+        <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
+        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
+        <div class="stats-grid" style="margin-bottom:16px;">
+          <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
+            <div class="stat-label">年度累計加班</div>
+            <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
+          </div>
+          <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
+            <div class="stat-label">年度累計漏卡</div>
+            <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
+          </div>
+          <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
+            <div class="stat-label">年度累計遲到/早退</div>
+            <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
+          </div>
+        </div>
+
+        <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡紀錄：</p>
+        <div id="aq-calendar-container"></div>
+      </div>
+    </div>
+    <div class="record-list" id="adminRecords" style="display:none;"></div>
+  </div>
+
+  <!-- ===== 排班異動（排班表 + 異動表單） ===== -->
+  <div class="admin-subpage" id="adminSubPage-adjust" style="display:none;">
+    <p class="section-title">📅 當月排班表</p>
+    <div class="profile-card" style="padding:0; overflow:hidden;">
+      <iframe id="rosterFrame" data-src="roster.html?embed=1&theme=dark"
+              style="width:100%; height:640px; border:0;" title="排班表"></iframe>
+    </div>
+
+    <p class="section-title" style="margin-top:24px;">⚙️ 指派同仁特別排班異動 (免審核直接生效)</p>
+    <div class="profile-card" style="padding: 16px;">
+      <div class="input-group" style="margin-bottom:12px;">
+        <label class="input-label" style="color:var(--blue-main); font-weight: bold;">選擇同仁</label>
+        <select class="select-field" id="adminAdjustEmpId">
+          <option value="">-- 請選擇員工 --</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom:12px;">
+        <label class="input-label">異動日期</label>
+        <input type="date" class="input-field" id="adminAdjustDate" />
+      </div>
+      <div class="input-group" style="margin-bottom:12px;">
+        <label class="input-label">班別選擇</label>
+        <select class="select-field" id="adminAdjustShiftType">
+          <option value="08:00-17:00">08:00 - 17:00</option>
+          <option value="08:30-17:30">08:30 - 17:30</option>
+          <option value="09:00-18:00" selected>09:00 - 18:00</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom:12px;">
+        <label class="input-label">異動原因/備註</label>
+        <input type="text" class="input-field" id="adminAdjustReason" placeholder="例：理監事會議、公務排班調整" />
+      </div>
+      <button class="submit-btn blue" style="margin-top:8px;" onclick="submitAdminAdjust()">✓ 儲存並直接生效</button>
+    </div>
+  </div>
+
+  <!-- ===== 代理人 ===== -->
+  <div class="admin-subpage" id="adminSubPage-agent" style="display:none;">
+    <!-- ★ 把原本「代理人」分頁的內容貼在這裡（你上次貼的片段裡沒有這一塊） -->
+  </div>
+</div>
+
+<script>
+/* ---------- 分頁切換 ---------- */
+var ADMIN_TABS = ['pending', 'board', 'adjust', 'agent'];
+function switchAdminSubTab(name){
+  ADMIN_TABS.forEach(function(t){
+    document.getElementById('adminSubPage-' + t).style.display = (t === name) ? '' : 'none';
+    document.getElementById('adminSubTab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'adjust') loadRoster();
+  // ★ 需要「切到該分頁就重新載入」的，在這裡加，例如：
+  // if (name === 'pending') loadPending();
+  // if (name === 'board')   loadAdminBoard();
+}
+
+/* ---------- 排班表 iframe ---------- */
+function loadRoster(){
+  var f = document.getElementById('rosterFrame');
+  if (!f.getAttribute('src')) f.src = f.dataset.src;           // 只載入一次
+}
+// 傳入 Tab 分隔文字（年 月 員工編號 1…31），排班表會自動顯示
+function sendRoster(tsv){
+  var f = document.getElementById('rosterFrame');
+  var go = function(){ f.contentWindow.postMessage({type:'roster', text:tsv}, location.origin); };
+  if (f.contentDocument && f.contentDocument.readyState === 'complete') go();
+  else f.addEventListener('load', go, {once:true});
+}
+
+/* ---------- ★ 從原主頁搬過來的函式 ----------
+   把下面這些「整段」從原本主頁的 <script> 剪下貼到這裡（連同它們用到的
+   API 呼叫函式、登入資訊讀取、日期工具）：
+     handleAdminQueryChange()   員工穿透查詢
+     submitAdminAdjust()        排班異動送出（成功後可呼叫 sendRoster(...) 更新排班表）
+     以及載入待審核、看板資料的函式                                           */
+function handleAdminQueryChange(){ /* TODO: 貼上原本內容 */ }
+function submitAdminAdjust(){ /* TODO: 貼上原本內容 */ }
+</script>
+</body>
+</html>
