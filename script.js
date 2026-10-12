@@ -581,6 +581,7 @@ function initAdminPage() {
   applyAdminSubTabVisibility();
   rebuildAdminDropdownsAndTable();
   loadAdminData();
+  syncProfileAndAccumulatedLeaves();
 }
 // ── Boot ──
 
@@ -615,19 +616,10 @@ function showApp() {
   applyAdminSubTabVisibility();
   rebuildAdminDropdownsAndTable();
 
-  /*if (!isAdmin) {
-    const adminPage = document.getElementById(`page-admin`);
-    if (adminPage.classList.contains(`active`)) switchTab(`home`);
-    switchTab(`home`);
-  } else {
-    switchTab(`admin`);
-  }*/
   if (!isAdmin) {
-    const adminPage = document.getElementById(`page-admin`);
-    if (adminPage.classList.contains(`active`)) switchTab(`home`);
     switchTab(`home`);
   } else {
-    switchTab(`admin`);
+    switchTab(`profile`);
   }
   document.getElementById(`headerUser`).textContent = currentUser.name;
   document.getElementById(`clockUser`).innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
@@ -684,6 +676,7 @@ async function doLogin() {
       migrateLegacyStorage(currentUser.empId);
       records = JSON.parse(localStorage.getItem(storageKey('tjcpm_records', currentUser.empId)) || `[]`);
       notifications = JSON.parse(localStorage.getItem(storageKey('tjcpm_notif', currentUser.empId)) || `[]`);
+      if (['admin', 'admin1', 'admin2'].includes(currentUser.role)) { location.href = 'admin.html'; return; }   // ← 新增
       showApp();
       updateLeaveBalanceDisplay();
       syncProfileAndAccumulatedLeaves().then(() => renderAllList()); 
@@ -704,6 +697,11 @@ function showLoginErr(msg) {
 }
 
 function doLogout() {
+  if (document.body.dataset.page === 'admin') {          // ← 新增
+    sessionStorage.removeItem('tjcpm_user');
+    location.replace('index.html');
+    return;
+  }
   sessionStorage.removeItem(`tjcpm_user`);
   records = [];
   notifications = [];
@@ -736,6 +734,7 @@ function doLogout() {
 
 // ── Clock ──
 function updateClock() {
+  if (!document.getElementById(`mainClock`)) return;   // ← 新增
   const now = new Date();
   document.getElementById(`mainClock`).textContent = now.toLocaleTimeString(`zh-TW`, { hour12: false });
   document.getElementById(`mainDate`).textContent = now.toLocaleDateString(`zh-TW`, { year:`numeric`, month:`long`, day:`numeric`, weekday:`long` });
