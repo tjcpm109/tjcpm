@@ -563,8 +563,26 @@ window.addEventListener(`online`, () => { checkConnectivity(); });
 window.addEventListener(`offline`, () => { setOnlineStatus(false); });
 
 // ── Boot ──
-if (currentUser) showApp();
-else showLogin();
+if (document.body.dataset.page === 'admin') {
+  initAdminPage();
+} else if (currentUser) {
+  showApp();
+} else {
+  showLogin();
+}
+
+function initAdminPage() {
+  const ok = currentUser && ['admin', 'admin1', 'admin2'].includes(currentUser.role);
+  if (!ok) { location.replace('index.html'); return; }   // 沒登入或不是主管，導回主頁
+  document.body.style.visibility = 'visible';
+  document.getElementById('headerUser').textContent = currentUser.name;
+  const d = document.getElementById('adminAdjustDate');
+  if (d) d.value = todayStr;
+  applyAdminSubTabVisibility();
+  rebuildAdminDropdownsAndTable();
+  loadAdminData();
+}
+// ── Boot ──
 
 function showLogin() {
   document.getElementById(`loginScreen`).style.display = `flex`;
@@ -597,6 +615,13 @@ function showApp() {
   applyAdminSubTabVisibility();
   rebuildAdminDropdownsAndTable();
 
+  /*if (!isAdmin) {
+    const adminPage = document.getElementById(`page-admin`);
+    if (adminPage.classList.contains(`active`)) switchTab(`home`);
+    switchTab(`home`);
+  } else {
+    switchTab(`admin`);
+  }*/
   if (!isAdmin) {
     const adminPage = document.getElementById(`page-admin`);
     if (adminPage.classList.contains(`active`)) switchTab(`home`);
@@ -604,7 +629,6 @@ function showApp() {
   } else {
     switchTab(`admin`);
   }
-
   document.getElementById(`headerUser`).textContent = currentUser.name;
   document.getElementById(`clockUser`).innerHTML = `👤 ${currentUser.name} <span class="badge badge-blue">${currentUser.empId}</span>`;
   [`leaveStart`,`leaveEnd`,`otDate`,`suppDate`,`adjustDate`,`adminAdjustDate`].forEach(id => {
@@ -3392,8 +3416,8 @@ async function submitCashOut() {
 const currentYear = new Date().getFullYear(); // 2026
 const prevYear = currentYear - 1;             // 2025
 // 動態更新文字標籤
-document.getElementById('labelPrevYear').textContent = prevYear;      // 顯示 2025
-document.getElementById('labelCurrentYear').textContent = currentYear; // 顯示 2026
+//document.getElementById('labelPrevYear').textContent = prevYear;      // 顯示 2025
+//document.getElementById('labelCurrentYear').textContent = currentYear; // 顯示 2026
 const elPrev = document.getElementById('labelPrevYear');
 const elCur = document.getElementById('labelCurrentYear');
 if (elPrev) elPrev.textContent = new Date().getFullYear() - 1;
