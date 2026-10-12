@@ -140,11 +140,34 @@
   </div>
 
   <!-- ===== 代理人 ===== -->
-  <div class="admin-subpage" id="adminSubPage-agent" style="display:none;">
-    <!-- ★ 把原本「代理人」分頁的內容貼在這裡（你上次貼的片段裡沒有這一塊） -->
+      <div class="admin-subpage" id="adminSubPage-agent" style="display:none;">
+        <p class="section-title">👥 主管代理人設定 (代理期間擁有審核權限)</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">選擇代理同仁</label>
+            <select class="select-field" id="adminAgentEmpId">
+              <option value="">-- 請選擇代理主管 --</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理開始日期</label>
+            <input type="date" class="input-field" id="adminAgentStartDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理結束日期</label>
+            <input type="date" class="input-field" id="adminAgentEndDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理狀態</label>
+            <select class="select-field" id="adminAgentStatus">
+              <option value="啟用">啟用 (代理中)</option>
+              <option value="停用">停用 (收回授權)</option>
+            </select>
+          </div>
+          <button class="submit-btn blue" style="margin-top:8px;" onclick="submitAdminAgent()">✓ 儲存代理設定</button>
+        </div>
+      </div>
   </div>
-</div>
-
 <script>
 /* ---------- 分頁切換 ---------- */
 var ADMIN_TABS = ['pending', 'board', 'adjust', 'agent'];
