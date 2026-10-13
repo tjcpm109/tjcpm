@@ -1845,7 +1845,7 @@ function buildMonthTableHTML(o) {
 
     const shiftHTML = beforeJoin ? dim('—') : (dayLabel ? dim(dayLabel) : `${minToTimeStr(shift.start)}–${minToTimeStr(shift.end)}`);
     const missTag = type => `<span style="color:#ef4444;font-weight:bold;font-size:13px;"${clickable ? ` onclick="autoFillSupp('${dateStr}','${type}',event)"` : ''}>⚠️ 漏打卡</span>`;
-
+    const flags = [];
     let inHTML = punch.上班, outHTML = punch.下班;
     if (beforeJoin) {
       inHTML = outHTML = dim('—');
@@ -1863,19 +1863,25 @@ function buildMonthTableHTML(o) {
       } else {
         const m = timeToMin(punch.上班);
         if (m > shift.start && !isRangeExempted(shift.start, m, exLeaves))
-          inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
+          //inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
+          inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班}</span>`;
+          flags.push('遲到');
       }
       if (punch.下班 === '—') {
         outHTML = afternoonOK ? dim(leaveLabel || '🌴 已請假') : (isToday ? dim('—') : missTag('下班'));
       } else {
         const m = timeToMin(punch.下班);
         if (m < shift.end && !isRangeExempted(m, shift.end, exLeaves))
-          outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>`;
+          //outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>`;
+          outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班}</span>`;
+          flags.push('早退');
       }
     }
 
     const dayPunches = monthPunches.filter(r => safeNewDate(r.date || r.timestamp).getDate() === day);
-    const remark = remarkFn(dayPunches, dayLeaves);
+    const flagHTML = flags.map(f => `<span class="badge badge-orange">⚠️${f}</span>`).join(' ');
+    const remarkBody = remarkFn(dayPunches, dayLeaves);
+    const remark = [flagHTML, remarkBody].filter(Boolean).join('<br>');
 
     html += `<tr ${isToday ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : ''}>
       <td style="color:${(isWeekend || dayLabel) ? 'var(--accent-orange)' : 'var(--text-primary)'}">${pad(month)}-${pad(day)} (${WD[dateObj.getDay()]})</td>
@@ -2965,14 +2971,14 @@ function renderAttendanceIssuesForRangeByMonth(startDate, endDate, targetElId) {
             checkinHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','上班',event)">⚠️ 漏上班</span>`;
           } else if (timeToMin(punch.in) > shift.start && !isRangeExempted(shift.start, timeToMin(punch.in), dayLeaves)) {
             isProblem = true; reason.push(`遲到`);
-            checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.in} ⚠️遲到</span>`;
+            checkinHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.in} </span>`;
           }
           if (!punch.out) {
             isProblem = true; reason.push(`下班漏卡`);
             checkoutHTML = `<span style="color:#ef4444;font-weight:bold;cursor:pointer;" onclick="autoFillSupp('${dateStr}','下班',event)">⚠️ 漏下班</span>`;
           } else if (timeToMin(punch.out) < shift.end && !isRangeExempted(timeToMin(punch.out), shift.end, dayLeaves)) {
             isProblem = true; reason.push(`早退`);
-            checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.out} ⚠️早退</span>`;
+            checkoutHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.out} </span>`;
           }
         }
 
