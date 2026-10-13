@@ -39,36 +39,28 @@ let currentSubCategory = '特休';       // 第二層：假別細項 (特休/補
 let currentStatus = '同意';           // 第三層：審核狀態 (同意/待審/拒絕/已撤回)
 
 // ── 第一層：主類別切換 ──
+
 function filterApplyMainCategory(type, chip) {
   currentApplyFilter = type;
-  
-  // 切換時重置第二層與第三層
-  currentSubCategory = 'ALL';
-  currentStatus = (type === '請假') ? '同意' : '';
+  currentSubCategory = type === '請假' ? '特休' : 'ALL';
+  currentStatus = '同意';
 
-  // 1. 主頁籤 (第一層) UI 高亮
   document.querySelectorAll('#record-apply-content .filter-chip').forEach(c => c.classList.remove('active'));
   if (chip) chip.classList.add('active');
 
-  // 2. 控制第二層 (假別細項列) 顯示與重置
   const subBar = document.getElementById('leaveSubFilterBar');
   if (subBar) {
-    subBar.style.display = (type === '請假') ? 'flex' : 'none';
-    subBar.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+    subBar.style.display = type === '請假' ? 'flex' : 'none';
+    subBar.querySelectorAll('.segment-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   }
-
-  // 3. 控制第三層 (狀態列) UI 重置
   const statusBar = document.getElementById('statusFilterBar');
   if (statusBar) {
-   statusBar.querySelectorAll('.segment-btn').forEach(btn => {
-    const wantActive = (type === '請假') && btn.getAttribute('onclick')?.includes("'同意'");
-    btn.classList.toggle('active', wantActive);
-  });
+    statusBar.querySelectorAll('.segment-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
   }
-
-  // 執行過濾
-  renderAllList();   // ← 新增這行，取代原本只呼叫 applyCombinedFilter();
+  renderAllList();
 }
+
+
 
 // ── 第二層：假別細項點擊 ──
 function filterLeaveSubCategory(subTypeTarget, el) {
@@ -911,7 +903,7 @@ function handleAction(type) {
   if (remarkEl) remarkEl.value = ``;
 
   if (!isOnline) {
-    const queueKey = storageKey('', currentUser.empId);
+    const queueKey = storageKey('tjcpm_offline_queue', currentUser.empId);
     let offlineQueue = JSON.parse(localStorage.getItem(queueKey) || `[]`);
     offlineQueue.push(record);
     localStorage.setItem(queueKey, JSON.stringify(offlineQueue));
@@ -937,17 +929,16 @@ async function processOfflineQueue() {
   }
   for (let i = 0; i < offlineQueue.length; i++) {
     const record = offlineQueue[i];
-    try {
-      await fetch(GAS_URL, {
-        method: `POST`,
-        mode: `no-cors`,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(record)
-      });
-      addNotif(`system`, `☁️ 離線打卡 (${record.date} ${record.time} ${record.type}) 已成功自動補傳同步！`);
-    } catch (err) {
-      remaining.push(record);
-    }
+try {
+  const res = await callGAS(record, 15000);
+  if (res && res.status === 'ok') {
+    addNotif('system', `☁️ 離線打卡 (${record.date} ${record.time} ${record.type}) 已成功自動補傳同步！`);
+  } else {
+    remaining.push(record);
+  }
+} catch (err) {
+  remaining.push(record);
+}
   }
   localStorage.setItem(queueKey, JSON.stringify(remaining));
   if (statusEl) {
@@ -1445,12 +1436,6 @@ function switchRecordSubTab(sub) {
   renderAllList();
 }
 
-function filterApplyRecords(type, chip) {
-  currentApplyFilter = type;
-  document.querySelectorAll(`#record-apply-content .filter-chip`).forEach(c => c.classList.remove(`active`));
-  if (chip) chip.classList.add(`active`);
-  renderAllList();
-}
 
 function getEarliestCheckDate(userObj) {
   const user = userObj || currentUser;
@@ -2675,7 +2660,15 @@ function confirmApprove(id) {
   approveRecord(id, decision, comment);
   delete pendingApproveDecision[id];
 }
-
+async function manualResyncPending() {
+  const btn = document.getElementById('btnManualResync');
+  if (btn) { btn.disabled = true; btn.textContent = '同步中…'; }
+  await processOfflineQueue();
+  const r = await refreshMyStatus();
+  renderAllList();
+  showToast(r.ok ? '✅ 已更新' : '⚠️ 更新失敗，請檢查網路');
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 更新'; }
+}
 async function approveRecord(id, decision, comment) {
   if (!currentUser || (currentUser.role !== `admin` && currentUser.role !== `admin1` && currentUser.role !== `admin2`)) {
     showToast(`⚠️ 您沒有審核權限`);
