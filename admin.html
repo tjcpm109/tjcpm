@@ -254,18 +254,19 @@
     }
 
     // 系統資料：特別排班 / 已核准的班別調整 > 週末 > 國定假日 > 預設班別
-    function special(e, ds) {
-      var g = null, p = null;
-      ((currentUser && currentUser.specialShifts) || []).forEach(function (s) {
-        if (formatLocalDateStr(s.date) !== ds) return;
-        if (String(s.empId).trim() === '') g = s.start + '-' + s.end;
-        else if (matchEmpId(s.empId, e.empId)) p = s.start + '-' + s.end;
-      });
-      (records || []).forEach(function (x) {
-        if (x.type === '班別調整' && isFinalApproved(x.status) && matchEmpId(x.empId, e.empId) && x.subType && formatLocalDateStr(x.date) === ds) p = x.subType;
-      });
-      return p || g;
-    }
+function special(e, ds) {
+  var g = null, p = null;
+  function lab(s) { return (s.start === s.end && (s.start === '休假日' || s.start === '例假日')) ? s.start : s.start + '-' + s.end; }
+  ((currentUser && currentUser.specialShifts) || []).forEach(function (s) {
+    if (formatLocalDateStr(s.date) !== ds) return;
+    if (String(s.empId).trim() === '') g = lab(s);
+    else if (matchEmpId(s.empId, e.empId)) p = lab(s);
+  });
+  (records || []).forEach(function (x) {
+    if (x.type === '班別調整' && isFinalApproved(x.status) && matchEmpId(x.empId, e.empId) && x.subType && formatLocalDateStr(x.date) === ds) p = x.subType;
+  });
+  return p || g;
+}
     function cellsFor(e, d) {
       if (S.paste) {
         var a = (((S.paste[e.empId] || {})[S.y + '-' + S.m] || {})[d]) || [];
@@ -273,6 +274,8 @@
       }
       var ds = S.y + '-' + pad(S.m) + '-' + pad(d), dow = new Date(S.y, S.m - 1, d).getDay();
       var sp = special(e, ds);
+      if (sp === '休假日') return [{ t: '休', c: 'off' }];
+      if (sp === '例假日') return [{ t: '例', c: 'ex' }];
       if (sp) return [{ t: fmt(sp), c: 'sp' }];
       if (dow === 6) return [{ t: '休', c: 'off' }];
       if (dow === 0) return [{ t: '例', c: 'ex' }];
