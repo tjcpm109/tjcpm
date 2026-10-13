@@ -1360,7 +1360,8 @@ async function submitAdminAdjust() {
     showToast(`⚠️ 請選擇要調整班別的同仁`);
     return;
   }
-  const empName = empSelect.options[empSelect.selectedIndex].textContent.split(` - `)[1] || ``;
+  const emp = (currentUser.employeeList || []).find(e => matchEmpId(e.empId, empId));
+  const empName = emp ? emp.name : '';
   const dateVal = document.getElementById(`adminAdjustDate`).value;
   if (!dateVal) {
     showToast(`⚠️ 請選擇調整日期`);
