@@ -1640,7 +1640,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     });
 
     const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
-    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
+    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
 
     if (sortedKeys.length === 0) {
       html += `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
@@ -1734,7 +1734,19 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const formattedDate = `${String(month).padStart(2,`0`)}-${String(day).padStart(2,`0`)} (${weekdayStr})`;
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     const isHoliday = holidayStrings.includes(dateStrHyphen) && !isWeekend;
+     const weekendLabel = dateObj.getDay() === 6 ? `休假日` : `例假日`; // 週六休假日、週日例假日
+    const dayTypeLabel = isHoliday ? `國定假日` : (isWeekend ? weekendLabel : ``);
 
+    // 班別欄位內容
+    const shiftInfo = getShiftMinutesForDate(dateStr, empId, specialShifts);
+    let shiftHTML;
+    if (isBeforeJoin) {
+    shiftHTML = `<span style="color:var(--text-muted);font-size:14px;">—</span>`;
+    } else if (dayTypeLabel) {
+      shiftHTML = `<span style="color:var(--text-muted);font-size:13px;">${dayTypeLabel}</span>`;
+    } else {
+      shiftHTML = `${minToTimeStr(shiftInfo.start)}–${minToTimeStr(shiftInfo.end)}`;
+    }
     let punch = punchMap[day] || { 上班: `—`, 下班: `—` };
     let leaveLabel = leaveMap[day];
 
@@ -1747,8 +1759,8 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
       if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
       if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:14px;">-</span>`;
     } else if (isWeekend || isHoliday) {
-      if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? `國定假日` : `休假日`}</span>`;
-      if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${isHoliday ? `國定假日` : `休假日`}</span>`;
+      if (punch.上班 === `—`) checkinHTML = `<span style="color:var(--text-muted);font-size:13px;">${dayTypeLabel}</span>`;
+      if (punch.下班 === `—`) checkoutHTML = `<span style="color:var(--text-muted);font-size:13px;">${dayTypeLabel}</span>`;
     } else {
       const dayLeaves = mineLeave.filter(r => {
         const startD = safeNewDate(r.date);
@@ -1788,10 +1800,11 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     const outOfOfficeStrings = buildOutOfOfficeParts(dayPunches);
     const col4HTML = outOfOfficeStrings.length > 0 ? outOfOfficeStrings.join(``) : `—`;
 
-    html += `<tr ${day === now.getDate() ? `style="background:var(--card-bg-soft);font-weight:bold;"` : ``}>
-      <td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td>
-      <td>${checkinHTML}</td><td>${checkoutHTML}</td>
-      <td style="font-size:12px; line-height:1.5;">${col4HTML}</td></tr>`;
+   html += `<tr ${day === now.getDate() ? `style="background:var(--card-bg-soft);font-weight:bold;"` : ``}>
+  <td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td>
+  <td style="font-size:13px;">${shiftHTML}</td>
+  <td>${checkinHTML}</td><td>${checkoutHTML}</td>
+  <td style="font-size:12px; line-height:1.5;">${col4HTML}</td></tr>`;
   }
 
   html += `</tbody></table></div>`;
