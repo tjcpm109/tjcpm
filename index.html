@@ -1,0 +1,696 @@
+  <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TJCPM">
+  <link rel="apple-touch-icon" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+  <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+  <title>TJCPM 員工系統 v10.13</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login -->
+  <div id="loginScreen">
+    <div class="login-logo">
+      <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextLogin').style.display='block'" />
+      <div id="logoTextLogin" class="logo-fallback">TJCPM</div>
+    </div>
+    <div class="login-title">TJCPM</div>
+    <div class="login-sub">員工管理系統</div>
+    <div class="login-box">
+      <div class="login-err" id="loginErr"></div>
+      <div class="input-group">
+        <label class="input-label">員工編號</label>
+        <input class="input-field" id="loginId" placeholder="例：111、114" onkeydown="if(event.key==='Enter')document.getElementById('loginPw').focus()" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">密碼</label>
+        <input class="input-field" type="password" id="loginPw" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="submit-btn blue" id="loginBtn" onclick="doLogin()">登入</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="mainApp" style="display:none">
+    <div class="header">
+      <div class="header-left">
+        <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none';document.getElementById('logoTextHeader').style.display='inline-block'" />
+        <span id="logoTextHeader" style="display:none;background:var(--blue-main);color:#fff;font-size:15px;font-weight:700;padding:7px 14px;border-radius:8px;letter-spacing:1px;">TJCPM</span>
+      </div>
+      <div class="header-right">
+        <div class="notif-bell" id="notifBell" style="display:none !important">
+          🔔<span class="notif-badge" id="notifCount" style="display:none !important">!</span>
+        </div>
+        <span class="header-user" id="headerUser"></span>
+        <span class="header-clock" id="headerClock" style="display:none !important">--:--:--</span>
+        <button class="logout-btn" onclick="doLogout()">登出</button>
+      </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <div class="nav" id="mainNav">
+      <div class="nav-tab" id="adminTab" data-tab="admin" style="display:none" onclick="location.href='admin.html'">👨💼 主管</div>
+      <div class="nav-tab active" data-tab="home" onclick="switchTab('home')">🏠 打卡</div>
+      <div class="nav-tab" data-tab="leave" onclick="switchTab('leave')">📅 請假</div>
+      <div class="nav-tab" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班</div>
+      <div class="nav-tab" data-tab="supp" onclick="switchTab('supp')">🔄 補打卡</div>
+      <div class="nav-tab" data-tab="records" onclick="switchTab('records')">📋 我的紀錄</div>
+      <div class="nav-tab" data-tab="profile" onclick="switchTab('profile')">👤 個人資料</div>
+    </div>
+
+    <!-- 打卡頁面 -->
+    <div class="page active" id="page-home">
+      <div class="clock-card">
+        <div class="clock-time" id="mainClock">00:00:00</div>
+        <div class="clock-date" id="mainDate"></div>
+        <div class="clock-user" id="clockUser"></div>
+      </div>
+
+      <div class="gps-bar">
+        <div class="gps-dot" id="gpsDot"></div>
+        <span class="gps-text" id="gpsText">取得位置中…</span>
+        <span class="gps-coords" id="gpsCoords"></span>
+      </div>
+
+      <div class="input-group" style="margin-top: 14px; margin-bottom: 14px;">
+        <label class="input-label" style="font-weight: 800;">📝 簽到退詳細說明（若非在雙和簽到退請說明）</label>
+        <textarea class="input-field" id="punchRemark" rows="3"
+                  placeholder="若非在雙和簽到退請說明，例：人才課程至重慶上班、人才課程文大下班...等詳細說明"
+                  style="height: 100px; padding: 12px 14px; font-size: var(--fs-label); border: 2.5px solid var(--blue-main) !important; border-radius: var(--radius); resize: none; background: #ffffff; color: var(--text-primary); font-weight: 500; width: 100%; outline: none;"></textarea>
+      </div>
+
+      <div class="offline-banner" id="offlineBanner">
+        ⚠️ 目前無法連線，暫時無法打卡，請確認網路後再試
+      </div>
+      <div style="text-align:right;font-size:14px;margin-bottom:12px;min-height:18px;">
+        <span id="syncStatus" style="transition:color 0.3s;"></span>
+      </div>
+        
+      <div class="action-grid">
+        <div class="action-btn btn-checkin" id="btnCheckin" onclick="handleAction('上班')">
+          <span class="btn-icon">✅</span>
+          <div class="btn-label">上班</div>
+          <div class="btn-sub" id="checkinSub">打卡上班</div>
+        </div>
+        <div class="action-btn btn-checkout" id="btnCheckout" onclick="handleAction('下班')">
+          <span class="btn-icon">🏁</span>
+          <div class="btn-label">下班</div>
+          <div class="btn-sub" id="checkoutSub">打卡下班</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 請假頁面（優化視覺版） -->
+    <div class="page" id="page-leave">
+      <div class="info-banner">
+        <span class="info-icon">📅</span>
+        <div>
+          <strong>請假說明：</strong>請假單位為<strong>小時</strong>，請選取完整的起訖時間。
+        </div>
+      </div>
+
+      <!-- 假別餘額顯示卡片
+      <div class="balance-card">
+        <div class="balance-grid">
+          <div class="balance-item border-right">
+            <div class="balance-title green">🌴 特休</div>
+            <div id="leaveAnnualBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveAnnualPending" class="balance-pending"></div>
+          </div>
+          <div class="balance-item">
+            <div class="balance-title purple">⏰ 補休</div>
+            <div id="leaveCompBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveCompPending" class="balance-pending"></div>
+          </div>
+        </div>
+      </div>  -->
+      <div class="balance-card">
+        <div class="balance-grid">
+          <div class="balance-item border-right">
+            <div class="balance-title green">🌴 特休</div>
+            <div id="leaveAnnualBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveAnnualPending" class="balance-pending"></div>
+            <div id="leaveAnnualYearSplit" class="balance-yearsplit"></div>
+          </div>
+          <div class="balance-item">
+            <div class="balance-title purple">⏰ 補休</div>
+            <div id="leaveCompBalance" class="balance-value">— <span class="unit">小時</span></div>
+            <div id="leaveCompPending" class="balance-pending"></div>
+            <div id="leaveCompYearSplit" class="balance-yearsplit"></div>
+          </div>
+        </div>
+      </div>
+      <!-- 請假申請表單 -->
+      <div class="form-card">
+        <h3 class="section-title">請假申請表單</h3>
+
+        <div class="input-group">
+          <label class="input-label" for="leaveType">假別</label>
+          <select class="select-field" id="leaveType">
+            <option value="特休">特休</option>
+            <option value="補休">補休</option>
+            <option value="事假">事假</option>
+            <option value="病假">病假</option>
+            <option value="公假">公假</option>
+            <option value="婚假">婚假</option>
+            <option value="喪假">喪假</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="leaveStart">開始日期</label>
+            <input type="date" class="input-field" id="leaveStart" value="" />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="leaveStartTime">開始時間</label>
+            <select class="select-field" id="leaveStartTime"></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="input-group">
+            <label class="input-label" for="leaveEnd">結束日期</label>
+            <input type="date" class="input-field" id="leaveEnd"  value="" />
+          </div>
+          <div class="input-group">
+            <label class="input-label" for="leaveEndTime">結束時間</label>
+            <select class="select-field" id="leaveEndTime"></select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="leaveReason">請假事由（選填）</label>
+          <input type="text" class="input-field" id="leaveReason" placeholder="例如：個人私事處理、身體不適" />
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">證明文件 <span class="hint">（病假/公假需上傳，單檔限 5MB）</span></label>
+          <div class="file-upload-box">
+            <input type="file" id="leaveProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'leave')" />
+            <label for="leaveProofFiles" class="file-label">📎 點擊選擇檔案 (圖片或 PDF)</label>
+          </div>
+          <div id="leaveProofFileList" class="file-list"></div>
+        </div>
+
+        <button class="submit-btn orange" onclick="submitLeave()">送出請假申請</button>
+      </div>
+    </div>
+
+    <!-- 加班頁面 -->
+    <div class="page" id="page-overtime">
+      <div class="info-box">
+        <div class="info-icon">⏰</div>
+        <div class="info-text">
+          <strong>加班說明：</strong>滿<strong>1 小時</strong>後起算，以<strong>0.5 小時</strong>為單位遞增。<br>
+          例：1h、1.5h、2h、2.5h…
+        </div>
+      </div>
+      <p class="section-title">加班申請</p>
+      <div class="input-group">
+        <label class="input-label">加班日期</label>
+        <input type="date" class="input-field" id="otDate"  value="" />
+      </div>
+      <div class="form-row">
+        <div class="input-group">
+          <label class="input-label">開始時間</label>
+          <select class="select-field" id="otStart"></select>
+        </div>
+        <div class="input-group">
+          <label class="input-label">結束時間</label>
+          <select class="select-field" id="otEnd"></select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">加班原因</label>
+        <input class="input-field" id="otReason" placeholder="加班原因" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 5MB）</span></label>
+        <div class="file-upload-box">
+          <input type="file" id="overtimeProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'overtime')" />
+          <label for="overtimeProofFiles" class="file-label">📎 點擊選擇檔案</label>
+        </div>
+        <div id="overtimeProofFileList" class="file-list"></div>
+      </div>
+      <button class="submit-btn purple" onclick="submitOvertime()">送出加班申請</button>
+    </div>
+
+    <!-- 補打卡頁面 -->
+    <div class="page" id="page-supp">
+      <div class="info-box">
+        <div class="info-icon">🔄</div>
+        <div class="info-text">
+          <strong>補打卡說明：</strong>若因離開辦公室忘記打卡，請在此填寫補打卡申請，送出後由主管審核確認。
+        </div>
+      </div>
+      <p class="section-title">補打卡申請</p>
+      <div class="input-group">
+        <label class="input-label">上班或下班</label>
+        <select class="select-field" id="suppType">
+          <option>上班</option>
+          <option>下班</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="input-group">
+          <label class="input-label">日期</label>
+          <input type="date" class="input-field" id="suppDate"  value="" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">時間</label>
+          <select class="select-field" id="suppTime"></select>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">未打卡原因</label>
+        <input class="input-field" id="suppReason" placeholder="請說明未打卡原因" />
+      </div>
+      <div class="input-group">
+        <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 3MB）</span></label>
+        <div class="file-upload-box">
+          <input type="file" id="punchfixProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'punchfix')" />
+          <label for="punchfixProofFiles" class="file-label">📎 點擊選擇檔案</label>
+        </div>
+        <div id="punchfixProofFileList" class="file-list"></div>
+      </div>
+      <button class="submit-btn green" onclick="submitSupp()">送出補打卡申請</button>
+    </div>
+    <!-- 我的紀錄 -->
+    <div class="page" id="page-records">
+      <div class="filter-bar" style="justify-content: center; margin-bottom: 20px;">
+        <div class="subtab-chip active" id="subtab-detail" onclick="switchRecordSubTab('detail')">本月打卡紀錄</div>
+        <div class="subtab-chip" id="subtab-apply" onclick="switchRecordSubTab('apply')">申請單明細</div>
+        <div class="subtab-chip" id="subtab-month" onclick="switchRecordSubTab('month')">本月考勤</div>
+        <div class="subtab-chip" id="subtab-year" onclick="switchRecordSubTab('year')">年度彙整</div>
+      </div>
+      
+      <div id="record-month-content" style="display:none;">
+        <p class="section-title">📊 本月至今即時考勤（動態累計）</p>
+        <div class="profile-card" style="padding:12px; overflow-x:auto;">
+          <table class="attendance-table" id="monthSummaryTable" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+              <tr style="border-bottom: 1.5px solid var(--card-border); color: var(--text-secondary);">
+                <th style="padding: 8px;">加班時數</th>
+                <th style="padding: 8px;">漏打卡次數</th>
+                <th style="padding: 8px;">補打卡次數</th>
+                <th style="padding: 8px;">遲到次數</th>
+                <th style="padding: 8px;">早退次數</th>
+                <th style="padding: 8px;">請假時數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="color: var(--text-primary); font-weight: bold;">
+                <td id="m-ot" style="padding: 8px;">0.0 h</td>
+                <td id="m-miss" style="padding: 8px; color: var(--accent-red);">0 次</td>
+                <td id="m-supp" style="padding: 8px;">0 次</td>
+                <td id="m-late" style="padding: 8px;">0 次</td>
+                <td id="m-early" style="padding: 8px;">0 次</td>
+                <td id="m-leave" style="padding: 8px;">0.0 h</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="record-year-content" style="display:none;">
+       <!-- <p class="section-title">📊 到職年度出勤彙整 <span id="emp-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p> -->
+        <p class="section-title">📊 到職年度出勤彙整</p>
+        <div class="profile-card" style="padding:12px; overflow-x:auto;">
+          <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
+            <thead>
+              <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
+                <th style="padding:8px;">⏰ 加班時數</th>
+                <th style="padding:8px;">🔄 漏打卡次數</th>
+                <th style="padding:8px;">⚠️ 遲到/早退次數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="color:var(--text-primary); font-weight:bold;">
+                <td id="emp-ot" style="padding:8px; color:var(--blue-main);">— h</td>
+                <td id="emp-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
+                <td id="emp-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="section-title" style="margin-top:28px;">🔍 查詢特定年月</p>
+        <div class="profile-card" style="padding:14px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+          <div style="flex:1; min-width:100px;">
+            <label class="input-label">年度</label>
+            <select class="select-field" id="queryYearSelect"></select>
+          </div>
+          <div style="flex:1; min-width:140px;">
+            <label class="input-label">月份</label>
+            <select class="select-field" id="queryMonthSelect">
+              <option value="1">1月</option><option value="2">2月</option>
+              <option value="3">3月</option><option value="4">4月</option>
+              <option value="5">5月</option><option value="6">6月</option>
+              <option value="7">7月</option><option value="8">8月</option>
+              <option value="9">9月</option><option value="10">10月</option>
+              <option value="11">11月</option><option value="12">12月</option>
+            </select>
+          </div>
+          <button class="submit-btn blue" style="margin-top:0; width:auto; padding:12px 20px;" onclick="queryYearMonthRecords()">🔍 查詢</button>
+        </div>
+
+        <div id="queryResultArea" style="display:none;">
+          <p class="section-title">📊 查詢結果 <span id="y-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+          <div class="profile-card" style="padding:12px; overflow-x:auto;">
+            <table class="attendance-table" style="width:100%; border-collapse:collapse; text-align:center;">
+              <thead>
+                <tr style="border-bottom:1.5px solid var(--card-border); color:var(--text-secondary);">
+                  <th style="padding:8px;">⏰ 加班時數</th>
+                  <th style="padding:8px;">🔄 漏打卡次數</th>
+                  <th style="padding:8px;">⚠️ 遲到/早退次數</th>
+                  <th style="padding:8px;">🌴 請假時數</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="color:var(--text-primary); font-weight:bold;">
+                  <td id="y-ot" style="padding:8px; color:var(--blue-main);">— h</td>
+                  <td id="y-miss" style="padding:8px; color:var(--accent-red);">— 次</td>
+                  <td id="y-lateearly" style="padding:8px; color:var(--accent-orange);">— 次</td>
+                  <td id="y-leave" style="padding:8px; color:var(--green-main);">— h</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="section-title" style="margin-top:24px;">⚠️ 查詢期間出勤異常明細</p>
+          <div id="yearIssueList"></div>
+        </div>
+      </div>
+
+      <div id="record-detail-content" style="display:block;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <p class="section-title" style="margin:0;">📅 本月打卡紀錄</p>
+    <button id="btnManualResync" class="approve-btn" 
+      style="font-size:12px; padding:6px 12px;" 
+      onclick="manualResyncPending()">
+      🔄 更新
+    </button>
+  </div>
+  <div class="record-list" id="allRecordsList"></div>
+</div>
+      
+
+<div id="record-apply-content" style="display:none;">
+        <p class="section-title">📋 申請單明細 <span id="apply-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+          <!--  「本年度 / 前一年度」切換, -->
+    <div class="filter-bar-segmented" id="applyYearScopeBar" style="margin-bottom:10px;">
+    <div class="segment-btn active" onclick="filterApplyYearScope(0, this)">📆 本年度</div>
+    <div class="segment-btn" onclick="filterApplyYearScope(-1, this)">⏮️ 上年度</div>
+    </div>
+        <!-- 主要類型選擇器 -->
+        <div class="filter-bar" style="margin-bottom: 10px;">
+          <div class="filter-chip active" onclick="filterApplyMainCategory('請假', this)">🌴 請假單</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('加班', this)">⏰ 加班單</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('補打卡', this)">🔄 補打卡</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('班別調整', this)">⚙️ 班別調整</div>
+          <div class="filter-chip" onclick="filterApplyMainCategory('換薪', this)">💰 換薪</div>
+        </div>
+
+<!-- 第二層：假別細項篩選 -->
+<div class="filter-bar-segmented" id="leaveSubFilterBar">
+  <div class="segment-btn active" onclick="filterLeaveSubCategory('特休', this)">🌴 特休</div>
+  <div class="segment-btn" onclick="filterLeaveSubCategory('補休', this)">⏰ 補休</div>
+  <div class="segment-btn" onclick="filterLeaveSubCategory('公假', this)">🏛️ 公假</div>
+  <div class="segment-btn" onclick="filterLeaveSubCategory('其他假別', this)">📁 其他</div>
+</div>
+
+<!-- 第三層：審核狀態篩選 -->
+<div class="filter-bar-segmented" id="statusFilterBar">
+  <div class="segment-btn active" data-status="agree" onclick="filterApplyStatus('同意', this)">✓ 已同意</div>
+  <div class="segment-btn" data-status="pending" onclick="filterApplyStatus('待審', this)">⏳ 待審核</div>
+  <div class="segment-btn" data-status="reject" onclick="filterApplyStatus('拒絕', this)">✗ 已拒絕</div>
+  <div class="segment-btn" data-status="cancel" onclick="filterApplyStatus('已撤回', this)">🔙 已撤回</div>
+</div>
+
+<!-- 清單渲染容器 -->
+<div class="record-list" id="leaveRecordList">
+  <!-- JavaScript 動態渲染卡片放置於此 -->
+</div>
+        <div class="record-list" id="applyRecordsList"></div>
+      </div>
+    </div>
+
+    <!-- 個人資料頁面 -->
+  <!-- 個人資料頁面（概念三：Hero 形象卡片 + 班別調整整合 + 榮譽質感風） -->
+    <div class="page" id="page-profile">
+      
+      <!-- 1. Hero 頂部個人形象區塊 -->
+<!-- 1. Hero 頂部個人形象區塊 (無大頭貼、三資訊並排) -->
+<div class="profile-hero-card">
+  <div class="hero-info-inline">
+    <span class="hero-name" id="profileNameVal">—</span>
+    <span class="badge badge-blue hero-type-badge" id="profileEmpType">—</span>
+    <span class="hero-id-tag">員編：<strong id="profileEmpIdVal">—</strong></span>
+  </div>
+</div>
+
+      <!-- 2. 班別與考勤設定卡片 (含嵌入式班別調整表單) -->
+  <!-- 2. 班別與考勤設定卡片 (整合班別調整) -->
+      <div class="profile-card profile-card-dark">
+        <div class="card-header-row">
+          <div class="card-title">🏢 班別與考勤設定</div>
+          <button class="btn-adjust-toggle" onclick="toggleProfileAdjustForm()">⚙️ 申請班別調整</button>
+        </div>
+        
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🕒</div>
+          <div class="profile-meta-label">預設班別</div>
+          <div class="profile-meta-value" id="profileDefaultShift">—</div>
+        </div>
+
+        <!-- 點擊按鈕展開原本的調整表單 -->
+        <div class="profile-adjust-area" id="profileAdjustArea">
+          <div class="adjust-form-title">📝 班別調整申請表單</div>
+          
+          <div class="input-group">
+            <label class="input-label">調整日期</label>
+            <input type="date" class="input-field" id="adjustDate" />
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">選擇新班別</label>
+            <select class="select-field" id="adjustShiftType">
+              <option value="08:00-17:00">08:00 - 17:00</option>
+              <option value="08:30-17:30">08:30 - 17:30</option>
+              <option value="09:00-18:00" selected>09:00 - 18:00</option>
+              <option value="休假日">休假日</option>
+              <option value="例假日">例假日</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">調整原因</label>
+            <input class="input-field" id="adjustReason" placeholder="請說明調整班別原因" />
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">證明文件 <span class="hint">（如有需要，單檔限 10MB）</span></label>
+            <div class="file-upload-box">
+              <input type="file" id="scheduleProofFiles" class="file-input" multiple accept="image/*,.pdf" onchange="handleProofFilesSelected(event, 'schedule')" />
+              <label for="scheduleProofFiles" class="file-label">📎 點擊選擇檔案</label>
+            </div>
+            <div id="scheduleProofFileList" class="file-list"></div>
+          </div>
+
+          <!-- 直接呼叫原本就有的 submitAdjust() -->
+          <button class="submit-btn orange" style="margin-top:10px;" onclick="submitAdjust()">送出班別調整申請</button>
+        </div>
+        </div>
+        <!-- 3. 年資與假別權益 (榮譽質感風格：使用 🎖️ 勳章圖案) -->
+      <div class="profile-card profile-card-dark">
+        <div class="card-title" style="margin-bottom:12px;">🌴 年資與假別權益</div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">📅</div>
+          <div class="profile-meta-label">到職日期</div>
+          <div class="profile-meta-value" id="profileJoinDate">—</div>
+        </div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🎖️</div>
+          <div class="profile-meta-label">當前年資</div>
+          <div class="profile-meta-value" id="profileSeniority" style="color:var(--accent-orange); font-weight:700;">—</div>
+        </div>
+
+    <div class="profile-meta-row">
+      <div class="profile-meta-icon">🌴</div>
+      <div class="profile-meta-label">特休應有</div>
+      <div class="profile-meta-value" style="display:flex; gap:16px; font-weight:700;">
+        <span style="color:var(--text-secondary);">
+          (到職日計算)上年度 <span id="profileAnnualEntitlementPrev" style="color:var(--green-light);">—</span>
+        </span>
+        <span style="color:var(--text-secondary);">
+          本年度 <span id="profileAnnualEntitlement" style="color:var(--green-light);">—</span>
+        </span>
+      </div>
+        <button id="btnCashOut特休" class="cashout-btn" style="display:none"
+          onclick="openCashOutModal('特休')">💰 申請折算工資</button>
+      </div>
+
+    <div class="profile-meta-row">
+  <div class="profile-meta-icon">⏰</div>
+  <div class="profile-meta-label">補休累計</div>
+  <div class="profile-meta-value" style="display:flex; gap:16px; font-weight:700;">
+<span style="color:var(--text-secondary);">
+  <span id="labelPrevYear"></span> : 
+  <span id="profileCompEntitlementPrev" style="color:var(--accent-purple);">—</span>
+</span>
+<span style="color:var(--text-secondary);">
+  <span id="labelCurrentYear"></span> : 
+  <span id="profileCompEntitlement" style="color:var(--accent-purple);">—</span>
+</span>
+      </div>
+      <button id="btnCashOut補休" class="cashout-btn" style="display:none"
+          onclick="openCashOutModal('補休')">💰 申請折算工資</button>
+      </div>
+</div>
+
+      <!-- 4. 帳號安全與通訊設定 -->
+      <div class="profile-card profile-card-dark">
+        <div class="card-title" style="margin-bottom:12px;">🔒 帳號安全與設定</div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">📧</div>
+          <div class="profile-meta-label">聯絡 Email</div>
+          <div class="profile-meta-value" id="profileEmailVal">—</div>
+        </div>
+
+        <div class="profile-meta-row">
+          <div class="profile-meta-icon">🔑</div>
+          <div class="profile-meta-label">登入密碼</div>
+          <div class="profile-meta-value" style="display:flex; align-items:center; gap:8px;">
+            <span>••••••••</span>
+            <button class="pw-toggle-btn" onclick="togglePwChange()">修改密碼</button>
+          </div>
+        </div>
+
+        <!-- 密碼修改展開區 -->
+        <div class="pw-change-area" id="pwChangeArea">
+          <div class="input-group" style="margin-bottom:10px;">
+            <label class="input-label">舊密碼</label>
+            <input type="password" class="input-field" id="pwOld" placeholder="請輸入舊密碼" />
+          </div>
+          <div class="input-group" style="margin-bottom:10px;">
+            <label class="input-label">新密碼</label>
+            <input type="password" class="input-field" id="pwNew" placeholder="請輸入新密碼" />
+          </div>
+          <div class="input-group" style="margin-bottom:10px;">
+            <label class="input-label">確認新密碼</label>
+            <input type="password" class="input-field" id="pwConfirm" placeholder="再次輸入新密碼" />
+          </div>
+          <button class="submit-btn blue" style="margin-top:0;" onclick="changePassword()">確認修改</button>
+        </div>
+      </div>
+   
+      <p class="section-title" style="margin-top: 24px;">⚖️ 勞基法常用假別與給薪說明</p>
+      <!-- <p class="section-title" style="margin-top: 24px;">⚖️ 勞基法常用假別與給薪說明 <span id="profile-range-span" style="color:var(--text-secondary); font-size:12px; margin-left:8px; font-weight:normal;"></span></p>
+           -->
+        <div class="profile-card" style="padding: 16px; overflow-x: auto;">
+        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; padding: 10px; background: var(--card-bg-soft); border-radius: var(--radius); border-left: 4px solid var(--blue-main);">
+          <strong>💡 系統請假規範：</strong>請假一律以<strong>小時</strong>為單位，全天假登記為 8 小時。
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; color: var(--text-primary);">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--card-border); color: var(--text-secondary);">
+              <th style="padding: 6px 4px;">假別</th>
+              <th style="padding: 6px 4px;">已申請</th>
+              <th style="padding: 6px 4px;">勞基法規定與給薪說明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--green-light);">🌴 特休假（上年度）</td>
+              <td id="accumAnnualPrev" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">遞延自前一服務年度尚未休畢的時數。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--green-light);">🌴 特休假</td>
+              <td id="accumAnnualCurrent" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。天數依到職年資遞增發給。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-purple);">⏰ 補休（上年度）</td>
+              <td id="accumCompPrev" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">遞延自前一服務年度尚未休畢的時數。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-purple);">⏰ 補休</td>
+              <td id="accumCompCurrent" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。加班時數 1:1 兌換，限當年度休畢。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--accent-orange);">🩹 普通病假</td>
+              <td id="accumSick" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);"><span style="color:var(--accent-orange); font-weight:bold;">折半發給 (半薪)</span>。未住院者一年上限 30 天。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: #f87171;">💼 事假</td>
+              <td id="accumPersonal" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);"><span style="color:#f87171; font-weight:bold;">期間不給薪 (無薪)</span>。一年累計最多請 14 天。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">🏛️ 公假</td>
+              <td id="accumOfficial" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--card-border);">
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">💍 婚假</td>
+              <td id="accumMarriage" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 4px; font-weight: bold; color: var(--blue-light);">🕯️ 喪假</td>
+              <td id="accumFuneral" style="padding: 10px 4px;">未讀入</td>
+              <td style="padding: 10px 4px; color: var(--text-secondary);">工資照給 (全薪)。依法定事由及憑證核給。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+    <!-- 換薪申請彈窗 -->
+  <div id="cashModal" class="cash-modal-overlay" style="display:none;">
+    <div class="cash-modal-box">
+      <h3 id="cashTitle" class="cash-modal-title"></h3>
+      <div id="cashInfo" class="cash-modal-info"></div>
+      <div class="cash-modal-form">
+        折發時數：<input id="cashHours" type="number" min="1" step="1" class="cash-modal-input"> 小時
+      </div>
+      <div class="cash-modal-note">
+        不申請則維持遞延；須主管簽核，核准後無法改回遞延。實際折發以結算日當天的剩餘時數為準。
+      </div>
+      <div class="cash-modal-actions">
+        <button type="button" class="cash-modal-cancel" onclick="closeCashModal()">取消</button>
+        <button type="button" id="cashSubmit" class="cash-modal-submit" onclick="submitCashOut()">送出申請</button>
+      </div>
+    </div>
+  </div>
+<!-- 放到 index.html 底部 -->
+<template id="resubmitTemplate">
+  <div class="resubmit-box-container">
+    <span class="reject-tag reject-tag-block resubmit-comment"></span>
+    <button class="btn-cancel-apply btn-resubmit-toggle">📝 補件重新申請</button>
+    <div class="resubmit-box" style="display:none; margin-top:8px;">
+      <textarea class="resubmit-textarea" placeholder="請輸入補充說明或證明文件連結"></textarea>
+      <button class="approve-btn ok btn-resubmit-submit">送出補件</button>
+    </div>
+  </div>
+</template>
+  <!-- JavaScript Resource -->
+  <script src="script.js"></script>
+</body>
+</html>
