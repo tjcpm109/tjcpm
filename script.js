@@ -1879,7 +1879,10 @@ function buildMonthTableHTML(o) {
     }
 
     const dayPunches = monthPunches.filter(r => safeNewDate(r.date || r.timestamp).getDate() === day);
-    const flagHTML = flags.map(f => `<span class="badge badge-orange">⚠️${f}</span>`).join(' ');
+    const SHOW_LATE_EARLY_FLAG = false;   // 之後要顯示就改成 true
+    const flagHTML = SHOW_LATE_EARLY_FLAG
+      ? flags.map(f => `<span class="badge badge-orange">⚠️${f}</span>`).join(' ')
+      : '';
     const remarkBody = remarkFn(dayPunches, dayLeaves);
     const remark = [flagHTML, remarkBody].filter(Boolean).join('<br>');
 
