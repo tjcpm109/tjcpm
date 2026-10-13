@@ -10,7 +10,9 @@ try {
 } catch (e) {
   console.error('Session 讀取錯誤', e);
 }
-
+function minToTimeStr(m) {
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
 // 💡 全域相容性大腦：集中定義請假與午休豁免計算
 function isTimeExempted(min, leaves) {
   if (min >= 720 && min < 780) return true; // 午休固定豁免
@@ -1643,7 +1645,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
 
     if (sortedKeys.length === 0) {
-      html += `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
+      html += `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
     } else {
       sortedKeys.forEach(key => {
         const item = dailyMap[key];
@@ -1717,7 +1719,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     }
   });
 
-  let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
+  let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateObj = new Date(year, month - 1, day);
@@ -1838,10 +1840,10 @@ function renderCalendarTable() {
     });
 
     const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
-    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
+    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
 
     if (sortedKeys.length === 0) {
-      html += `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
+      html += `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
     } else {
       sortedKeys.forEach(key => {
         const item = dailyMap[key];
@@ -1889,7 +1891,7 @@ function renderCalendarTable() {
     }
   });
 
-  let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
+  let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateObj = new Date(year, month - 1, day);
