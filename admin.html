@@ -354,7 +354,10 @@ function special(e, ds) {
     var origSwitch = window.switchAdminSubTab;
     window.switchAdminSubTab = function (t) { origSwitch.apply(this, arguments); if (t === 'adjust') render(); };
     var origAdjust = window.submitAdminAdjust;
-    window.submitAdminAdjust = function () { origAdjust.apply(this, arguments); setTimeout(render, 300); };
+window.submitAdminAdjust = async function () {
+  await origAdjust.apply(this, arguments);
+  render();
+};
   })();
   </script>
 </body>
