@@ -564,14 +564,7 @@ async function checkConnectivity() {
 window.addEventListener(`online`, () => { checkConnectivity(); });
 window.addEventListener(`offline`, () => { setOnlineStatus(false); });
 
-// ── Boot ──
-if (document.body.dataset.page === 'admin') {
-  initAdminPage();
-} else if (currentUser) {
-  showApp();
-} else {
-  showLogin();
-}
+
 
 function initAdminPage() {
   const ok = currentUser && ['admin', 'admin1', 'admin2'].includes(currentUser.role);
@@ -1011,11 +1004,10 @@ function calculateLeaveHoursLocal(record, holidayStrings = []) {
     const isHoliday = holidayStrings.includes(dateStr);
 
     // 排除週末與國定假日
-  if (!isWeekend && !isHoliday) {
-      // 動態取得班表（如無法取得則預設 09:00~18:00，即 540~1080）
+ if (!getDayStatus(cur, dateStr, record.empId || currentUser?.empId, holidayStrings)) {
       const shift = (typeof getShiftMinutesForDate === 'function')
         ? getShiftMinutesForDate(dateStr, record.empId || currentUser?.empId)
-        : { start: 540, end: 1080 };
+        : { start: 0, end: 1440 };
       
       let sMin = shift.start;
       let eMin = shift.end;
@@ -1768,7 +1760,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         const startD = safeNewDate(r.date);
         const endD = safeNewDate(r.endDate || r.date);
         return dateObj >= startD && dateObj <= endD;
-      }).map(r => ({ start: 540, end: 1080 }));
+      }).map(r => ({ start: 0, end: 1440 }));
 
       const shift = getShiftMinutesForDate(dateStr, empId, specialShifts);
       const isMorningExempted = isRangeExempted(shift.start, 720, dayLeaves);
@@ -1813,6 +1805,91 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
   container.innerHTML = html;
 }
 
+function buildMonthTableHTML(o) {
+  const { empId, punches, leaves, supps, holidayStrings, specialShifts, defaultShift, earliestD, clickable, remarkFn } = o;
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth() + 1, today = now.getDate();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const pad = n => String(n).padStart(2, '0');
+  const WD = ['日','一','二','三','四','五','六'];
+  const dim = t => `<span style="color:var(--text-muted);font-size:13px;">${t}</span>`;
+  const inMonth = r => { const d = safeNewDate(r.date || r.timestamp); return d.getFullYear() === year && d.getMonth() + 1 === month; };
+
+  const monthPunches = punches.filter(inMonth);
+  const punchMap = {};
+  monthPunches.forEach(r => {
+    const k = safeNewDate(r.date || r.timestamp).getDate();
+    if (!punchMap[k]) punchMap[k] = { 上班: '—', 下班: '—' };
+    if (r.type === '上班' || r.type === '下班') punchMap[k][r.type] = r.time || '—';
+  });
+  (supps || []).filter(inMonth).forEach(r => {          // 已核准的補打卡補進空格
+    const k = safeNewDate(r.date).getDate();
+    if (!punchMap[k]) punchMap[k] = { 上班: '—', 下班: '—' };
+    if ((r.subType === '上班' || r.subType === '下班') && punchMap[k][r.subType] === '—') punchMap[k][r.subType] = r.time || '—';
+  });
+
+  // 與本月「重疊」的請假（含跨月）
+  const monthStart = new Date(year, month - 1, 1), monthEnd = new Date(year, month - 1, daysInMonth);
+  const monthLeaves = leaves.filter(r => safeNewDate(r.date) <= monthEnd && safeNewDate(r.endDate || r.date) >= monthStart);
+  const leavesOfDay = d => monthLeaves.filter(r => d >= safeNewDate(r.date) && d <= safeNewDate(r.endDate || r.date));
+
+  let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateObj = new Date(year, month - 1, day);
+    const dateStr = `${year}-${pad(month)}-${pad(day)}`;
+    const isToday = day === today, isFuture = day > today;
+    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+    const beforeJoin = earliestD && dateObj < earliestD;
+    const dayLabel = getDayStatus(dateObj, dateStr, empId, holidayStrings, specialShifts);
+    const shift = getShiftMinutesForDate(dateStr, empId, specialShifts, defaultShift);
+    const punch = punchMap[day] || { 上班: '—', 下班: '—' };
+    const dayLeaves = leavesOfDay(dateObj);
+    const leaveLabel = dayLeaves.length ? `🌴 已${dayLeaves[0].subType === '加班補休' ? '補休' : (dayLeaves[0].subType || '請假')}` : '';
+    const exLeaves = dayLeaves.map(() => ({ start: 0, end: 1440 }));
+
+    const shiftHTML = beforeJoin ? dim('—') : (dayLabel ? dim(dayLabel) : `${minToTimeStr(shift.start)}–${minToTimeStr(shift.end)}`);
+    const missTag = type => `<span style="color:#ef4444;font-weight:bold;font-size:13px;"${clickable ? ` onclick="autoFillSupp('${dateStr}','${type}',event)"` : ''}>⚠️ 漏打卡</span>`;
+
+    let inHTML = punch.上班, outHTML = punch.下班;
+    if (beforeJoin) {
+      inHTML = outHTML = dim('—');
+    } else if (isFuture) {
+      if (inHTML === '—') inHTML = dim('-');
+      if (outHTML === '—') outHTML = dim('-');
+    } else if (dayLabel) {
+      if (inHTML === '—') inHTML = dim(dayLabel);
+      if (outHTML === '—') outHTML = dim(dayLabel);
+    } else {
+      const morningOK = isRangeExempted(shift.start, 720, exLeaves);
+      const afternoonOK = isRangeExempted(780, shift.end, exLeaves);
+      if (punch.上班 === '—') {
+        inHTML = morningOK ? dim(leaveLabel || '🌴 已請假') : (isToday ? dim('—') : missTag('上班'));
+      } else {
+        const m = timeToMin(punch.上班);
+        if (m > shift.start && !isRangeExempted(shift.start, m, exLeaves))
+          inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
+      }
+      if (punch.下班 === '—') {
+        outHTML = afternoonOK ? dim(leaveLabel || '🌴 已請假') : (isToday ? dim('—') : missTag('下班'));
+      } else {
+        const m = timeToMin(punch.下班);
+        if (m < shift.end && !isRangeExempted(m, shift.end, exLeaves))
+          outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>`;
+      }
+    }
+
+    const dayPunches = monthPunches.filter(r => safeNewDate(r.date || r.timestamp).getDate() === day);
+    const remark = remarkFn(dayPunches, dayLeaves);
+
+    html += `<tr ${isToday ? 'style="background:var(--card-bg-soft);font-weight:bold;"' : ''}>
+      <td style="color:${(isWeekend || dayLabel) ? 'var(--accent-orange)' : 'var(--text-primary)'}">${pad(month)}-${pad(day)} (${WD[dateObj.getDay()]})</td>
+      <td style="font-size:13px;">${shiftHTML}</td><td>${inHTML}</td><td>${outHTML}</td>
+      <td style="font-size:12px; line-height:1.5;">${remark || '—'}</td></tr>`;
+  }
+  return html + `</tbody></table></div>`;
+}
+
 function renderCalendarTable() {
   const el = document.getElementById(`allRecordsList`);
   if (!el) return;
@@ -1840,10 +1917,10 @@ function renderCalendarTable() {
     });
 
     const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
-    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🕘 班別</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
+    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
 
     if (sortedKeys.length === 0) {
-      html += `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
+      html += `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
     } else {
       sortedKeys.forEach(key => {
         const item = dailyMap[key];
@@ -1864,7 +1941,27 @@ function renderCalendarTable() {
     el.innerHTML = html;
     return;
   }
-
+  const mine = records.filter(r => matchEmpId(r.empId, currentUser?.empId));
+  el.innerHTML = buildMonthTableHTML({
+    empId: currentUser.empId,
+    punches: mine.filter(r => r.type === '上班' || r.type === '下班'),
+    leaves: mine.filter(r => r.type === '請假' && isFinalApproved(r.status)),
+    supps: mine.filter(r => r.type === '補打卡' && isFinalApproved(r.status)),
+    holidayStrings: currentUser?.holidayStrings || [],
+    specialShifts: currentUser?.specialShifts || [],
+    defaultShift: currentUser?.defaultShift,
+    earliestD: getEarliestCheckDate(),
+    clickable: true,
+    remarkFn: (dayPunches, dayLeaves) => {
+      const parts = [
+        ...dayLeaves.map(r => `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'} ${r.startTime || '09:00'}-${r.endTime || '18:00'}</span>`),
+        ...buildPunchRemarkParts(dayPunches)
+      ];
+      return parts.length ? `<span style="font-weight:600;line-height:1.6;">${parts.join('<br>')}</span>` : '';
+    }
+  });
+}
+/*
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
@@ -1930,7 +2027,7 @@ function renderCalendarTable() {
         const startD = safeNewDate(r.date);
         const endD = safeNewDate(r.endDate || r.date);
         return dateObj >= startD && dateObj <= endD;
-      }).map(r => ({ start: 540, end: 1080 }));
+      }).map(r => ({ start: 0, end: 1440 }));
 
       const isMorningExempted = isRangeExempted(540, 720, dayLeaves);
       const isAfternoonExempted = isRangeExempted(780, 1080, dayLeaves);
@@ -1969,6 +2066,7 @@ function renderCalendarTable() {
   html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
+*/
 
 window.autoFillSupp = function(dateStr, type, event) {
   event.stopPropagation();
@@ -1979,6 +2077,7 @@ window.autoFillSupp = function(dateStr, type, event) {
   showToast(`🔄 已為您自動填入 ${dateStr} ${type} 漏卡資訊！`);
 }
 
+//1013
 function getShiftMinutesForDate(dateStr, empId, shiftsList) {
   const shifts = shiftsList || currentUser?.specialShifts || [];
   const targetDateStr = formatLocalDateStr(dateStr);
@@ -2004,7 +2103,62 @@ function getShiftMinutesForDate(dateStr, empId, shiftsList) {
     }
   }
   return match || { start: defaultStart, end: defaultEnd };
+} //getShiftMinutesForDate
+const DAY_OFF_TYPES = ['休假日', '例假日'];
+
+// 這筆班表是不是「休假日／例假日」（欄位名稱依後端實際回傳，這裡全部檢查）
+function getDayOffLabel(s) {
+  return [s.subType, s.shiftType, s.start, s.end]
+    .map(v => String(v ?? '').trim())
+    .find(v => DAY_OFF_TYPES.includes(v)) || '';
 }
+
+// 回傳：'休假日'/'例假日' = 被調為休息；'' = 被調為一般班別（要上班）；null = 沒有任何調整
+function getDayOffTypeForDate(dateStr, empId, shiftsList) {
+  const shifts = shiftsList || currentUser?.specialShifts || [];
+  const target = formatLocalDateStr(dateStr);
+  let general = null;
+  for (const s of shifts) {
+    if (formatLocalDateStr(s.date) !== target) continue;
+    const label = getDayOffLabel(s);
+    if (matchEmpId(s.empId, empId)) return label;               // 本人優先
+    if (String(s.empId ?? '').trim() === '') general = label;   // 全體
+  }
+  return general;
+}
+
+// 當天性質：回傳 '' 代表正常上班日
+function getDayStatus(dateObj, dateStrHyphen, empId, holidayStrings, shiftsList) {
+  const adj = getDayOffTypeForDate(dateStrHyphen, empId, shiftsList);
+  if (adj !== null) return adj;
+  const dow = dateObj.getDay();
+  if (dow === 6) return '休假日';
+  if (dow === 0) return '例假日';
+  if ((holidayStrings || []).includes(dateStrHyphen)) return '國定假日';
+  return '';
+}
+
+function getShiftMinutesForDate(dateStr, empId, shiftsList, defaultShiftStr) {
+  const shifts = shiftsList || currentUser?.specialShifts || [];
+  const targetDateStr = formatLocalDateStr(dateStr);
+  const targetEmpId = String(empId).trim();
+  let match = null;
+  for (const s of shifts) {
+    if (getDayOffLabel(s)) continue;                 // 休假日/例假日不是時間班別
+    if (formatLocalDateStr(s.date) !== targetDateStr) continue;
+    if (matchEmpId(s.empId, targetEmpId)) return { start: timeToMin(s.start), end: timeToMin(s.end) };
+    if (String(s.empId ?? '').trim() === '') match = { start: timeToMin(s.start), end: timeToMin(s.end) };
+  }
+  let defaultStart = 540, defaultEnd = 1080;
+  const ds = defaultShiftStr || currentUser?.defaultShift;
+  if (ds) {
+    const parts = ds.split('-');
+    if (parts.length === 2) { defaultStart = timeToMin(parts[0].trim()); defaultEnd = timeToMin(parts[1].trim()); }
+  }
+  return match || { start: defaultStart, end: defaultEnd };
+}
+
+
 
 function isApproveCommentBoxOpen() {
   const textareas = document.querySelectorAll(`.approve-comment-input`);
@@ -2815,9 +2969,9 @@ function renderAttendanceIssuesForRangeByMonth(startDate, endDate, targetElId) {
     const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
     const isHoliday = currentUser.holidayStrings && currentUser.holidayStrings.includes(dateStr);
 
-    if (!isWeekend && !isHoliday) {
+   if (!getDayStatus(dIndex, dateStr, currentUser.empId, currentUser.holidayStrings || [])) {
       const punch = dailyPunches[dateQueryStr] || dailyPunches[dateStr] || { in: null, out: null };
-      const dayLeaves = myLeaves.filter(r => dIndex >= safeNewDate(r.date) && dIndex <= safeNewDate(r.endDate || r.date)).map(r => ({ start: 540, end: 1080 }));
+      const dayLeaves = myLeaves.filter(r => dIndex >= safeNewDate(r.date) && dIndex <= safeNewDate(r.endDate || r.date)).map(r => ({ start: 0, end: 1440 }));
       const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
 
       if (!isRangeExempted(shift.start, shift.end, dayLeaves)) {
@@ -2942,9 +3096,10 @@ function calcAttendance() {
       const dayOfWeek = dateObj.getDay();
       const dateStr = `${thisYear}/${thisMonth}/${d}`;
       
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      const hyphen = `${thisYear}-${String(thisMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if (!getDayStatus(dateObj, hyphen, currentUser.empId, currentUser.holidayStrings || [])) {
         const punch = dailyPunches[dateStr];
-        const dayLeaves = myRecords.filter(r => r.type === `請假` && isFinalApproved(r.status) && dateObj >= safeNewDate(r.date) && dateObj <= safeNewDate(r.endDate || r.date)).map(r => ({ start: 540, end: 1080 }));
+        const dayLeaves = myRecords.filter(r => r.type === `請假` && isFinalApproved(r.status) && dateObj >= safeNewDate(r.date) && dateObj <= safeNewDate(r.endDate || r.date)).map(r => ({ start: 0, end: 1440 }));
         const shift = getShiftMinutesForDate(dateStr, currentUser.empId);
 
         if (!isRangeExempted(shift.start, shift.end, dayLeaves)) {
@@ -3099,9 +3254,9 @@ function countMissedLateEarlyInRange(start, end) {
     const isWeekend = (dow === 0 || dow === 6);
     const isHoliday = currentUser.holidayStrings && currentUser.holidayStrings.includes(dateStr);
 
-    if (!isWeekend && !isHoliday) {
+    if (!getDayStatus(dIndex, dateStr, currentUser.empId, currentUser.holidayStrings || [])) {
       const punch = dailyPunches[dateQueryStr] || { in: null, out: null };
-      const dayLeaves = myLeaves.filter(r => dIndex >= safeNewDate(r.date) && dIndex <= safeNewDate(r.endDate || r.date)).map(r => ({ start: 540, end: 1080 }));
+      const dayLeaves = myLeaves.filter(r => dIndex >= safeNewDate(r.date) && dIndex <= safeNewDate(r.endDate || r.date)).map(r => ({ start: 0, end: 1440 }));
       const shift = getShiftMinutesForDate(dateQueryStr, currentUser.empId);
 
       if (!isRangeExempted(shift.start, shift.end, dayLeaves)) {
@@ -3436,3 +3591,13 @@ const elPrev = document.getElementById('labelPrevYear');
 const elCur = document.getElementById('labelCurrentYear');
 if (elPrev) elPrev.textContent = new Date().getFullYear() - 1;
 if (elCur) elCur.textContent = new Date().getFullYear();
+
+
+// ── Boot ──
+if (document.body.dataset.page === 'admin') {
+  initAdminPage();
+} else if (currentUser) {
+  showApp();
+} else {
+  showLogin();
+}
