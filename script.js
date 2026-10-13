@@ -1349,10 +1349,11 @@ async function retractRecord(recordId, type, clientId) {
   }
 }
 
-function submitAdminAdjust() {
+async function submitAdminAdjust() {
   if (window.submitAdminAdjustInFlight) return;
   window.submitAdminAdjustInFlight = true;
   setTimeout(() => { window.submitAdminAdjustInFlight = false; }, 3000);
+
   const empSelect = document.getElementById(`adminAdjustEmpId`);
   const empId = empSelect.value;
   if (!empId) {
@@ -1367,7 +1368,7 @@ function submitAdminAdjust() {
   }
   const shiftType = document.getElementById(`adminAdjustShiftType`).value;
   const reason = document.getElementById(`adminAdjustReason`).value.trim();
-  
+
   const id = Date.now();
   const record = {
     id: id,
@@ -1383,14 +1384,23 @@ function submitAdminAdjust() {
     approverId: currentUser.empId,
     timestamp: new Date().toISOString()
   };
-  
-  records.unshift(record);
-  saveRecords();
-  renderAllList();
-  syncToSheet(record);
-  
-  showToast(`✓ 班別異動指派成功並已直接生效！`);
-  document.getElementById(`adminAdjustReason`).value = ``;
+
+  showLoading();
+  try {
+    const res = await callGAS(record);
+    hideLoading();
+    if (res && res.status === `ok`) {
+      showToast(`✓ 班別異動指派成功並已直接生效！`);
+      document.getElementById(`adminAdjustReason`).value = ``;
+      await loadAdminData();   // 重新抓 specialShifts，排班表才會更新
+      if (typeof window.rsRender === 'function') window.rsRender();
+    } else {
+      showToast(`⚠️ 指派失敗：` + ((res && res.message) || `後端未回應`));
+    }
+  } catch (e) {
+    hideLoading();
+    showToast(`⚠️ 連線失敗，請檢查網路`);
+  }
 }
 
 function quickLeave() {
@@ -2062,33 +2072,6 @@ window.autoFillSupp = function(dateStr, type, event) {
   showToast(`🔄 已為您自動填入 ${dateStr} ${type} 漏卡資訊！`);
 }
 
-//1013
-function getShiftMinutesForDate(dateStr, empId, shiftsList) {
-  const shifts = shiftsList || currentUser?.specialShifts || [];
-  const targetDateStr = formatLocalDateStr(dateStr);
-  const targetEmpId = String(empId).trim();
-  
-  let match = null;
-  for (let i = 0; i < shifts.length; i++) {
-    const s = shifts[i];
-    if (formatLocalDateStr(s.date) === targetDateStr) {
-      if (matchEmpId(s.empId, targetEmpId)) {
-        return { start: timeToMin(s.start), end: timeToMin(s.end) };
-      } else if (String(s.empId).trim() === "") {
-        match = { start: timeToMin(s.start), end: timeToMin(s.end) };
-      }
-    }
-  }
-  let defaultStart = 540, defaultEnd = 1080;
-  if (currentUser && currentUser.defaultShift) {
-    const parts = currentUser.defaultShift.split(`-`);
-    if (parts.length === 2) {
-      defaultStart = timeToMin(parts[0].trim());
-      defaultEnd = timeToMin(parts[1].trim());
-    }
-  }
-  return match || { start: defaultStart, end: defaultEnd };
-} //getShiftMinutesForDate
 const DAY_OFF_TYPES = ['休假日', '例假日'];
 
 // 這筆班表是不是「休假日／例假日」（欄位名稱依後端實際回傳，這裡全部檢查）
@@ -2338,7 +2321,8 @@ async function loadAdminData() {
       sessionStorage.setItem(`tjcpm_user`, JSON.stringify(currentUser));
       rebuildAdminDropdownsAndTable();
     }
-    
+    if (data && data.specialShifts) currentUser.specialShifts = data.specialShifts;
+    if (data && data.holidayStrings) currentUser.holidayStrings = data.holidayStrings;
     if (data && data.pending) {
       const pendingList = data.pending;
       pendingList.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
