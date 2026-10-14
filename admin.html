@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/png" href="https://tjcpm109.github.io/tjcpm/APP%20logo.png">
+  <title>TJCPM 主管後台</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 排班表（只作用在 .rs- 開頭的元素，不會影響其他頁面） */
+    .rs-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    .rs-btn{padding:6px 12px;border:1px solid var(--card-border,#ccc);border-radius:6px;background:transparent;color:var(--text-primary,inherit);cursor:pointer;font:inherit;font-size:13px}
+    .rs-wrap{overflow-x:auto;border:1.5px solid var(--card-border,#ccc);border-radius:8px}
+    .rs-tbl{border-collapse:separate;border-spacing:0;min-width:100%;font-size:12px}
+    .rs-tbl th,.rs-tbl td{border-right:1px solid var(--card-border,#ccc);border-bottom:1px solid var(--card-border,#ccc);padding:3px;min-width:58px;vertical-align:top;text-align:center}
+    .rs-tbl thead th{background:#2a3650;color:#fff;position:sticky;top:0;z-index:2;padding:6px 3px}
+    .rs-tbl thead th small{display:block;font-weight:400;opacity:.75}
+    .rs-tbl td.rs-we{background:rgba(245,158,11,.10)}
+    .rs-tbl thead th.rs-we{background:#3a4663}
+    .rs-tbl td.rs-td{background:rgba(250,204,21,.18)}
+    .rs-tbl thead th.rs-td{background:#b45309}
+    .rs-tbl .rs-emp{position:sticky;left:0;z-index:3;background:var(--card-bg,#fff);min-width:84px;text-align:left;padding:6px 8px;font-weight:700}
+    .rs-tbl thead th.rs-emp{background:#2a3650;z-index:4}
+    .rs-emp small{display:block;font-weight:400;color:var(--text-muted,#888)}
+    .rs-cell{display:flex;flex-direction:column;gap:3px}
+    .rs-chip{border-left:3px solid var(--c);background:rgba(128,128,128,.14);border-radius:4px;padding:2px 4px;line-height:1.3;font-weight:600;white-space:nowrap}
+    .rs-chip.n{--c:#3b82f6}.rs-chip.off{--c:#94a3b8}.rs-chip.ex{--c:#64748b}.rs-chip.h{--c:#ef4444}.rs-chip.sp{--c:#f59e0b}
+    .rs-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--text-muted,#888)}
+    .rs-legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-right:5px}
+    .rs-chip.lv{--c:#a855f7}.rs-chip.pd{border-left-style:dashed;opacity:.8}.rs-chip.auto{opacity:.45}
+    .rs-tbl td.rs-click{cursor:pointer}.rs-tbl td.rs-click:hover{outline:2px solid #3b82f6;outline-offset:-2px}
+    .rs-md{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500;padding:16px}
+    .rs-box{background:var(--card-bg,#fff);color:var(--text-primary,#000);border-radius:12px;padding:18px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px}
+  </style>
+</head>
+
+<!-- 先隱藏，script.js 確認是主管後才顯示；不是主管會被導回 index.html -->
+<body data-page="admin" style="visibility:hidden">
+  <div id="mainApp" style="display:block">
+    <div class="header">
+      <div class="header-left">
+        <img src="https://tjcpm109.github.io/tjcpm/logo.png" onerror="this.style.display='none'" />
+      </div>
+      <div class="header-right">
+        <span class="header-user" id="headerUser"></span>
+        <button class="logout-btn" onclick="location.href='index.html'">回主頁</button>
+        <button class="logout-btn" onclick="doLogout()">登出</button>
+      </div>
+    </div>
+
+    <!-- 主管頁面 -->
+    <div class="page active" id="page-admin">
+      <div class="filter-bar" style="margin-bottom: 20px;">
+        <div class="filter-chip active" id="adminSubTab-pending" onclick="switchAdminSubTab('pending')">⏳ 待審核</div>
+        <div class="filter-chip" id="adminSubTab-board" onclick="switchAdminSubTab('board')">📊 考勤與假別看板</div>
+        <div class="filter-chip" id="adminSubTab-adjust" onclick="switchAdminSubTab('adjust')">⚙️ 排班異動</div>
+        <div class="filter-chip" id="adminSubTab-agent" onclick="switchAdminSubTab('agent')">👥 代理人</div>
+        <div class="filter-chip" id="adminSubTab-salary" onclick="switchAdminSubTab('salary')">💰 調薪</div>
+      </div>
+
+      <!-- ===== 待審核 ===== -->
+      <div class="admin-subpage" id="adminSubPage-pending">
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr) !important;">
+          <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審請假</div>
+            <div class="stat-value" id="statLeave" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid var(--accent-purple); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審加班</div>
+            <div class="stat-value" id="statOT" style="color:var(--accent-purple); font-size: 20px;">—<span>筆</span></div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid var(--blue-light); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審補卡</div>
+            <div class="stat-value" id="statSupp" style="color:var(--blue-light); font-size: 20px;">—<span>筆</span></div>
+          </div>
+          <div class="stat-card" style="border-top:3px solid var(--accent-orange); padding: 10px;">
+            <div class="stat-label" style="font-size: 11px;">待審排班</div>
+            <div class="stat-value" id="statAdjust" style="color:var(--accent-orange); font-size: 20px;">—<span>筆</span></div>
+          </div>
+        </div>
+        <p class="section-title">待審核 <span id="pendingLoading" style="color:var(--blue-light);font-size:12px;font-weight:400;"></span></p>
+        <div class="record-list" id="pendingList"></div>
+      </div>
+
+      <!-- ===== 考勤與假別看板 ===== -->
+      <div class="admin-subpage" id="adminSubPage-board" style="display:none;">
+        <div class="record-list" id="adminFieldPunches" style="margin-bottom:24px;display: none !important;"></div>
+        <p class="section-title">📊 全體專任同仁考勤與假別看板</p>
+        <div class="profile-card" style="padding:16px; overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px; border: 1.5px solid var(--card-border);">
+            <thead>
+              <tr style="background:#2a3650; border-bottom:2px solid var(--card-border); color:#ffffff; font-weight:bold; text-align:center;">
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">員編</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">姓名</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">到職日</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">當前年資</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休總額</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休已請</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">特休賸餘</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">補休賸餘</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤上班</th>
+                <th style="padding:8px; border-right:1.5px solid var(--card-border);">外勤下班</th>
+                <th style="padding:8px;">穿透對帳</th>
+              </tr>
+            </thead>
+            <tbody id="adminEmployeeOverviewBody">
+              <tr><td colspan="11" style="text-align:center; padding:12px; color:var(--text-muted);">資料載入中…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="section-title" style="margin-top:24px;">👤 員工考勤多維度穿透查詢</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">請選擇要穿透查詢的同仁</label>
+            <select class="select-field" id="adminQueryUserSelect" onchange="handleAdminQueryChange()">
+              <option value="">-- 請選擇員工 --</option>
+            </select>
+          </div>
+          <div id="adminQueryResults" style="display:none; margin-top:16px;">
+            <div id="aq-interval" style="font-size: 13px; color: var(--blue-main); margin-bottom: 12px; font-weight: bold; border-left: 3px solid var(--blue-main); padding-left: 8px;"></div>
+            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-bottom:8px;">📊 年度累計統計指標：</p>
+            <div class="stats-grid" style="margin-bottom:16px;">
+              <div class="stat-card" style="border-top: 3px solid var(--accent-purple);">
+                <div class="stat-label">年度累計加班</div>
+                <div class="stat-value" id="aq-y-ot" style="font-size:24px; font-weight:bold; color:var(--accent-purple);">0.0 h</div>
+              </div>
+              <div class="stat-card" style="border-top: 3px solid var(--accent-red);">
+                <div class="stat-label">年度累計漏卡</div>
+                <div class="stat-value" id="aq-y-miss" style="font-size:24px; font-weight:bold; color:var(--accent-red);">0 次</div>
+              </div>
+              <div class="stat-card" style="border-top: 3px solid var(--accent-orange); grid-column: span 2;">
+                <div class="stat-label">年度累計遲到/早退</div>
+                <div class="stat-value" id="aq-y-late" style="font-size:24px; font-weight:bold; color:var(--accent-orange);">0 次</div>
+              </div>
+            </div>
+            <p style="font-size:14px; font-weight:bold; color:var(--text-primary); margin-top:16px; margin-bottom:8px;">📅 本月打卡紀錄：</p>
+            <div id="aq-calendar-container"></div>
+          </div>
+        </div>
+        <div class="record-list" id="adminRecords" style="display:none;"></div>
+      </div>
+
+      <!-- ===== 排班異動：排班表 + 異動表單 ===== -->
+      <div class="admin-subpage" id="adminSubPage-adjust" style="display:none;">
+        <p class="section-title">📅 當月排班表</p>
+        <div class="profile-card" style="padding:12px;">
+          <div class="rs-bar">
+            <button class="rs-btn" id="rsPrev" aria-label="上個月">‹</button>
+            <strong id="rsYm"></strong>
+            <button class="rs-btn" id="rsNext" aria-label="下個月">›</button>
+            <button class="rs-btn" id="rsToday">本月</button>
+            <span style="flex:1"></span>
+            <button class="rs-btn" id="rsRefresh">🔄 重新整理</button>
+            <span id="rsMsg" style="font-size:12px;color:var(--text-muted,#888)"></span>
+          </div>
+          <div class="rs-wrap"><table class="rs-tbl" id="rsTbl"></table></div>
+          <div class="rs-legend">
+            <span style="--c:#3b82f6">上班</span><span style="--c:#94a3b8">休</span><span style="--c:#64748b">例</span><span style="--c:#ef4444">H 國定假日</span><span style="--c:#f59e0b">與預設不同</span><span style="--c:#a855f7">請假（虛線＝待審）</span><span>點格子可修改</span>
+          </div>
+        </div>
+
+        <p class="section-title" style="margin-top:24px;">⚙️ 指派同仁特別排班異動 (免審核直接生效)</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">選擇同仁</label>
+            <select class="select-field" id="adminAdjustEmpId">
+              <option value="">-- 請選擇員工 --</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">異動日期</label>
+            <input type="date" class="input-field" id="adminAdjustDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">班別選擇</label>
+            <select class="select-field" id="adminAdjustShiftType">
+              <option value="08:00-17:00">08:00 - 17:00</option>
+              <option value="08:30-17:30">08:30 - 17:30</option>
+              <option value="09:00-18:00" selected>09:00 - 18:00</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">異動原因/備註</label>
+            <input type="text" class="input-field" id="adminAdjustReason" placeholder="例：理監事會議、公務排班調整" />
+          </div>
+          <button class="submit-btn blue" style="margin-top:8px;" onclick="submitAdminAdjust()">✓ 儲存並直接生效</button>
+        </div>
+      </div>
+
+      <!-- ===== 調薪（僅 admin / admin1）===== -->
+      <div class="admin-subpage" id="adminSubPage-salary" style="display:none;">
+        <p class="section-title">💰 調薪管理（僅主管可見）</p>
+        <div class="profile-card" style="padding:16px;" id="slLock">
+          <div class="input-group"><label class="input-label">為保護薪資資料，請再次輸入您的登入密碼</label>
+            <input type="password" class="input-field" id="slPw" autocomplete="current-password"></div>
+          <button class="submit-btn blue" id="slUnlock">解鎖</button>
+          <div id="slMsg" style="margin-top:8px;font-size:13px;color:var(--accent-red);"></div>
+        </div>
+        <div id="slBody" style="display:none;">
+          <div class="profile-card" style="padding:16px;">
+            <div class="input-group" style="margin-bottom:12px;"><label class="input-label">員工</label><select class="select-field" id="slEmp"></select></div>
+            <div class="input-group" style="margin-bottom:12px;"><label class="input-label">生效日</label><input type="date" class="input-field" id="slDate"></div>
+            <div class="input-group" style="margin-bottom:12px;"><label class="input-label">新月薪（元）</label><input type="number" min="1" step="1" class="input-field" id="slAmt"></div>
+            <div class="input-group" style="margin-bottom:12px;"><label class="input-label">備註</label><input class="input-field" id="slNote" placeholder="例：年度調薪"></div>
+            <button class="submit-btn blue" id="slSave">✓ 新增調薪紀錄</button>
+          </div>
+          <p class="section-title">調薪紀錄（只新增、不修改舊紀錄）</p>
+          <div class="profile-card" style="padding:12px;overflow-x:auto;"><table id="slTbl" style="width:100%;border-collapse:collapse;font-size:13px;"></table></div>
+        </div>
+      </div>
+
+      <!-- ===== 代理人 ===== -->
+      <div class="admin-subpage" id="adminSubPage-agent" style="display:none;">
+        <p class="section-title">👥 主管代理人設定 (代理期間擁有審核權限)</p>
+        <div class="profile-card" style="padding: 16px;">
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label" style="color:var(--blue-main); font-weight: bold;">選擇代理同仁</label>
+            <select class="select-field" id="adminAgentEmpId">
+              <option value="">-- 請選擇代理主管 --</option>
+            </select>
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理開始日期</label>
+            <input type="date" class="input-field" id="adminAgentStartDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理結束日期</label>
+            <input type="date" class="input-field" id="adminAgentEndDate" />
+          </div>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label class="input-label">代理狀態</label>
+            <select class="select-field" id="adminAgentStatus">
+              <option value="啟用">啟用 (代理中)</option>
+              <option value="停用">停用 (收回授權)</option>
+            </select>
+          </div>
+          <button class="submit-btn blue" style="margin-top:8px;" onclick="submitAdminAgent()">✓ 儲存代理設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 只載入 script.js；這裡不要再寫任何同名函式（會蓋掉 script.js 裡的正本） -->
+  <script src="script.js"></script>
+  <!-- 排班表：讀寫 Google Sheet「排班」，只顯示專任；點格子可修改 -->
+  <script>
+  (function () {
+    var now = new Date(), S = { y: now.getFullYear(), m: now.getMonth() + 1, data: null };
+    var OPTS = ['8-17', '8:30-17:30', '9-18', '休', '例', 'H', '自訂'];
+    function $(id) { return document.getElementById(id); }
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function fmt(r) { return String(r).split('-').map(function (t) { var p = t.trim().split(':'); return (+p[0]) + (p[1] && p[1] !== '00' ? ':' + p[1] : ''); }).join('-'); }
+    function full(r) { return fmt(r).split('-').map(function (t) { var p = t.split(':'); return pad(+p[0]) + ':' + (p[1] || '00'); }).join('-'); }
+    function cls(t) { return t === '休' ? 'off' : t === '例' ? 'ex' : t === 'H' ? 'h' : 'n'; }
+    function isRange(t) { return /^\d{1,2}(:\d{2})?-\d{1,2}(:\d{2})?$/.test(t); }
+    function msg(t) { $('rsMsg').textContent = t || ''; }
+    function emps() { return ((currentUser && currentUser.employeeList) || []).filter(function (e) { return e.role !== 'admin' && e.role !== 'admin1' && e.role !== 'admin2' && e.empType === '專任'; }); }
+    function rowOf(id) { if (!S.data) return null; var k = Object.keys(S.data.rows || {}).filter(function (x) { return matchEmpId(x, id); })[0]; return k ? S.data.rows[k] : null; }
+    function dayStr(d) { return S.y + '-' + pad(S.m) + '-' + pad(d); }
+
+    function leavesOf(e, ds) {
+      var out = [], all = ((S.data && S.data.leaves) || []).map(function (l) { return { l: l, p: false }; });
+      (adminPendingCache || []).forEach(function (r) { if (r.type === '請假' && /待審|補件|待第二次審查/.test(r.status)) all.push({ l: r, p: true }); });
+      all.forEach(function (x) {
+        var l = x.l; if (!matchEmpId(l.empId, e.empId)) return;
+        var a = formatLocalDateStr(l.date), b = formatLocalDateStr(l.endDate || l.date);
+        if (ds >= a && ds <= b) out.push({ t: l.subType || '請假', c: 'lv' + (x.p ? ' pd' : '') });
+      });
+      return out;
+    }
+    function cellsFor(e, d) {
+      var ds = dayStr(d), dow = new Date(S.y, S.m - 1, d).getDay(), row = rowOf(e.empId), cs = [];
+      var def = fmt(e.defaultShift || '09:00-18:00');
+      if (row) {
+        String(row[d - 1] || '').split(/[\/、]/).forEach(function (t) { t = t.trim(); if (!t) return; var c = cls(t); if (c === 'n' && t !== def) c = 'sp'; cs.push({ t: t, c: c }); });
+      } else if (S.data) {
+        var t = dow === 6 ? '休' : dow === 0 ? '例' : (((currentUser && currentUser.holidayStrings) || []).indexOf(ds) >= 0 ? 'H' : def);
+        cs.push({ t: t, c: cls(t) + ' auto' });
+      }
+      return cs.concat(leavesOf(e, ds));
+    }
+
+    function render() {
+      $('rsYm').textContent = S.y + ' 年 ' + S.m + ' 月';
+      var tbl = $('rsTbl'), list = emps(), days = new Date(S.y, S.m, 0).getDate(), wk = '日一二三四五六';
+      if (!S.data) { tbl.innerHTML = '<tbody><tr><td style="padding:16px;border:0;">讀取中…</td></tr></tbody>'; return; }
+      if (!list.length) { tbl.innerHTML = '<tbody><tr><td style="padding:16px;border:0;">尚無專任員工資料</td></tr></tbody>'; return; }
+      var tdy = (now.getFullYear() === S.y && now.getMonth() + 1 === S.m) ? now.getDate() : 0;
+      var h = '<thead><tr><th class="rs-emp">員工</th>';
+      for (var d = 1; d <= days; d++) { var w = new Date(S.y, S.m - 1, d).getDay(); h += '<th class="' + (w % 6 === 0 ? 'rs-we ' : '') + (d === tdy ? 'rs-td' : '') + '">' + d + '<small>' + wk[w] + '</small></th>'; }
+      h += '</tr></thead><tbody>';
+      list.forEach(function (e, i) {
+        var cnt = 0, row = '';
+        for (var d = 1; d <= days; d++) {
+          var w = new Date(S.y, S.m - 1, d).getDay(), cs = cellsFor(e, d);
+          row += '<td class="rs-click ' + (w % 6 === 0 ? 'rs-we ' : '') + (d === tdy ? 'rs-td' : '') + '" data-i="' + i + '" data-d="' + d + '"><div class="rs-cell">';
+          cs.forEach(function (c) { if (/^(n|sp)\b/.test(c.c)) cnt++; row += '<div class="rs-chip ' + c.c + '">' + esc(c.t) + '</div>'; });
+          row += '</div></td>';
+        }
+        h += '<tr><td class="rs-emp">' + esc(e.name || e.empId) + '<small>' + esc(e.empId) + '・' + cnt + ' 班</small></td>' + row + '</tr>';
+      });
+      tbl.innerHTML = h + '</tbody>';
+    }
+
+    function load() {
+      S.data = null; render(); msg('讀取中…');
+      callGAS({ action: 'getRoster', year: S.y, month: S.m }).then(function (r) {
+        if (r && r.status === 'ok') { S.data = { rows: r.rows || {}, leaves: r.leaves || [] }; msg(''); }
+        else { S.data = { rows: {}, leaves: [] }; msg('⚠ ' + ((r && r.message) || '讀取失敗')); }
+        render();
+      }).catch(function () { S.data = { rows: {}, leaves: [] }; msg('⚠ 連線失敗'); render(); });
+    }
+
+    function save(e, d, val, quiet) {
+      return callGAS({ action: 'setRosterCell', year: S.y, month: S.m, empId: e.empId, day: d, value: val, operatorId: currentUser.empId }).then(function (r) {
+        if (!r || r.status !== 'ok') { showToast('⚠️ 排班儲存失敗：' + ((r && r.message) || '')); return; }
+        var k = Object.keys(S.data.rows).filter(function (x) { return matchEmpId(x, e.empId); })[0] || e.empId;
+        var row = S.data.rows[k] = S.data.rows[k] || new Array(31).fill('');
+        row[d - 1] = val;
+        if (isRange(val) && full(val) !== full(e.defaultShift || '09:00-18:00')) {   // 時間班別 → 同步成「班別調整」，出勤計算才會跟著變
+          var id = Date.now(), rec = { id: id, clientId: String(id), type: '班別調整', subType: full(val), empId: e.empId, name: e.name, date: dayStr(d), reason: '排班表異動', status: '同意', approverName: currentUser.name, approverId: currentUser.empId, timestamp: new Date().toISOString() };
+          records.unshift(rec); saveRecords(); syncToSheet(rec);
+        }
+        if (!quiet) showToast('✅ 排班已更新'); render();
+      }).catch(function () { showToast('⚠️ 連線失敗，未儲存'); });
+    }
+
+    function openEd(e, d) {
+      var raw = String((rowOf(e.empId) || [])[d - 1] || ''), box = $('rsMd');
+      if (!box) { box = document.createElement('div'); box.id = 'rsMd'; box.className = 'rs-md'; document.body.appendChild(box); }
+      var inList = OPTS.indexOf(raw) >= 0;
+      box.innerHTML = '<div class="rs-box"><b>' + esc(e.name || e.empId) + '　' + S.m + '/' + d + '</b><select class="select-field" id="rsSel">' +
+        OPTS.map(function (o) { return '<option' + ((inList ? o === raw : o === '自訂') ? ' selected' : '') + '>' + o + '</option>'; }).join('') +
+        '</select><input class="input-field" id="rsCus" placeholder="例 9-12/14-18" value="' + (inList ? '' : esc(raw)) + '"><div class="rs-bar" style="margin:0"><button class="rs-btn" id="rsOk">儲存</button><button class="rs-btn" id="rsNo">取消</button></div></div>';
+      box.style.display = 'flex';
+      var sel = $('rsSel'), cus = $('rsCus');
+      function sync() { cus.style.display = sel.value === '自訂' ? '' : 'none'; } sel.onchange = sync; sync();
+      $('rsNo').onclick = function () { box.style.display = 'none'; };
+      $('rsOk').onclick = function () {
+        var v = (sel.value === '自訂' ? cus.value : sel.value).trim();
+        if (!v) { showToast('⚠️ 請輸入內容'); return; }
+        box.style.display = 'none'; save(e, d, v);
+      };
+    }
+
+    $('rsTbl').addEventListener('click', function (ev) {
+      var td = ev.target.closest('td[data-i]'); if (!td) return;
+      openEd(emps()[+td.dataset.i], +td.dataset.d);
+    });
+    $('rsPrev').onclick = function () { S.m--; if (S.m < 1) { S.m = 12; S.y--; } load(); };
+    $('rsNext').onclick = function () { S.m++; if (S.m > 12) { S.m = 1; S.y++; } load(); };
+    $('rsToday').onclick = function () { S.y = now.getFullYear(); S.m = now.getMonth() + 1; load(); };
+    $('rsRefresh').onclick = load;
+
+    // 切到「排班異動」分頁時載入；下方「指派異動」送出時，同步寫入排班表
+    var origSwitch = window.switchAdminSubTab;
+    window.switchAdminSubTab = function (t) { origSwitch.apply(this, arguments); if (t === 'adjust') load(); };
+    var origAdjust = window.submitAdminAdjust;
+    window.submitAdminAdjust = function () {
+      var id = $('adminAdjustEmpId').value, dt = $('adminAdjustDate').value, sh = $('adminAdjustShiftType').value;
+      origAdjust.apply(this, arguments);
+      if (!id || !dt || !S.data) return;
+      var p = dt.split('-'), e = emps().filter(function (x) { return matchEmpId(x.empId, id); })[0];
+      if (e && +p[0] === S.y && +p[1] === S.m) save(e, +p[2], fmt(sh), true);
+    };
+  })();
+  </script>
+  <!-- 調薪：密碼只留在記憶體，不寫入任何儲存空間 -->
+  <script>
+  (function () {
+    var pw = '';
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    if (currentUser && currentUser.role === 'admin2') $('adminSubTab-salary').style.display = 'none';
+
+    function lock(m) { pw = ''; $('slBody').style.display = 'none'; $('slLock').style.display = ''; $('slMsg').textContent = m || ''; }
+    function show(rows) {
+      $('slLock').style.display = 'none'; $('slBody').style.display = ''; $('slMsg').textContent = '';
+      var opts = ((currentUser.employeeList || []).filter(function (e) { return e.role !== 'admin' && e.role !== 'admin1' && e.role !== 'admin2'; }))
+        .map(function (e) { return '<option value="' + esc(e.empId) + '">' + esc(e.empId + ' - ' + e.name) + '</option>'; }).join('');
+      $('slEmp').innerHTML = opts;
+      var h = '<thead><tr style="background:#2a3650;color:#fff;"><th style="padding:8px;">員編</th><th>姓名</th><th>生效日</th><th>月薪</th><th>備註</th><th>登錄人</th></tr></thead><tbody>';
+      rows.slice().reverse().forEach(function (r) {
+        h += '<tr style="border-bottom:1px solid var(--card-border);text-align:center;"><td style="padding:8px;">' + esc(r.empId) + '</td><td>' + esc(r.name) + '</td><td>' + esc(r.effective) + '</td><td style="font-weight:700;">' + Number(r.salary).toLocaleString() + '</td><td>' + esc(r.note) + '</td><td>' + esc(r.by) + '</td></tr>';
+      });
+      $('slTbl').innerHTML = h + (rows.length ? '' : '<tr><td colspan="6" style="padding:14px;text-align:center;color:var(--text-muted);">尚無調薪紀錄</td></tr>') + '</tbody>';
+    }
+    function load() {
+      $('slMsg').textContent = '驗證中…';
+      callGAS({ action: 'getSalaryHistory', operatorId: currentUser.empId, password: pw }).then(function (r) {
+        if (r && r.status === 'ok') show(r.rows || []); else lock((r && r.message) || '驗證失敗');
+      }).catch(function () { lock('連線失敗'); });
+    }
+    $('slUnlock').onclick = function () { pw = $('slPw').value; $('slPw').value = ''; if (pw) load(); };
+    $('slSave').onclick = function () {
+      var emp = $('slEmp').value, d = $('slDate').value, amt = Number($('slAmt').value);
+      if (!emp || !d || !(amt > 0)) { showToast('⚠️ 請填員工、生效日與月薪'); return; }
+      if (!confirm('確定新增調薪：' + emp + '，' + d + ' 起月薪 ' + amt.toLocaleString() + ' 元？')) return;
+      callGAS({ action: 'setSalary', operatorId: currentUser.empId, password: pw, empId: emp, effective: d, salary: amt, note: $('slNote').value }).then(function (r) {
+        if (r && r.status === 'ok') { showToast('✅ 已新增調薪紀錄'); $('slAmt').value = ''; $('slNote').value = ''; load(); }
+        else showToast('⚠️ ' + ((r && r.message) || '儲存失敗'));
+      }).catch(function () { showToast('⚠️ 連線失敗'); });
+    };
+    var prev = window.switchAdminSubTab;
+    window.switchAdminSubTab = function (t) {
+      prev.apply(this, arguments);
+      var on = t === 'salary';
+      $('adminSubPage-salary').style.display = on ? 'block' : 'none';
+      $('adminSubTab-salary').classList.toggle('active', on);
+      if (!on) lock('');          // 離開分頁就重新上鎖
+    };
+  })();
+  </script>
+</body>
+
+</html>
