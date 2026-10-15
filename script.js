@@ -2272,7 +2272,7 @@ function recordHTML1015(r, showName = false, showApprove = false) {
 
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
  // recordHTML：在 ${approveRow} 前面加（換薪的審核卡出現「試算金額」鈕，proxy 不顯示）
-  ${(r.type === '換薪' && showApprove && currentUser.role !== 'admin2') ? `<button class="approve-btn" style="margin-top:8px" onclick="quoteCashOut('${r.clientId}')">💰 試算金額與明細</button>` : ''}
+  ${(r.type === '換薪' && showApprove && currentUser.role !== 'admin2') ? `<button class="approve-btn" style="margin-top:8px" onclick="quoteCashOut('${r.clientId}')">💰 試算金額與明細</button>` : ''};
   
   const approveRow = (showApprove && (r.status === `待審` || r.status === `待第二次審查`)) ? `
     <div class="approve-row" id="approveBtns-${r.id}">
