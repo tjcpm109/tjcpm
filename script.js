@@ -1,5 +1,6 @@
 // 在 script.js 最上方或 init 函式統一初始化
 // 【Line 1】直接在最上面宣告並初始化
+
 let currentUser = null;
 try {
   const savedUser = sessionStorage.getItem('tjcpm_user');
@@ -37,7 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentApplyFilter = '請假';      // 第一層：主類別 (請假/加班/補打卡/班別調整)
 let currentSubCategory = '特休';       // 第二層：假別細項 (特休/補休/公假/其他假別)
 let currentStatus = '同意';           // 第三層：審核狀態 (同意/待審/拒絕/已撤回)
-
+let pendingClientId = null;
+let pendingProofFiles = [];
 // ── 第一層：主類別切換 ──
 
 function filterApplyMainCategory(type, chip) {
@@ -118,9 +120,7 @@ function applyCombinedFilter() {
 
     // (B) 第三層：審核狀態條件判斷
     let passStatus = false;
-    if (currentStatus === '') {
-      passStatus = false;   // ← 新增：尚未選擇狀態時，全部不顯示，畫面空白
-    } else if (currentStatus === 'ALL') {
+    if (currentStatus === 'ALL') {
       passStatus = true;
     } else if (currentStatus === '同意') {
       passStatus = (itemStatus === '同意' || itemStatus === '同意_補件後');
@@ -380,7 +380,7 @@ function getYearRangeString(joinDateStr, quota) {
   if (quota && quota.correction && quota.correction.startDate) {
     const corrStart = safeNewDate(quota.correction.startDate);
     if (corrStart && !isNaN(corrStart.getTime())) {
-    if (corrStart <= displayedEnd) {
+     if (corrStart <= displayedEnd) {
   // 只有校正落在「當前年度區間內」才套用起始日與備註；跨年度後不再顯示舊備註
       if (corrStart >= start) {
         displayedStart = corrStart;
@@ -628,12 +628,13 @@ function showApp() {
       agentTab.style.setProperty(`display`, `inline-flex`, `important`);
     }
   }
-  
+  clearInterval(approvalTimer);
+  clearInterval(connectivityTimer);
   if (currentUser.role !== `admin`) {
-    setInterval(checkApprovalUpdates, 60000);
+    approvalTimer = setInterval(checkApprovalUpdates, 60000);
   }
   checkConnectivity();
-  setInterval(checkConnectivity, 30000);
+  connectivityTimer = setInterval(checkConnectivity, 30000);
 }
 
 // ── Login / Logout ──
@@ -685,6 +686,8 @@ function showLoginErr(msg) {
 }
 
 function doLogout() {
+    clearInterval(approvalTimer);
+    clearInterval(connectivityTimer);
   if (document.body.dataset.page === 'admin') {          // ← 新增
     sessionStorage.removeItem('tjcpm_user');
     location.replace('index.html');
@@ -1033,8 +1036,102 @@ function calculateLeaveHoursLocal(record, holidayStrings = []) {
 
   return totalHours;
 }
-
 async function submitLeave() {
+  if (window.submitLeaveInFlight) return;
+  window.submitLeaveInFlight = true;
+  try {
+    await submitLeaveCore();
+  } finally {
+    window.submitLeaveInFlight = false;   // 不管成功、提早 return 或丟例外，都會解除
+  }
+}
+
+async function submitLeaveCore() {
+  const leaveStartVal = document.getElementById(`leaveStart`).value;
+  const leaveEndVal = document.getElementById(`leaveEnd`).value || leaveStartVal;
+
+  if (hasLocalOverlap(`請假`, leaveStartVal, leaveEndVal)) {
+    showToast(`⚠️ 這段期間已經有一筆待審或已核准的請假申請，請勿重複申請`);
+    return;
+  }
+
+  const subType = document.getElementById(`leaveType`).value;
+
+  if (subType === `補休`) {
+    const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
+    const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
+    const requestHours = Math.ceil(calculateLeaveHoursLocal(
+      { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
+      currentUser?.holidayStrings || []
+    ));
+    const compensationBalance = calculateCompensationBalance(leaveStartVal);
+    if (requestHours > compensationBalance) {
+      showToast(`⚠️ 補休餘額不足！申請時數：${requestHours}h，餘額：${compensationBalance}h`);
+      return;
+    }
+  } else if (subType === `特休`) {
+    const startTime = document.getElementById(`leaveStartTime`).value || `09:00`;
+    const endTime = document.getElementById(`leaveEndTime`).value || `18:00`;
+    const requestHours = Math.ceil(calculateLeaveHoursLocal(
+      { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
+      currentUser?.holidayStrings || []
+    ));
+    // 餘額檢查改用扣掉待審後的可用額度
+    const annualBalance = Number(currentUser?.quota?.specialLeaveRealAvailable ?? getLeaveRemaining('特休'));
+    if (requestHours > annualBalance) {
+      showToast(`⚠️ 特休餘額不足！申請時數：${requestHours}h，餘額：${annualBalance}h`);
+      return;
+    }
+  }
+
+  const id = Date.now();
+  const clientId = pendingClientId || String(id);
+  pendingClientId = null;
+  const filesToUpload = pendingProofFiles.slice();
+  clearProofFileSelection(`leave`);
+
+  const record = {
+    id,
+    clientId: clientId,
+    type: `請假`,
+    subType: subType,
+    empId: currentUser.empId,
+    name: currentUser.name,
+    date: leaveStartVal,
+    startTime: document.getElementById(`leaveStartTime`).value,
+    endDate: document.getElementById(`leaveEnd`).value,
+    endTime: document.getElementById(`leaveEndTime`).value,
+    reason: document.getElementById(`leaveReason`).value,
+    status: `待審`,
+    timestamp: new Date().toISOString(),
+    // 先用前端算一個暫時值，之後以後端為準
+    hours: calculateLeaveHoursLocal(
+      {
+        empId: currentUser.empId,
+        date: leaveStartVal,
+        endDate: document.getElementById(`leaveEnd`).value,
+        startTime: document.getElementById(`leaveStartTime`).value,
+        endTime: document.getElementById(`leaveEndTime`).value
+      },
+      currentUser?.holidayStrings || []
+    )
+  };
+
+  records.unshift(record);
+  saveRecords();
+  renderAllList();
+
+  if (filesToUpload.length > 0) {
+    showToast(`📤 證明文件上傳中…`);
+    await uploadProofFiles(clientId, filesToUpload, `請假`);
+  }
+
+  await syncToSheet(record);
+  addNotif(`pending`, `請假申請已送出（${record.subType} ${record.date}），等待主管審核`);
+  showToast(`📝 請假申請已送出`);
+  updateLeaveBalanceDisplay();
+}
+/*async function submitLeave() {
   if (window.submitLeaveInFlight) return;
   window.submitLeaveInFlight = true;
   setTimeout(() => { window.submitLeaveInFlight = false; }, 3000);
@@ -1102,7 +1199,7 @@ async function submitLeave() {
 
   if (filesToUpload.length > 0) {
     showToast(`📤 證明文件上傳中…`);
-    await uploadProofFiles(clientId, filesToUpload);
+    await uploadProofFiles(clientId, filesToUpload,'請假');
   }
 
   await syncToSheet(record);
@@ -1110,7 +1207,7 @@ async function submitLeave() {
   showToast(`📝 請假申請已送出`);
   updateLeaveBalanceDisplay();   // 8/20 ← 新增
   window.submitLeaveInFlight = false;
-}
+} */
 
 // ── 3.2：拿掉本地重複疊加，直接信任伺服器算好的批次加總結果 ──
 // 原本這個函式會在 baseBalance 上疊加「本地快取的本月加班-本月已用」，
@@ -2382,8 +2479,7 @@ function saveRecords() {
   localStorage.setItem(storageKey('tjcpm_records', currentUser.empId), JSON.stringify(records));
 }
 
-let pendingClientId = null;
-let pendingProofFiles = [];
+
 
 function handleProofFilesSelected(event, formKey) {
   const files = Array.from(event.target.files || []);
@@ -2419,7 +2515,7 @@ function fileToBase64(file) {
   });
 }
 
-async function uploadProofFiles(clientId, files) {
+async function uploadProofFiles(clientId, files, type = '請假') {
   if (!files || files.length === 0) return true;
   try {
     const payload = await Promise.all(files.map(async f => ({
@@ -2429,7 +2525,7 @@ async function uploadProofFiles(clientId, files) {
       method: `POST`,
       mode: `no-cors`,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: `uploadProofFile`, clientId: clientId, name: currentUser.name, files: payload })
+      body: JSON.stringify({ action: `uploadProofFile`, clientId, type, name: currentUser.name, files: payload })
     });
     return true;
   } catch (e) {
@@ -2942,13 +3038,7 @@ function calcAttendance() {
 
   let otHours = 0;
   myRecords.filter(r => r.type === `加班` && isFinalApproved(r.status)).forEach(r => {
-   // if (r.hours) otHours += parseFloat(r.hours);
-   // else if (r.startTime && r.endTime) {
-   //   const sh = parseInt(r.startTime.split(`:`)[0], 10), sm = parseInt(r.startTime.split(`:`)[1] || 0, 10);
-   //   const eh = parseInt(r.endTime.split(`:`)[0], 10), em = parseInt(r.endTime.split(`:`)[1] || 0, 10);
-   //   otHours += Math.max(0, (eh * 60 + em - sh * 60 - sm) / 60);
-  //  }
-  //});
+
   if (r.hours !== undefined && r.hours !== null && r.hours !== ``) otHours += Math.floor(parseFloat(r.hours) || 0);
   else otHours += calculateOvertimeHoursLocal(r);
   });
@@ -3501,18 +3591,7 @@ function adminFixHours(type, clientId, cur) {
     } else showToast('⚠️ ' + ((r && r.message) || '校正失敗'));
   }).catch(function () { showToast('⚠️ 連線失敗'); });
 }
-function refreshAttachmentLinks_(ss, empName, clientId) {
-  const { folder2b } = getYearlyFolders(new Date().getFullYear());
-  const links = collectFolderFileLinksByClientId(getEmployeeSubfolder(folder2b, empName, '4b_證明文件'), clientId);
-  if (!links) return;
-  ['請假申請', '加班申請', '補打卡申請', '特別排班'].forEach(n => {
-    const sh = ss.getSheetByName(n); if (!sh) return;
-    const c = SHEET_COLUMNS[n], row = findApplicationRow(sh.getDataRange().getValues(), c, clientId, null, false);
-    if (row === -1) return;
-    const cell = sh.getRange(row, c.attachment);
-    if (String(cell.getValue() || '').indexOf('【補件新增】') === -1) cell.setValue(links);   // 不蓋掉補件紀錄
-  });
-}
+
 // ── Boot ──
 if (document.body.dataset.page === 'admin') {
   initAdminPage();
