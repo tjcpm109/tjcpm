@@ -1850,7 +1850,7 @@ function buildMonthTableHTML(o) {
     const isToday = day === today, isFuture = day > today;
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     const beforeJoin = earliestD && dateObj < earliestD;
-    const dayLabel = getDayStatus(dateObj, dateStr, empId, holidayStrings, specialShifts);
+    const dayLabel = getDayStatus(cur, dateStr, record.empId || currentUser?.empId, holidayStrings);
     const shift = getShiftMinutesForDate(dateStr, empId, specialShifts, defaultShift);
     const punch = punchMap[day] || { 上班: '—', 下班: '—' };
     const dayLeaves = leavesOfDay(dateObj);
@@ -2269,7 +2269,7 @@ function recordHTML(r, showName = false, showApprove = false) {
     r.attachment ? buildAttachmentLinksHTML(r.attachment) : ``
   ].filter(Boolean).join(` · `);
 
-  const who = showName ? `${r.name \vert{}\vert{} r.empId}（${r.empId}）` : ``;
+  const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
 
   // 1. 修正：將原本語法錯誤的「試算金額」按鈕宣告為獨立變數
   const cashOutBtn = (r.type === '換薪' && showApprove && typeof currentUser !== 'undefined' && currentUser.role !== 'admin2')
