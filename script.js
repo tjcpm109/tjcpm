@@ -40,6 +40,7 @@ let currentSubCategory = '特休';       // 第二層：假別細項 (特休/補
 let currentStatus = '同意';           // 第三層：審核狀態 (同意/待審/拒絕/已撤回)
 let pendingClientId = null;
 let pendingProofFiles = [];
+let approvalTimer = null, connectivityTimer = null; 
 // ── 第一層：主類別切換 ──
 
 function filterApplyMainCategory(type, chip) {
@@ -652,10 +653,12 @@ async function doLogin() {
   try {
     const data = await callGAS({ action: `login`, empId, password });
     if (data.status === `ok`) {
-      currentUser = { empId: data.empId, name: data.name, role: data.role, joinDate: data.joinDate, empType: data.empType || `專任`, defaultShift: data.defaultShift || `09:00-18:00`, quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false,  
-                     email: data.email || '',
-                     seniorityText: data.seniorityText || `—`,                              // 【新增】
-                   specialLeaveEntitlementHours: data.specialLeaveEntitlementHours || 0   // 【新增】 
+            currentUser = { empId: data.empId, name: data.name, role: data.role, token: data.token || ``, 
+                           joinDate: data.joinDate, empType: data.empType || `專任`, defaultShift: data.defaultShift || `09:00-18:00`, 
+                           quota: data.quota || null, employeeList: data.employeeList || [], isActiveProxy: data.isActiveProxy || false,  
+                           email: data.email || '',
+                           seniorityText: data.seniorityText || `—`,                              
+                           specialLeaveEntitlementHours: data.specialLeaveEntitlementHours || 0    
                    };
       try {
         const cachedSettled = localStorage.getItem(storageKey('tjcpm_settledAccumulated', currentUser.empId));
@@ -1821,7 +1824,7 @@ function buildMonthTableHTML(o) {
     const isToday = day === today, isFuture = day > today;
     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
     const beforeJoin = earliestD && dateObj < earliestD;
-    const dayLabel = getDayStatus(cur, dateStr, record.empId || currentUser?.empId, holidayStrings);
+    const dayLabel = getDayStatus(dateObj, dateStr, empId, holidayStrings, specialShifts);
     const shift = getShiftMinutesForDate(dateStr, empId, specialShifts, defaultShift);
     const punch = punchMap[day] || { 上班: '—', 下班: '—' };
     const dayLeaves = leavesOfDay(dateObj);
@@ -1906,11 +1909,11 @@ function renderCalendarTable() {
     });
 
     const sortedKeys = Object.keys(dailyMap).sort((a, b) => b.localeCompare(a));
-    let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>📝 備註</th></tr></thead><tbody>`;
+      let html = `<div class="calendar-table-container"><table class="calendar-table"><thead><tr><th>📅 出勤日期</th><th>🟢 上班簽到</th><th>🏁 下班簽退</th><th>💬 備註</th></tr></thead><tbody>`;
 
     if (sortedKeys.length === 0) {
-      html += `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;
-    } else {
+      html += `<tr><td colspan="4" style="text-align:center; color:var(--text-secondary); padding:20px;">尚無年度打卡紀錄</td></tr>`;  
+  } else {
       sortedKeys.forEach(key => {
         const item = dailyMap[key];
         const dateObj = item.dateObj;
@@ -2525,7 +2528,7 @@ async function uploadProofFiles(clientId, files, type = '請假') {
       method: `POST`,
       mode: `no-cors`,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: `uploadProofFile`, clientId, type, name: currentUser.name, files: payload })
+            body: JSON.stringify({ action: `uploadProofFile`, token: currentUser && currentUser.token, clientId, type, name: currentUser.name, files: payload })
     });
     return true;
   } catch (e) {
@@ -2668,7 +2671,7 @@ async function approveRecord(id, decision, comment) {
     showToast(`⚠️ 您沒有審核權限`);
     return;
   }
-  const rec = adminPendingCache.find(r => r.id === id) || records.find(r => r.id === id);
+  const rec = adminPendingCache.find(r => String(r.id) === String(id)) || records.find(r => String(r.id) === String(id));
   if (!rec) { showToast(`⚠️ 找不到此筆申請資料`); return; }
   rec.status = decision;
   if (comment) rec.approveComment = comment;
@@ -3591,7 +3594,21 @@ function adminFixHours(type, clientId, cur) {
     } else showToast('⚠️ ' + ((r && r.message) || '校正失敗'));
   }).catch(function () { showToast('⚠️ 連線失敗'); });
 }
+function quoteCashOut(clientId) {
+  callGAS({ action: 'getCashOutQuote', clientId: clientId }).then(function (r) {
+    if (!r || r.status !== 'ok') { showToast('⚠️ ' + ((r && r.message) || '試算失敗')); return; }
+    var q = r.quote;
+    if (!q.ok) { alert(q.message || '試算失敗'); return; }
+    var lines = (q.detail || []).map(function (d) {
+      return (d.date ? d.date + ' ' : '') + d.dayType + '　' + d.hours + 'h ×' + d.mult + '　月薪 ' + d.monthlySalary + ' ＝ ' + d.amountRaw;
+    });
+    alert(q.name + '　' + q.leaveType + ' ' + q.hours + 'h\n' + (q.settled ? '已結算 ' : '預估，結算日 ') + q.settleDate +
+      '\n\n' + lines.join('\n') + '\n\n合計（整筆無條件進位）：' + q.amount + ' 元' +
+      ((q.warnings || []).length ? '\n\n⚠ ' + q.warnings.join('\n⚠ ') : ''));
+  }).catch(function () { showToast('⚠️ 連線失敗'); });
+}
 
+// ── Boot ──
 // ── Boot ──
 if (document.body.dataset.page === 'admin') {
   initAdminPage();
