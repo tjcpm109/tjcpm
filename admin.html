@@ -275,7 +275,15 @@
       });
       return out;
     }
+    var S = { y: now.getFullYear(), m: now.getMonth() + 1, data: null, mode: 'plan' };
+
     function cellsFor(e, d) {
+      if (S.mode === 'actual') {
+      var tx = String((rowOf(e.empId) || [])[d - 1] || '').trim();
+      if (!tx) return [];
+      var cc = tx === '漏' ? 'h' : /^(休|例|H)$/.test(tx) ? 'off' : /^(休|例|H) /.test(tx) ? 'sp' : /[\u4e00-\u9fa5]/.test(tx) ? 'lv' : 'n';
+      return [{ t: tx, c: cc }];
+      }
       var ds = dayStr(d), dow = new Date(S.y, S.m - 1, d).getDay(), row = rowOf(e.empId), cs = [];
       var def = fmt(e.defaultShift || '09:00-18:00');
       if (row) {
@@ -311,14 +319,14 @@
 
     function load() {
       S.data = null; render(); msg('讀取中…');
-      callGAS({ action: 'getRoster', year: S.y, month: S.m }).then(function (r) {
+      callGAS({ action: S.mode === 'plan' ? 'getRoster' : 'getActualRoster', year: S.y, month: S.m }).then(function (r) {
         if (r && r.status === 'ok') { S.data = { rows: r.rows || {}, leaves: r.leaves || [] }; msg(''); }
         else { S.data = { rows: {}, leaves: [] }; msg('⚠ ' + ((r && r.message) || '讀取失敗')); }
         render();
       }).catch(function () { S.data = { rows: {}, leaves: [] }; msg('⚠ 連線失敗'); render(); });
     }
 
-    function save(e, d, val, quiet) {
+    function save1015(e, d, val, quiet) {
       return callGAS({ action: 'setRosterCell', year: S.y, month: S.m, empId: e.empId, day: d, value: val, operatorId: currentUser.empId }).then(function (r) {
         if (!r || r.status !== 'ok') { showToast('⚠️ 排班儲存失敗：' + ((r && r.message) || '')); return; }
         var k = Object.keys(S.data.rows).filter(function (x) { return matchEmpId(x, e.empId); })[0] || e.empId;
@@ -331,7 +339,13 @@
         if (!quiet) showToast('✅ 排班已更新'); render();
       }).catch(function () { showToast('⚠️ 連線失敗，未儲存'); });
     }
-
+  // 取代 save1015()：後端自己同步 特別排班，前端不要再 syncToSheet
+  function save(e, d, val) {
+  return callGAS({ action: 'setRosterCell', year: S.y, month: S.m, empId: e.empId, day: d, value: val }).then(function (r) {
+    if (!r || r.status !== 'ok') { showToast('⚠️ 排班儲存失敗：' + ((r && r.message) || '')); return; }
+    showToast('✅ 排班已更新'); load(); loadAdminData();
+  }).catch(function () { showToast('⚠️ 連線失敗，未儲存'); });
+  }
     function openEd(e, d) {
       var raw = String((rowOf(e.empId) || [])[d - 1] || ''), box = $('rsMd');
       if (!box) { box = document.createElement('div'); box.id = 'rsMd'; box.className = 'rs-md'; document.body.appendChild(box); }
@@ -362,14 +376,45 @@
     // 切到「排班異動」分頁時載入；下方「指派異動」送出時，同步寫入排班表
     var origSwitch = window.switchAdminSubTab;
     window.switchAdminSubTab = function (t) { origSwitch.apply(this, arguments); if (t === 'adjust') load(); };
+    //var origAdjust = window.submitAdminAdjust;
+    //window.submitAdminAdjust = function () {
+    //  var id = $('adminAdjustEmpId').value, dt = $('adminAdjustDate').value, sh = $('adminAdjustShiftType').value;
+    //  origAdjust.apply(this, arguments);
+    //  if (!id || !dt || !S.data) return;
+    //  var p = dt.split('-'), e = emps().filter(function (x) { return matchEmpId(x.empId, id); })[0];
+    //  if (e && +p[0] === S.y && +p[1] === S.m) save(e, +p[2], fmt(sh), true);
+    //};
+    // 取代 submitAdminAdjust 的 wrapper（修掉重複寫入）
     var origAdjust = window.submitAdminAdjust;
     window.submitAdminAdjust = function () {
-      var id = $('adminAdjustEmpId').value, dt = $('adminAdjustDate').value, sh = $('adminAdjustShiftType').value;
-      origAdjust.apply(this, arguments);
-      if (!id || !dt || !S.data) return;
-      var p = dt.split('-'), e = emps().filter(function (x) { return matchEmpId(x.empId, id); })[0];
-      if (e && +p[0] === S.y && +p[1] === S.m) save(e, +p[2], fmt(sh), true);
+      Promise.resolve(origAdjust.apply(this, arguments)).then(function () { if (S.data) load(); });
     };
+  $('rsMode').onclick = function () {
+  S.mode = S.mode === 'plan' ? 'actual' : 'plan';
+  this.textContent = S.mode === 'plan' ? '📅 排班表' : '✅ 實際班表';
+  load();
+  };
+  $('rsSwap').onclick = function () {
+  var box = $('rsMd2');
+  if (!box) { box = document.createElement('div'); box.id = 'rsMd2'; box.className = 'rs-md'; document.body.appendChild(box); }
+  var opts = emps().map(function (e) { return '<option value="' + esc(e.empId) + '">' + esc(e.empId + ' ' + e.name) + '</option>'; }).join('');
+  var td = S.y + '-' + pad(S.m) + '-' + pad(now.getDate());
+  box.innerHTML = '<div class="rs-box"><b>🔁 換班（甲的這天 ↔ 乙的那天）</b>' +
+    '<select class="select-field" id="swEA">' + opts + '</select><input type="date" class="input-field" id="swDA" value="' + td + '">' +
+    '<select class="select-field" id="swEB">' + opts + '</select><input type="date" class="input-field" id="swDB" value="' + td + '">' +
+    '<div class="rs-bar" style="margin:0"><button class="rs-btn" id="swOk">確認對調</button><button class="rs-btn" id="swNo">取消</button></div></div>';
+  box.style.display = 'flex';
+  $('swNo').onclick = function () { box.style.display = 'none'; };
+  $('swOk').onclick = function () {
+    callGAS({ action: 'swapRosterCells', empA: $('swEA').value, dateA: $('swDA').value, empB: $('swEB').value, dateB: $('swDB').value }).then(function (r) {
+      if (r && r.status === 'ok') {
+        box.style.display = 'none';
+        showToast('✅ ' + r.a.name + ' ' + r.a.date.slice(5) + '：' + r.a.from + '→' + r.a.to + '；' + r.b.name + ' ' + r.b.date.slice(5) + '：' + r.b.from + '→' + r.b.to);
+        load(); loadAdminData();
+      } else showToast('⚠️ ' + ((r && r.message) || '換班失敗'));
+    }).catch(function () { showToast('⚠️ 連線失敗'); });
+    };
+  };
   })();
   </script>
   <!-- 調薪：密碼只留在記憶體，不寫入任何儲存空間 -->
