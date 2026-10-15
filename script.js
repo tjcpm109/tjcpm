@@ -2403,6 +2403,18 @@ async function handleAdminQueryChange() {
       document.getElementById(`aq-y-late`).textContent = lateEarlyCount + ` 次`;
 
       renderAdminQueryCalendarTable(empId, empRecords, res, empInfo);
+      var hl = document.getElementById('aq-hours-list');
+if (hl && currentUser.role !== 'admin2') {
+  var hr = empRecords.filter(function (r) { return (r.type === '請假' || r.type === '加班') && isFinalApproved(r.status); })
+    .sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); }).slice(0, 40);
+  hl.innerHTML = '<p style="font-size:14px;font-weight:bold;margin:16px 0 8px;">✏️ 時數校正(已核准,最近 40 筆)</p>' +
+    '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center">' +
+    hr.map(function (r) {
+      return '<tr style="border-bottom:1px solid var(--card-border)"><td style="padding:6px">' + r.date + '</td><td>' + (r.type === '請假' ? r.subType : '加班') +
+        '</td><td>' + (r.startTime || '') + '-' + (r.endTime || '') + '</td><td style="font-weight:700">' + r.hours + 'h' + (r.manual ? ' ✏️' : '') +
+        '</td><td style="color:var(--text-muted)">' + (r.manualNote || '') + '</td><td><button class="pw-toggle-btn" onclick="adminFixHours(\'' + r.type + '\',\'' + r.clientId + '\',' + r.hours + ')">校正</button></td></tr>';
+    }).join('') + '</table></div>';
+}
     }
   } catch (e) {
     document.getElementById(`aq-y-ot`).textContent = `⚠️ 錯誤`;
