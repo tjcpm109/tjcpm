@@ -1880,7 +1880,7 @@ function buildMonthTableHTML(o) {
           //inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
           inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班}</span>`;
           flags.push('遲到');
-      }
+      }}
       if (punch.下班 === '—') {
         outHTML = afternoonOK ? dim(leaveLabel || '🌴 已請假') : (isToday ? dim('—') : missTag('下班'));
       } else {
@@ -1890,7 +1890,7 @@ function buildMonthTableHTML(o) {
           outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班}</span>`;
           flags.push('早退');
       }
-    }
+    }}
 
     const dayPunches = monthPunches.filter(r => safeNewDate(r.date || r.timestamp).getDate() === day);
     const SHOW_LATE_EARLY_FLAG = false;   // 之後要顯示就改成 true
