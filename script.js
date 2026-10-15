@@ -1668,7 +1668,7 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
         if (leaveStrings.length > 0) col4Items.push(leaveStrings.join(`<br>`));
         if (outOfOfficeStrings.length > 0) col4Items.push(outOfOfficeStrings.join(``));
         
-        html += `<tr><td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td><td>${item.in || `—`}</td><td>${item.out || `—`}</td><style="font-size:12px; line-height:1.5;">${col4Items.length > 0 ? col4Items.join(`<br>`) : `—`}</td></tr>`;
+        html += `<tr><td style="color:${isWeekend?`var(--accent-orange)`:`var(--text-primary)`}">${formattedDate}</td><td>${item.in || `—`}</td><td>${item.out || `—`}</td><td style="font-size:12px; line-height:1.5;">${col4Items.length > 0 ? col4Items.join(`<br>`) : `—`}</td></tr>`;
       });
     }
     html += `</tbody></table></div>`;
