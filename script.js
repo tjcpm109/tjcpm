@@ -3603,8 +3603,30 @@ const elPrev = document.getElementById('labelPrevYear');
 const elCur = document.getElementById('labelCurrentYear');
 if (elPrev) elPrev.textContent = new Date().getFullYear() - 1;
 if (elCur) elCur.textContent = new Date().getFullYear();
-
-
+function adminFixHours(type, clientId, cur) {
+  var v = prompt('校正「' + type + '」時數(目前 ' + cur + 'h,0.5 的倍數)\n留空 = 恢復系統計算', cur);
+  if (v === null) return;
+  var note = '';
+  if (v.trim() !== '') { note = prompt('校正原因(必填)', '') || ''; if (!note.trim()) { showToast('⚠️ 請填校正原因'); return; } }
+  callGAS({ action: 'setHours', type: type, clientId: clientId, hours: v.trim(), note: note }).then(function (r) {
+    if (r && r.status === 'ok') {
+      showToast('✅ 已校正為 ' + r.hours + 'h' + (r.shortfall > 0 ? '(餘額不足 ' + r.shortfall + 'h,請確認)' : ''));
+      loadAdminData(); handleAdminQueryChange();
+    } else showToast('⚠️ ' + ((r && r.message) || '校正失敗'));
+  }).catch(function () { showToast('⚠️ 連線失敗'); });
+}
+function refreshAttachmentLinks_(ss, empName, clientId) {
+  const { folder2b } = getYearlyFolders(new Date().getFullYear());
+  const links = collectFolderFileLinksByClientId(getEmployeeSubfolder(folder2b, empName, '4b_證明文件'), clientId);
+  if (!links) return;
+  ['請假申請', '加班申請', '補打卡申請', '特別排班'].forEach(n => {
+    const sh = ss.getSheetByName(n); if (!sh) return;
+    const c = SHEET_COLUMNS[n], row = findApplicationRow(sh.getDataRange().getValues(), c, clientId, null, false);
+    if (row === -1) return;
+    const cell = sh.getRange(row, c.attachment);
+    if (String(cell.getValue() || '').indexOf('【補件新增】') === -1) cell.setValue(links);   // 不蓋掉補件紀錄
+  });
+}
 // ── Boot ──
 if (document.body.dataset.page === 'admin') {
   initAdminPage();
