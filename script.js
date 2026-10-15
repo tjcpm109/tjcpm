@@ -469,6 +469,7 @@ if (`serviceWorker` in navigator) {
 
 // ── JSONP caller ──
 function callGAS(params, timeoutMs = 15000) {
+  if (currentUser && currentUser.token && !params.token) params = Object.assign({}, params, { token: currentUser.token });//1015
   return new Promise((resolve, reject) => {
     const cbName = `cb_` + Date.now() + `_` + Math.random().toString(36).slice(2);
     const url = GAS_URL + `?callback=` + cbName + `&data=` + encodeURIComponent(JSON.stringify(params));
@@ -766,7 +767,7 @@ async function syncToSheet(record) {
   }
   try {
     const cbName = `cb_` + Date.now() + `_` + Math.random().toString(36).slice(2);
-    const url = GAS_URL + `?callback=` + cbName + `&data=` + encodeURIComponent(JSON.stringify(record));
+    const url = GAS_URL + `?callback=` + cbName + `&data=` + encodeURIComponent(JSON.stringify(Object.assign({}, record, { token: currentUser && currentUser.token })));
     
     const response = await new Promise((resolve, reject) => {
       const script = document.createElement(`script`);
@@ -1066,8 +1067,10 @@ async function submitLeave() {
       { date: leaveStartVal, endDate: leaveEndVal, startTime, endTime, empId: currentUser.empId },
       currentUser?.holidayStrings || []
     ));
-    const annualBalance = getLeaveRemaining('特休');
-    
+    //1015 const annualBalance = getLeaveRemaining('特休');
+    // submitLeave：餘額檢查改用扣掉待審後的可用額度
+    const annualBalance = Number(currentUser?.quota?.specialLeaveRealAvailable ?? getLeaveRemaining('特休'));
+
     if (requestHours > annualBalance) {
       showToast(`⚠️ 特休餘額不足！申請時數：${requestHours}h，餘額：${annualBalance}h`);
       window.submitLeaveInFlight = false;
@@ -1114,7 +1117,8 @@ async function submitLeave() {
 // 换成批次系統後，伺服器回傳的 compLeaveRemainingHours 本身就是即時、
 // 正確加總過的數字，前端不用也不該再自己疊加一次，否則有雙重計算風險。
 function calculateCompensationBalance(refDateStr) {
-  return currentUser?.quota?.compLeaveRemainingHours || 0;
+  //return currentUser?.quota?.compLeaveRemainingHours || 0;
+  return currentUser?.quota?.compLeaveRealAvailable ?? currentUser?.quota?.compLeaveRemainingHours ?? 0;
 }
   
 async function submitOvertime() {
@@ -1672,7 +1676,16 @@ function renderAdminQueryCalendarTable(empId, empRecords, res, empInfo) {
     return;
   }
 
-  const now = new Date();
+  container.innerHTML = buildMonthTableHTML({
+  empId, holidayStrings, specialShifts, defaultShift: res.defaultShift,
+  punches: empRecords.filter(r => r.type === '上班' || r.type === '下班'),
+  leaves: empRecords.filter(r => r.type === '請假' && isFinalApproved(r.status)),
+  supps: empRecords.filter(r => r.type === '補打卡' && isFinalApproved(r.status)),
+  earliestD: getEarliestCheckDate({ joinDate: empInfo && empInfo.joinDate, quota: res.quota }),
+  clickable: false,
+  remarkFn: (dp, dl) => [...dl.map(r => `<span style="color:var(--accent-orange);font-weight:bold;">🌴 ${r.subType || '請假'} ${r.startTime || '09:00'}-${r.endTime || '18:00'}</span>`),
+                         ...buildOutOfOfficeParts(dp)].join('<br>')
+});
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -1863,7 +1876,7 @@ function buildMonthTableHTML(o) {
         inHTML = morningOK ? dim(leaveLabel || '🌴 已請假') : (isToday ? dim('—') : missTag('上班'));
       } else {
         const m = timeToMin(punch.上班);
-        if (m > shift.start && !isRangeExempted(shift.start, m, exLeaves))
+        if (m > shift.start && !isRangeExempted(shift.start, m, exLeaves)){
           //inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班} ⚠️遲到</span>`;
           inHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.上班}</span>`;
           flags.push('遲到');
@@ -1872,7 +1885,7 @@ function buildMonthTableHTML(o) {
         outHTML = afternoonOK ? dim(leaveLabel || '🌴 已請假') : (isToday ? dim('—') : missTag('下班'));
       } else {
         const m = timeToMin(punch.下班);
-        if (m < shift.end && !isRangeExempted(m, shift.end, exLeaves))
+        if (m < shift.end && !isRangeExempted(m, shift.end, exLeaves)){
           //outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班} ⚠️早退</span>`;
           outHTML = `<span style="color:var(--accent-orange);font-weight:bold;">${punch.下班}</span>`;
           flags.push('早退');
@@ -2258,7 +2271,9 @@ function recordHTML(r, showName = false, showApprove = false) {
   ].filter(Boolean).join(` · `);
 
   const who = showName ? `${r.name || r.empId}（${r.empId}）` : ``;
-
+ // recordHTML：在 ${approveRow} 前面加（換薪的審核卡出現「試算金額」鈕，proxy 不顯示）
+  ${(r.type === '換薪' && showApprove && currentUser.role !== 'admin2') ? `<button class="approve-btn" style="margin-top:8px" onclick="quoteCashOut('${r.clientId}')">💰 試算金額與明細</button>` : ''}
+  
   const approveRow = (showApprove && (r.status === `待審` || r.status === `待第二次審查`)) ? `
     <div class="approve-row" id="approveBtns-${r.id}">
       <button class="approve-btn ok" onclick="toggleApproveComment('${r.id}', '同意')">✓ 核准</button>
