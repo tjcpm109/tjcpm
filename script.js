@@ -3509,7 +3509,7 @@ function filterApplyYearScope(offset, el) {
   renderAllList();
 }
 // 1005 加班時數：與後端 getOvertimeHoursFromRow 一致（不排除假日、不裁班表，跨午休扣 1h，無條件捨去）
-function calculateOvertimeHoursLocal(r) {
+function calculateOvertimeHoursLocal1015(r) {
   if (!r || !r.startTime || !r.endTime) return 0;
   const s = timeToMin(r.startTime);
   const e = timeToMin(r.endTime);
@@ -3518,6 +3518,13 @@ function calculateOvertimeHoursLocal(r) {
   if (s < 720 && e > 780) diff -= 60;   // 完整跨越 12:00~13:00 才扣午休
   return Math.floor(Math.max(0, diff) / 60);
 }
+function calculateOvertimeHoursLocal(r) {
+  if (!r || !r.startTime || !r.endTime) return 0;
+  const s = timeToMin(r.startTime), e = timeToMin(r.endTime);
+  if (s >= e) return 0;
+  const lunch = Math.max(0, Math.min(e, 780) - Math.max(s, 720));
+  return Math.floor(Math.max(0, e - s - lunch) / 60);
+}    
 let _cashOffers = [];
 let _cashCur = null;
 
